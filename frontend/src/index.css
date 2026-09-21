@@ -1,0 +1,386 @@
+@import "tailwindcss";
+
+/* ═══ Theme tokens (set by theme.ts applyTheme — ported from ibiz_v2) ═════ */
+:root {
+  --accent: #a78bfa;
+  --accent-soft: rgba(167, 139, 250, .16);
+  --accent-strong: #c4b5fd;
+  --accent-text-on: #0f172a;
+  --accent-rgb: 167, 139, 250;
+  --accent-hover: rgba(167, 139, 250, .85);
+  --on-accent: #0f172a;
+
+  --bg: #0f172a;
+  --bg-elev: rgba(30, 41, 59, .78);
+  --text-hi: #e2e8f0;
+  --text-mid: #cbd5e1;
+  --text-low: #94a3b8;
+  --border: rgba(255, 255, 255, .12);
+
+  --error: #f87171;
+  --error-soft: rgba(248, 113, 113, .16);
+  --success: #10b981;
+  --success-soft: rgba(16, 185, 129, .14);
+  --warning: #f59e0b;
+  --warning-soft: rgba(245, 158, 11, .16);
+
+  --glass-a: 0.10;
+  --glass-blur: 16px;
+  --glass-border: rgba(255, 255, 255, .18);
+  --glass-highlight: rgba(255, 255, 255, .06);
+
+  --radius: 14px;
+  --radius-sm: 8px;
+  --radius-lg: 20px;
+
+  --font-ui: 'Inter', system-ui, sans-serif;
+
+  --shadow-window: 0 24px 70px rgba(0, 0, 0, .55), 0 2px 8px rgba(0, 0, 0, .4);
+}
+
+/* ═══ Base ═════════════════════════════════════════════════════════════════ */
+* { box-sizing: border-box; }
+
+html, body, #root { height: 100%; }
+
+body {
+  margin: 0;
+  font-family: var(--font-ui);
+  background: var(--bg);
+  color: var(--text-hi);
+  overflow: hidden;
+  -webkit-font-smoothing: antialiased;
+  text-rendering: optimizeLegibility;
+}
+
+button { font-family: inherit; }
+::selection { background: rgba(var(--accent-rgb), .35); }
+
+/* Scrollbars */
+*::-webkit-scrollbar { width: 8px; height: 8px; }
+*::-webkit-scrollbar-track { background: transparent; }
+*::-webkit-scrollbar-thumb {
+  background: rgba(var(--accent-rgb), .25);
+  border-radius: 99px;
+}
+*::-webkit-scrollbar-thumb:hover { background: rgba(var(--accent-rgb), .4); }
+
+/* ═══ Glass surfaces ═══════════════════════════════════════════════════════ */
+.glass-surface {
+  background: rgba(30, 41, 59, calc(var(--glass-a) + .35));
+  backdrop-filter: blur(var(--glass-blur)) saturate(1.4);
+  -webkit-backdrop-filter: blur(var(--glass-blur)) saturate(1.4);
+  border: 1px solid var(--glass-border);
+  box-shadow: inset 0 1px 0 var(--glass-highlight), 0 8px 32px rgba(0, 0, 0, .25);
+}
+
+:root[data-mode='light'] .glass-surface {
+  background: rgba(255, 255, 255, calc(var(--glass-a) + .45));
+}
+
+.glass-header {
+  background: rgba(30, 41, 59, calc(var(--glass-a) + .18));
+  backdrop-filter: blur(var(--glass-blur)) saturate(1.3);
+  -webkit-backdrop-filter: blur(var(--glass-blur)) saturate(1.3);
+  border-bottom: 1px solid var(--glass-border);
+}
+
+:root[data-mode='light'] .glass-header {
+  background: rgba(255, 255, 255, calc(var(--glass-a) + .28));
+}
+
+/* ═══ Desktop & wallpaper ══════════════════════════════════════════════════ */
+.desktop-root {
+  position: fixed;
+  inset: 0;
+  overflow: hidden;
+  background: var(--wallpaper, var(--bg));
+}
+
+.wallpaper-layer {
+  position: absolute;
+  inset: 0;
+  background: var(--wallpaper, var(--bg));
+  background-size: cover;
+  transition: background .6s ease;
+}
+
+.desktop-area {
+  position: absolute;
+  inset: 40px 0 56px 0; /* topbar 40px, taskbar 56px */
+}
+
+/* ═══ Window chrome ════════════════════════════════════════════════════════ */
+.window-frame {
+  position: absolute;
+  border-radius: var(--radius-lg);
+  overflow: hidden;
+  display: flex;
+  flex-direction: column;
+  will-change: transform;
+  background: rgba(16, 16, 28, .82);
+  backdrop-filter: blur(var(--glass-blur)) saturate(1.5);
+  -webkit-backdrop-filter: blur(var(--glass-blur)) saturate(1.5);
+  border: 1px solid var(--glass-border);
+  box-shadow: var(--shadow-window);
+}
+
+:root[data-mode='light'] .window-frame {
+  background: rgba(252, 252, 255, .86);
+}
+
+.window-frame.maximized {
+  border-radius: 0;
+  border-left: 0;
+  border-right: 0;
+  border-bottom: 0;
+}
+
+.window-titlebar {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  height: 38px;
+  flex: 0 0 auto;
+  padding: 0 10px;
+  cursor: grab;
+  user-select: none;
+}
+
+.window-titlebar:active { cursor: grabbing; }
+
+.window-body {
+  flex: 1;
+  min-height: 0;
+  overflow: auto;
+  padding: 18px 22px;
+}
+
+.window-dragging { transition: none !important; }
+.window-animating { transition: transform .18s ease, width .18s ease, height .18s ease; }
+
+/* Traffic lights */
+.tl-btn {
+  width: 12px;
+  height: 12px;
+  border-radius: 50%;
+  border: none;
+  padding: 0;
+  cursor: pointer;
+  opacity: .85;
+  transition: transform .12s ease, opacity .12s ease;
+}
+.tl-btn:hover { transform: scale(1.18); opacity: 1; }
+.tl-close { background: #ff5f57; }
+.tl-min { background: #febc2e; }
+.tl-max { background: #28c840; }
+
+/* ═══ Widgets ══════════════════════════════════════════════════════════════ */
+.widget-card {
+  position: absolute;
+  border-radius: var(--radius);
+  overflow: hidden;
+  user-select: none;
+  backdrop-filter: blur(var(--glass-blur));
+  -webkit-backdrop-filter: blur(var(--glass-blur));
+  background: rgba(18, 18, 30, .68);
+  border: 1px solid var(--glass-border);
+  box-shadow: inset 0 1px 0 var(--glass-highlight), 0 10px 30px rgba(0, 0, 0, .25);
+}
+
+:root[data-mode='light'] .widget-card {
+  background: rgba(255, 255, 255, .74);
+}
+
+.widget-card.dragging {
+  opacity: .9;
+  z-index: 40 !important;
+  transition: none !important;
+}
+
+.widget-resize-handle {
+  position: absolute;
+  right: 2px;
+  bottom: 2px;
+  width: 16px;
+  height: 16px;
+  cursor: nwse-resize;
+  opacity: .55;
+}
+
+.widget-resize-handle::after {
+  content: '';
+  position: absolute;
+  inset: 2px;
+  background: linear-gradient(135deg, transparent 55%, var(--text-mid) 55%);
+}
+
+/* ═══ Start menu / spotlight ═══════════════════════════════════════════════ */
+.menu-surface {
+  position: absolute;
+  border-radius: var(--radius-lg);
+  backdrop-filter: blur(var(--glass-blur)) saturate(1.5);
+  -webkit-backdrop-filter: blur(var(--glass-blur)) saturate(1.5);
+  background: rgba(14, 14, 26, .88);
+  border: 1px solid var(--glass-border);
+  box-shadow: 0 30px 90px rgba(0, 0, 0, .5), inset 0 1px 0 var(--glass-highlight);
+}
+
+:root[data-mode='light'] .menu-surface {
+  background: rgba(252, 252, 255, .9);
+}
+
+/* ═══ Taskbar ══════════════════════════════════════════════════════════════ */
+.taskbar {
+  position: absolute;
+  left: 0;
+  right: 0;
+  bottom: 0;
+  height: 56px;
+  display: flex;
+  align-items: center;
+  gap: 6px;
+  padding: 0 12px;
+  backdrop-filter: blur(var(--glass-blur)) saturate(1.4);
+  -webkit-backdrop-filter: blur(var(--glass-blur)) saturate(1.4);
+  background: rgba(10, 10, 20, .62);
+  border-top: 1px solid var(--glass-border);
+}
+
+:root[data-mode='light'] .taskbar {
+  background: rgba(255, 255, 255, .66);
+}
+
+.topbar {
+  position: absolute;
+  left: 0;
+  right: 0;
+  top: 0;
+  height: 40px;
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  padding: 0 14px;
+  backdrop-filter: blur(var(--glass-blur)) saturate(1.4);
+  -webkit-backdrop-filter: blur(var(--glass-blur)) saturate(1.4);
+  background: rgba(10, 10, 20, .5);
+  border-bottom: 1px solid var(--glass-border);
+}
+
+:root[data-mode='light'] .topbar {
+  background: rgba(255, 255, 255, .55);
+}
+
+/* ═══ App icons / buttons ══════════════════════════════════════════════════ */
+.icon-btn {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  border: none;
+  background: transparent;
+  color: var(--text-mid);
+  border-radius: var(--radius-sm);
+  cursor: pointer;
+  transition: background .15s ease, color .15s ease, transform .1s ease;
+}
+.icon-btn:hover {
+  background: rgba(var(--accent-rgb), .14);
+  color: var(--text-hi);
+}
+.icon-btn:active { transform: scale(.94); }
+
+.chip {
+  display: inline-flex;
+  align-items: center;
+  gap: 6px;
+  padding: 4px 10px;
+  border-radius: 999px;
+  font-size: 12px;
+  background: rgba(var(--accent-rgb), .12);
+  color: var(--accent);
+  border: 1px solid rgba(var(--accent-rgb), .25);
+}
+
+.btn-accent {
+  display: inline-flex;
+  align-items: center;
+  gap: 8px;
+  padding: 8px 16px;
+  border: none;
+  border-radius: var(--radius-sm);
+  background: var(--accent);
+  color: var(--accent-text-on);
+  font-weight: 600;
+  cursor: pointer;
+  transition: filter .15s ease, transform .1s ease;
+}
+.btn-accent:hover { filter: brightness(1.1); }
+.btn-accent:active { transform: scale(.97); }
+
+.btn-ghost {
+  display: inline-flex;
+  align-items: center;
+  gap: 8px;
+  padding: 8px 16px;
+  border-radius: var(--radius-sm);
+  background: transparent;
+  color: var(--text-hi);
+  border: 1px solid var(--border);
+  cursor: pointer;
+  transition: background .15s ease;
+}
+.btn-ghost:hover { background: rgba(var(--accent-rgb), .1); }
+
+input, textarea, select {
+  font-family: inherit;
+  background: rgba(0, 0, 0, .18);
+  color: var(--text-hi);
+  border: 1px solid var(--border);
+  border-radius: var(--radius-sm);
+  padding: 8px 12px;
+  outline: none;
+  transition: border-color .15s ease, box-shadow .15s ease;
+}
+input:focus, textarea:focus, select:focus {
+  border-color: rgba(var(--accent-rgb), .6);
+  box-shadow: 0 0 0 3px rgba(var(--accent-rgb), .15);
+}
+:root[data-mode='light'] input,
+:root[data-mode='light'] textarea,
+:root[data-mode='light'] select {
+  background: rgba(0, 0, 0, .04);
+}
+
+/* ═══ Animations ═══════════════════════════════════════════════════════════ */
+@keyframes window-open {
+  from { opacity: 0; transform: scale(.96) translateY(8px); }
+  to   { opacity: 1; transform: scale(1) translateY(0); }
+}
+.window-open { animation: window-open .18s ease; }
+
+@keyframes fade-in {
+  from { opacity: 0; }
+  to   { opacity: 1; }
+}
+.fade-in { animation: fade-in .25s ease; }
+
+@keyframes slide-up {
+  from { opacity: 0; transform: translateY(14px); }
+  to   { opacity: 1; transform: translateY(0); }
+}
+.slide-up { animation: slide-up .22s ease; }
+
+@keyframes spin-slow {
+  to { transform: rotate(360deg); }
+}
+.spin-slow { animation: spin-slow 2.4s linear infinite; }
+
+:root[data-anim='off'] * {
+  animation: none !important;
+  transition: none !important;
+}
+
+/* Reduced motion */
+@media (prefers-reduced-motion: reduce) {
+  * { animation-duration: .01ms !important; transition-duration: .01ms !important; }
+}
