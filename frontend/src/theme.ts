@@ -13,6 +13,8 @@ export type AccentName =
 export type GlassLevel = 'subtle' | 'normal' | 'strong';
 export type BlurLevel = 'normal' | 'high' | 'ultra';
 export type RadiusLevel = 'sharp' | 'rounded' | 'pill';
+export type Density = 'compact' | 'normal' | 'comfortable';
+export type GridSize = 16 | 24 | 32;
 export type FontName =
   | 'Inter' | 'Manrope' | 'Space Grotesk' | 'Sora' | 'Outfit'
   | 'DM Sans' | 'Plus Jakarta Sans' | 'IBM Plex Sans' | 'JetBrains Mono' | 'System UI';
@@ -79,17 +81,19 @@ export const ON_ACCENT: Record<ThemeMode, string> = {
 };
 
 // ─── Fonts (10) ─────────────────────────────────────────────────────────────
+// 'Noto Sans Devanagari' appended so Nepali text keeps shape (ibiz_v2 FONT_FAMILY).
+const NOTO = "'Noto Sans Devanagari'";
 export const FONTS: FontDef[] = [
-  { name: 'Inter',            label: 'Inter',            stack: "'Inter', system-ui, sans-serif" },
-  { name: 'Manrope',          label: 'Manrope',          stack: "'Manrope', system-ui, sans-serif" },
-  { name: 'Space Grotesk',    label: 'Space Grotesk',    stack: "'Space Grotesk', system-ui, sans-serif" },
-  { name: 'Sora',             label: 'Sora',             stack: "'Sora', system-ui, sans-serif" },
-  { name: 'Outfit',           label: 'Outfit',           stack: "'Outfit', system-ui, sans-serif" },
-  { name: 'DM Sans',          label: 'DM Sans',          stack: "'DM Sans', system-ui, sans-serif" },
-  { name: 'Plus Jakarta Sans',label: 'Plus Jakarta Sans',stack: "'Plus Jakarta Sans', system-ui, sans-serif" },
-  { name: 'IBM Plex Sans',    label: 'IBM Plex Sans',    stack: "'IBM Plex Sans', system-ui, sans-serif" },
-  { name: 'JetBrains Mono',   label: 'JetBrains Mono',   stack: "'JetBrains Mono', ui-monospace, monospace" },
-  { name: 'System UI',        label: 'System UI',        stack: "system-ui, sans-serif" },
+  { name: 'Inter',            label: 'Inter',            stack: `'Inter', ${NOTO}, system-ui, sans-serif` },
+  { name: 'Manrope',          label: 'Manrope',          stack: `'Manrope', ${NOTO}, system-ui, sans-serif` },
+  { name: 'Space Grotesk',    label: 'Space Grotesk',    stack: `'Space Grotesk', ${NOTO}, system-ui, sans-serif` },
+  { name: 'Sora',             label: 'Sora',             stack: `'Sora', ${NOTO}, system-ui, sans-serif` },
+  { name: 'Outfit',           label: 'Outfit',           stack: `'Outfit', ${NOTO}, system-ui, sans-serif` },
+  { name: 'DM Sans',          label: 'DM Sans',          stack: `'DM Sans', ${NOTO}, system-ui, sans-serif` },
+  { name: 'Plus Jakarta Sans',label: 'Plus Jakarta Sans',stack: `'Plus Jakarta Sans', ${NOTO}, system-ui, sans-serif` },
+  { name: 'IBM Plex Sans',    label: 'IBM Plex Sans',    stack: `'IBM Plex Sans', ${NOTO}, system-ui, sans-serif` },
+  { name: 'JetBrains Mono',   label: 'JetBrains Mono',   stack: `'JetBrains Mono', ${NOTO}, ui-monospace, monospace` },
+  { name: 'System UI',        label: 'System UI',        stack: `system-ui, ${NOTO}, sans-serif` },
 ];
 
 // ─── Wallpaper presets ──────────────────────────────────────────────────────
@@ -133,6 +137,13 @@ export const RADIUS_LEVELS: Record<RadiusLevel, string> = {
   sharp: '4px', rounded: '14px', pill: '24px',
 };
 
+// ─── Density & grid (ported from ibiz_v2 DENSITY_SPACING / GRID_SIZES) ───────
+export const DENSITY_SPACING: Record<Density, string> = {
+  compact: '0.2rem', normal: '0.25rem', comfortable: '0.3rem',
+};
+
+export const GRID_SIZES: GridSize[] = [16, 24, 32];
+
 // ─── Status colors (ported from ibiz_v2 ERROR_COLORS + status tokens) ───────
 export const STATUS_COLORS: Record<ThemeMode, { error: string; errorSoft: string; success: string; successSoft: string; warning: string; warningSoft: string }> = {
   light: {
@@ -148,6 +159,11 @@ export const STATUS_COLORS: Record<ThemeMode, { error: string; errorSoft: string
 };
 
 // ─── Theme state shape ──────────────────────────────────────────────────────
+export type TaskbarMode = 'always' | 'auto-hide';
+export type TaskbarStyle = 'macos' | 'windows';
+export type ClockFormat = '12h' | '24h';
+export type DateFormat = 'short' | 'long';
+
 export interface ThemeState {
   mode: ThemeMode;
   accent: AccentName;
@@ -156,12 +172,25 @@ export interface ThemeState {
   blur: BlurLevel;
   radius: RadiusLevel;
   font: FontName;
+  density: Density;
+  gridSize: GridSize;
+  windowOpacity: number; // 0.5-1 (ibiz_v2 InterfacePanel)
+  showTopBar: boolean;
   wallpaper: string; // WallpaperDef.id
+  wallpaperDim: number;  // 0-60 (%)
+  wallpaperBlur: number; // 0-25 (px)
   dockPosition?: 'bottom';
+  taskbarMode: TaskbarMode;
+  taskbarStyle: TaskbarStyle;
+  taskbarApps: string[];       // pinned app ids, in order
+  showHomeIndicator: boolean;  // iPad-style home bar (ibiz_v2 TaskbarPanel)
+  showSeconds: boolean;        // taskbar/tray clock seconds (ibiz_v2 TimePanel)
   animationsEnabled: boolean;
   soundsEnabled: boolean;
   widgets: WidgetPlacement[];
   startupWindows: string[];
+  clockFormat: ClockFormat;
+  dateFormat: DateFormat;
 }
 
 export interface WidgetPlacement {
@@ -180,11 +209,24 @@ export const DEFAULT_THEME: ThemeState = {
   blur: 'normal',
   radius: 'rounded',
   font: 'Inter',
+  density: 'normal',
+  gridSize: 24,
+  windowOpacity: 1,
+  showTopBar: true,
   wallpaper: 'violet-dream',
+  wallpaperDim: 0,
+  wallpaperBlur: 0,
+  taskbarMode: 'always',
+  taskbarStyle: 'windows',
+  taskbarApps: ['about', 'skills', 'projects', 'experience', 'contact', 'settings'],
+  showHomeIndicator: false,
+  showSeconds: false,
   animationsEnabled: true,
   soundsEnabled: false,
   widgets: [],
   startupWindows: ['about', 'skills'],
+  clockFormat: '12h',
+  dateFormat: 'short',
 };
 
 // ─── Color helpers ──────────────────────────────────────────────────────────
@@ -311,6 +353,12 @@ export function applyTheme(theme: ThemeState): void {
   // Font
   set('--font-ui', font.stack);
 
+  // Density / grid / window chrome (ibiz_v2 DENSITY_SPACING, GRID_SIZES, windowOpacity)
+  set('--spacing', DENSITY_SPACING[theme.density] ?? DENSITY_SPACING.normal);
+  set('--grid-size', String(theme.gridSize ?? 24));
+  const opacity = Math.min(1, Math.max(0.5, theme.windowOpacity ?? 1));
+  set('--window-opacity', String(opacity));
+
   // Shadow depth
   set('--shadow-window', isDark
     ? '0 24px 70px rgba(0,0,0,.55), 0 2px 8px rgba(0,0,0,.4)'
@@ -331,8 +379,16 @@ export function applyTheme(theme: ThemeState): void {
   const fallback = isDark ? 'var(--wp-accent-dark)' : 'var(--wp-accent-light)';
   set('--wallpaper', wp.css.startsWith('var(') ? fallback : wp.css);
 
+  // Wallpaper effects (ibiz_v2 wallpaperDim / wallpaperBlur)
+  set('--wallpaper-dim', String(Math.min(60, Math.max(0, theme.wallpaperDim)) / 100));
+  set('--wallpaper-blur', `${Math.min(25, Math.max(0, theme.wallpaperBlur))}px`);
+
+  // Taskbar height — collapses when auto-hide is on so windows use the space
+  set('--taskbar-h', theme.taskbarMode === 'auto-hide' ? '14px' : '56px');
+
   root.dataset.mode = theme.mode;
   root.dataset.accent = theme.accent;
+  root.dataset.topbar = theme.showTopBar ? 'on' : 'off';
   root.style.colorScheme = theme.mode;
 }
 
@@ -346,7 +402,16 @@ export function loadTheme(): ThemeState {
     const raw = localStorage.getItem('portfolio.theme');
     if (!raw) return { ...DEFAULT_THEME };
     const parsed = JSON.parse(raw) as Partial<ThemeState>;
-    return { ...DEFAULT_THEME, ...parsed };
+    const merged = { ...DEFAULT_THEME, ...parsed };
+    // Sanitize backfilled fields from older saves (ibiz_v2 parity)
+    if (!['compact', 'normal', 'comfortable'].includes(merged.density as string)) merged.density = 'normal';
+    if (![16, 24, 32].includes(merged.gridSize as number)) merged.gridSize = 24;
+    if (typeof merged.windowOpacity !== 'number' || Number.isNaN(merged.windowOpacity)) merged.windowOpacity = 1;
+    if (typeof merged.showTopBar !== 'boolean') merged.showTopBar = true;
+    if (typeof merged.showSeconds !== 'boolean') merged.showSeconds = false;
+    if (typeof merged.showHomeIndicator !== 'boolean') merged.showHomeIndicator = false;
+    if (!Array.isArray(merged.taskbarApps)) merged.taskbarApps = [...DEFAULT_THEME.taskbarApps];
+    return merged;
   } catch {
     return { ...DEFAULT_THEME };
   }

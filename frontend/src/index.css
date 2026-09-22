@@ -36,6 +36,10 @@
   --font-ui: 'Inter', system-ui, sans-serif;
 
   --shadow-window: 0 24px 70px rgba(0, 0, 0, .55), 0 2px 8px rgba(0, 0, 0, .4);
+
+  --spacing: 0.25rem;
+  --grid-size: 24;
+  --window-opacity: 1;
 }
 
 /* ═══ Base ═════════════════════════════════════════════════════════════════ */
@@ -105,9 +109,22 @@ button { font-family: inherit; }
   transition: background .6s ease;
 }
 
+/* Wallpaper dim & blur effects (ibiz_v2) */
+.wallpaper-dim {
+  position: absolute;
+  inset: 0;
+  background: rgb(0 0 0 / var(--wallpaper-dim, 0));
+  pointer-events: none;
+}
+
+.wallpaper-layer {
+  filter: blur(var(--wallpaper-blur, 0px));
+  transform: scale(calc(1 + var(--wallpaper-blur, 0px) / 100)); /* hide blur edge bleed */
+}
+
 .desktop-area {
   position: absolute;
-  inset: 40px 0 56px 0; /* topbar 40px, taskbar 56px */
+  inset: 40px 0 var(--taskbar-h, 56px) 0; /* topbar 40px, taskbar var */
 }
 
 /* ═══ Window chrome ════════════════════════════════════════════════════════ */
@@ -123,6 +140,7 @@ button { font-family: inherit; }
   -webkit-backdrop-filter: blur(var(--glass-blur)) saturate(1.5);
   border: 1px solid var(--glass-border);
   box-shadow: var(--shadow-window);
+  opacity: var(--window-opacity, 1);
 }
 
 :root[data-mode='light'] .window-frame {
@@ -236,7 +254,9 @@ button { font-family: inherit; }
   left: 0;
   right: 0;
   bottom: 0;
-  height: 56px;
+  height: var(--taskbar-h, 56px);
+  min-height: 14px;
+  overflow: hidden;
   display: flex;
   align-items: center;
   gap: 6px;
@@ -270,6 +290,9 @@ button { font-family: inherit; }
 :root[data-mode='light'] .topbar {
   background: rgba(255, 255, 255, .55);
 }
+
+:root[data-topbar='off'] .topbar { display: none; }
+:root[data-topbar='off'] .desktop-area { inset-top: 0; top: 0; }
 
 /* ═══ App icons / buttons ══════════════════════════════════════════════════ */
 .icon-btn {

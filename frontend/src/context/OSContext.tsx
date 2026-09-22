@@ -10,6 +10,7 @@ import {
 } from 'react';
 import {
   applyTheme,
+  DEFAULT_THEME,
   getWallpaper,
   loadTheme,
   saveTheme,
@@ -17,6 +18,7 @@ import {
 } from '@/theme';
 import type { AppDef, AppId, NotificationItem, WindowState, WidgetMeta, WidgetPlacement, WidgetVariant } from '@/types';
 import { sound } from '@/lib/sound';
+import { themeService } from '@/lib/api/themeService';
 import { APP_REGISTRY } from '@/apps/registry';
 
 export interface OSContextValue {
@@ -90,21 +92,48 @@ export function OSProvider({ children }: { children: ReactNode }) {
   const [notifications, setNotifications] = useState<NotificationItem[]>([]);
   const zCounter = useRef(10);
   const startedRef = useRef(false);
+  const hydratedRef = useRef(false);
+  const saveTimer = useRef<number | undefined>(undefined);
 
-  // ─── Theme application ────────────────────────────────────────────────────
+  // ─── Theme application + persistence (local + server, ibiz_v2 parity) ──────
   useEffect(() => {
     applyTheme(theme);
     saveTheme(theme);
+    if (!hydratedRef.current) return; // skip server push until first pull completes
+    window.clearTimeout(saveTimer.current);
+    saveTimer.current = window.setTimeout(() => {
+      void themeService.save(theme);
+    }, 800);
+    return () => window.clearTimeout(saveTimer.current);
   }, [theme]);
+
+  // Boot: server wins over local when it exists (single-user, no auth scope)
+  useEffect(() => {
+    let cancelled = false;
+    void themeService.get().then((server) => {
+      if (cancelled || !server || typeof server !== 'object') {
+        hydratedRef.current = true;
+        return;
+      }
+      setThemeState((prev) => ({
+        ...DEFAULT_THEME,
+        ...server,
+        widgets: (server.widgets as ThemeState['widgets']) ?? prev.widgets,
+      }));
+      hydratedRef.current = true;
+    });
+    return () => {
+      cancelled = true;
+    };
+  }, []);
 
   const setTheme = useCallback((patch: Partial<ThemeState>) => {
     setThemeState((t) => ({ ...t, ...patch }));
   }, []);
 
   const resetTheme = useCallback(() => {
-    setThemeState((t) => ({ ...t, widgets: t.widgets }));
-    // full reset to defaults, keeping nothing custom
-    import('@/theme').then(({ DEFAULT_THEME }) => setThemeState({ ...DEFAULT_THEME }));
+    setThemeState({ ...DEFAULT_THEME });
+    void themeService.reset();
   }, []);
 
   // ─── Window management ────────────────────────────────────────────────────

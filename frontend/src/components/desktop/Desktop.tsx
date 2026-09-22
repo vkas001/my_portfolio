@@ -16,7 +16,7 @@ import MobileNotice from './MobileNotice';
 
 export default function Desktop() {
   const {
-    windows, focusedId, launchApp, setSpotlightOpen, setWidgetsOpen, widgetsOpen, closeWindow,
+    theme, windows, focusedId, launchApp, setSpotlightOpen, setWidgetsOpen, widgetsOpen, closeWindow,
   } = useOS();
   const isMobile = useIsMobile();
 
@@ -44,6 +44,8 @@ export default function Desktop() {
 
   return (
     <div className="desktop-root">
+      {/* Wallpaper dim overlay (Settings → Personalization → Wallpaper effects) */}
+      <div className="wallpaper-dim" />
       <TopBar />
       <StartMenu />
       <Spotlight />
@@ -82,6 +84,16 @@ export default function Desktop() {
       ))}
 
       <Taskbar />
+
+      {/* Home indicator (Settings → Taskbar, ported from ibiz_v2) */}
+      {theme.showHomeIndicator && (
+        <div className="absolute inset-x-0 bottom-1 flex justify-center pointer-events-none z-[60]">
+          <div
+            className="h-1 rounded-full"
+            style={{ width: 134, background: 'var(--text-low)', opacity: 0.65 }}
+          />
+        </div>
+      )}
     </div>
   );
 }

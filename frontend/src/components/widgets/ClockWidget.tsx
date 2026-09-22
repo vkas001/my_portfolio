@@ -1,6 +1,8 @@
 import { useEffect, useState } from 'react';
+import { useOS } from '@/context/OSContext';
 
 export default function ClockWidget() {
+  const { theme } = useOS();
   const [now, setNow] = useState(new Date());
 
   useEffect(() => {
@@ -8,13 +10,23 @@ export default function ClockWidget() {
     return () => clearInterval(t);
   }, []);
 
+  const time = now.toLocaleTimeString([], {
+    hour: '2-digit',
+    minute: '2-digit',
+    hour12: theme.clockFormat === '12h',
+  });
+
+  const date = theme.dateFormat === 'long'
+    ? now.toLocaleDateString([], { weekday: 'long', year: 'numeric', month: 'long', day: 'numeric' })
+    : now.toLocaleDateString([], { weekday: 'long', month: 'short', day: 'numeric' });
+
   return (
     <div className="flex flex-col items-center justify-center h-full gap-1">
       <p className="text-3xl font-bold tabular-nums" style={{ color: 'var(--accent)' }}>
-        {now.toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' })}
+        {time}
       </p>
       <p className="text-xs" style={{ color: 'var(--text-mid)' }}>
-        {now.toLocaleDateString([], { weekday: 'long', month: 'short', day: 'numeric' })}
+        {date}
       </p>
     </div>
   );

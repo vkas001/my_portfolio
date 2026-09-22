@@ -5,6 +5,7 @@ import { Bell, BellOff, X } from 'lucide-react';
 export default function TopBar() {
   const { notifications, dismissNotification, markNotificationsRead, theme } = useOS();
   const [now, setNow] = useState(new Date());
+  const hour12 = theme.clockFormat === '12h';
   const [open, setOpen] = useState(false);
   const popRef = useRef<HTMLDivElement>(null);
   const unread = notifications.filter((n) => !n.read).length;
@@ -26,7 +27,7 @@ export default function TopBar() {
   return (
     <header className="topbar z-50">
       <span className="text-xs font-semibold" style={{ color: 'var(--accent)' }}>
-        Portfolio OS
+        Hey! this is Vkas
       </span>
       <span className="text-xs" style={{ color: 'var(--text-low)' }}>
         {theme.mode === 'dark' ? '🌙' : '☀️'} {theme.accent}
@@ -72,8 +73,10 @@ export default function TopBar() {
       </div>
 
       <span className="text-xs tabular-nums" style={{ color: 'var(--text-mid)' }}>
-        {now.toLocaleDateString([], { weekday: 'short', month: 'short', day: 'numeric' })}{' '}
-        {now.toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' })}
+        {theme.dateFormat === 'long'
+          ? now.toLocaleDateString([], { weekday: 'long', year: 'numeric', month: 'long', day: 'numeric' })
+          : now.toLocaleDateString([], { weekday: 'short', month: 'short', day: 'numeric' })}{' '}
+        {now.toLocaleTimeString([], { hour: '2-digit', minute: '2-digit', hour12 })}
       </span>
     </header>
   );

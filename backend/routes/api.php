@@ -3,6 +3,7 @@
 use App\Http\Controllers\ContactController;
 use App\Http\Controllers\GitHubController;
 use App\Http\Controllers\PortfolioController;
+use App\Http\Controllers\ThemeController;
 use Illuminate\Support\Facades\Route;
 
 /*
@@ -34,3 +35,7 @@ Route::post('/contact', [ContactController::class, 'store'])
     ->middleware('throttle:contact');
 
 Route::get('/github/stats', [GitHubController::class, 'stats']);
+
+Route::get('/theme', [ThemeController::class, 'show']);
+Route::put('/theme', [ThemeController::class, 'update']);
+Route::delete('/theme/reset', [ThemeController::class, 'reset']);
