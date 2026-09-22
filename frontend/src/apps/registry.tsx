@@ -1,4 +1,5 @@
 import { lazy } from 'react';
+import { User, Sparkles, Folder, Briefcase, Mail, Settings as SettingsIcon } from 'lucide-react';
 import type { AppDef } from '@/types';
 
 const About = lazy(() => import('./About'));
@@ -12,7 +13,7 @@ export const APP_REGISTRY: AppDef[] = [
   {
     id: 'about',
     name: 'About',
-    icon: '👤',
+    icon: User,
     color: '#8b5cf6',
     component: About,
     defaultSize: { w: 680, h: 520 },
@@ -22,7 +23,7 @@ export const APP_REGISTRY: AppDef[] = [
   {
     id: 'skills',
     name: 'Skills',
-    icon: '⚡',
+    icon: Sparkles,
     color: '#06b6d4',
     component: Skills,
     defaultSize: { w: 640, h: 540 },
@@ -32,7 +33,7 @@ export const APP_REGISTRY: AppDef[] = [
   {
     id: 'projects',
     name: 'Projects',
-    icon: '🚀',
+    icon: Folder,
     color: '#f59e0b',
     component: Projects,
     defaultSize: { w: 860, h: 600 },
@@ -42,7 +43,7 @@ export const APP_REGISTRY: AppDef[] = [
   {
     id: 'experience',
     name: 'Experience',
-    icon: '📅',
+    icon: Briefcase,
     color: '#10b981',
     component: Experience,
     defaultSize: { w: 680, h: 560 },
@@ -52,7 +53,7 @@ export const APP_REGISTRY: AppDef[] = [
   {
     id: 'contact',
     name: 'Contact',
-    icon: '✉️',
+    icon: Mail,
     color: '#f43f5e',
     component: Contact,
     defaultSize: { w: 560, h: 520 },
@@ -62,7 +63,7 @@ export const APP_REGISTRY: AppDef[] = [
   {
     id: 'settings',
     name: 'Settings',
-    icon: '⚙️',
+    icon: SettingsIcon,
     color: '#64748b',
     component: Settings,
     defaultSize: { w: 720, h: 560 },

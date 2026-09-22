@@ -1,22 +1,16 @@
-import { useEffect, useState } from 'react';
-import { fetchProfile, sendContact } from '@/lib/api';
-import type { Profile } from '@shared/types';
+import { useState } from 'react';
+import { sendContact } from '@/lib/api';
+import { useProfile } from '@/lib/hooks';
 import { useOS } from '@/context/OSContext';
 import { Send, LoaderCircle, Check, Copy, Mail } from 'lucide-react';
 
 export default function Contact() {
   const { pushNotification } = useOS();
-  const [profile, setProfile] = useState<Profile | null>(null);
+  const profile = useProfile();
   const [form, setForm] = useState({ name: '', email: '', subject: '', message: '' });
   const [status, setStatus] = useState<'idle' | 'sending' | 'sent' | 'error'>('idle');
   const [error, setError] = useState('');
   const [copied, setCopied] = useState(false);
-
-  useEffect(() => {
-    let alive = true;
-    fetchProfile().then((p) => { if (alive) setProfile(p); });
-    return () => { alive = false; };
-  }, []);
 
   const submit = async (e: React.FormEvent) => {
     e.preventDefault();

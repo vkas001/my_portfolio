@@ -1,4 +1,5 @@
 import type { ComponentType, LazyExoticComponent } from 'react';
+import type { LucideIcon } from 'lucide-react';
 import type { WidgetPlacement } from '@/theme';
 
 export type { WidgetPlacement };
@@ -9,7 +10,7 @@ export type AppId =
 export interface AppDef {
   id: AppId;
   name: string;
-  icon: string;                 // emoji fallback; real icons via registry
+  icon: LucideIcon;             // lucide icon component for tiles, menus, lists
   color: string;                // accent tint for icon tile
   component: LazyExoticComponent<ComponentType> | ComponentType;
   defaultSize: { w: number; h: number };

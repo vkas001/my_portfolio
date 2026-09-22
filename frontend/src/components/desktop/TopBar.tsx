@@ -1,10 +1,14 @@
 import { useEffect, useRef, useState } from 'react';
 import { useOS } from '@/context/OSContext';
+import { useProfile } from '@/lib/hooks';
+import UserAvatar from '@/components/ui/UserAvatar';
 import { WIDGET_DEFS } from '@/components/widgets/registry';
 import { Bell, BellOff, Eye, EyeOff, Plus, X } from 'lucide-react';
+import ViewToggle from './ViewToggle';
 
 export default function TopBar() {
   const { notifications, dismissNotification, markNotificationsRead, theme, addWidget, widgetsOpen, setWidgetsOpen } = useOS();
+  const profile = useProfile();
   const [bellOpen, setBellOpen] = useState(false);
   const [pickerOpen, setPickerOpen] = useState(false);
   const bellRef = useRef<HTMLDivElement>(null);
@@ -30,12 +34,14 @@ export default function TopBar() {
           Hey! this is Vkas
         </span>
         <span className="text-xs shrink-0" style={{ color: 'var(--text-low)' }}>
-          {theme.mode === 'dark' ? '🌙' : '☀️'} {theme.accent}
+          {theme.accent}
         </span>
       </div>
 
-      {/* Center — kept clear; the clock lives in the taskbar tray */}
-      <div className="flex-1" />
+      {/* Center — shell view toggle (Web ⇄ OS) */}
+      <div className="flex-1 flex items-center justify-center">
+        <ViewToggle />
+      </div>
 
       {/* Right — widgets visibility, add widget, notifications */}
       <div className="flex items-center gap-1">
@@ -112,6 +118,13 @@ export default function TopBar() {
             </div>
           )}
         </div>
+
+        {/* Right-most — profile avatar (same image as About) */}
+        {profile ? (
+          <UserAvatar profile={profile} className="w-7 h-7 text-xs" />
+        ) : (
+          <div className="w-7 h-7 rounded-full animate-pulse" style={{ background: 'var(--accent-soft)' }} />
+        )}
       </div>
     </header>
   );

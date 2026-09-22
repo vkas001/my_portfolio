@@ -1,10 +1,10 @@
 import { OSProvider } from '@/context/OSContext';
-import Desktop from '@/components/desktop/Desktop';
+import AppShell from '@/components/desktop/AppShell';
 
 export default function App() {
   return (
     <OSProvider>
-      <Desktop />
+      <AppShell />
     </OSProvider>
   );
 }

@@ -106,7 +106,9 @@ export default function WindowFrame({ win, children }: Props) {
         onDoubleClick={() => toggleMaximize(win.id)}
       >
         <div className="flex items-center gap-2 flex-1 min-w-0">
-          <span className="text-base leading-none">{app?.icon}</span>
+          <span className="leading-none inline-flex" style={{ color: app?.color }}>
+            {app ? <app.icon size={14} /> : null}
+          </span>
           <span className="text-xs font-medium truncate" style={{ color: 'var(--text-mid)' }}>
             {app?.name}
           </span>

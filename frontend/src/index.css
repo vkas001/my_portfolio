@@ -54,10 +54,12 @@ body {
   font-family: var(--font-ui);
   background: var(--bg);
   color: var(--text-hi);
-  overflow: hidden;
   -webkit-font-smoothing: antialiased;
   text-rendering: optimizeLegibility;
 }
+
+/* OS view locks document scroll (fixed desktop); Web view scrolls normally. */
+html[data-view='os'] body { overflow: hidden; }
 
 button { font-family: inherit; }
 ::selection { background: rgba(var(--accent-rgb), .35); }
@@ -581,4 +583,99 @@ input:focus, textarea:focus, select:focus {
 /* Reduced motion */
 @media (prefers-reduced-motion: reduce) {
   * { animation-duration: .01ms !important; transition-duration: .01ms !important; }
+}
+
+/* ═══ Web view (normal scrolling site) ═════════════════════════════════════ */
+.web-root {
+  min-height: 100vh;
+  background: var(--wallpaper, var(--bg));
+  color: var(--text-hi);
+}
+/* Reuse the OS topbar as a sticky web header. Later in the file + equal
+ * specificity wins over both the OS absolute positioning and the
+ * `data-topbar='off'` hide rule, so the view toggle is always reachable. */
+:root .web-root .topbar {
+  position: sticky;
+  top: 0;
+  display: flex;
+}
+.web-nav {
+  position: sticky;
+  top: 40px;
+  z-index: 30;
+  display: flex;
+  justify-content: center;
+  flex-wrap: wrap;
+  gap: 4px;
+  padding: 10px 16px;
+  backdrop-filter: blur(var(--glass-blur)) saturate(1.4);
+  -webkit-backdrop-filter: blur(var(--glass-blur)) saturate(1.4);
+  background: rgba(10, 10, 20, .45);
+  border-bottom: 1px solid var(--glass-border);
+}
+:root[data-mode='light'] .web-nav {
+  background: rgba(255, 255, 255, .5);
+}
+.web-nav-link {
+  display: inline-flex;
+  align-items: center;
+  gap: 6px;
+  padding: 6px 12px;
+  border-radius: var(--radius-sm);
+  font-size: 12px;
+  font-weight: 600;
+  color: var(--text-mid);
+  text-decoration: none;
+}
+.web-nav-link:hover {
+  background: rgba(var(--accent-rgb), .14);
+  color: var(--text-hi);
+}
+.web-main {
+  max-width: 1080px;
+  margin: 0 auto;
+  padding: 28px 20px 72px;
+  display: flex;
+  flex-direction: column;
+  gap: 48px;
+}
+.web-section-wrap { scroll-margin-top: 112px; }
+.web-section {
+  container-type: inline-size; /* anchor for reused OS app container queries */
+  background: var(--bg-elev);
+  border: 1px solid var(--border);
+  border-radius: var(--radius-lg);
+  padding: 24px;
+  display: flex;
+  flex-direction: column;
+  gap: 16px;
+}
+.web-section-head {
+  display: flex;
+  align-items: center;
+  gap: 12px;
+}
+.web-section-icon {
+  width: 44px;
+  height: 44px;
+  border-radius: var(--radius);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  font-size: 20px;
+  flex-shrink: 0;
+}
+.web-section-head h2 {
+  margin: 0;
+  font-size: 18px;
+  font-weight: 700;
+}
+.web-section-head p {
+  margin: 2px 0 0;
+  font-size: 12px;
+}
+.web-footer {
+  text-align: center;
+  font-size: 12px;
+  padding: 0 20px 48px;
 }

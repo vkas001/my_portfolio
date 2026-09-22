@@ -101,10 +101,10 @@ export default function StartMenu() {
               onClick={() => { launchApp(app.id); setStartMenuOpen(false); }}
             >
               <span
-                className="w-10 h-10 rounded-xl flex items-center justify-center text-lg"
-                style={{ background: `${app.color}22`, border: `1px solid ${app.color}44` }}
+                className="w-10 h-10 rounded-xl flex items-center justify-center"
+                style={{ background: `${app.color}22`, border: `1px solid ${app.color}44`, color: app.color }}
               >
-                {app.icon}
+                <app.icon size={20} />
               </span>
               <span className="text-[11px] text-center leading-tight">{app.name}</span>
             </button>

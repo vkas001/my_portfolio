@@ -1,4 +1,4 @@
-import { useEffect, useMemo, useRef, useState } from 'react';
+import { useEffect, useMemo, useRef, useState, type ReactNode } from 'react';
 import { useOS } from '@/context/OSContext';
 import { APP_REGISTRY } from '@/apps/registry';
 import { WIDGET_DEFS } from '@/components/widgets/registry';
@@ -10,29 +10,44 @@ interface Result {
   id: string;
   name: string;
   sub: string;
-  icon: string;
+  icon: ReactNode;
   run: () => void;
 }
 
 export default function Spotlight() {
   const {
-    spotlightOpen, setSpotlightOpen, launchApp, addWidget,
+    spotlightOpen, setSpotlightOpen, launchApp, addWidget, viewMode,
   } = useOS();
   const [query, setQuery] = useState('');
   const [sel, setSel] = useState(0);
   const inputRef = useRef<HTMLInputElement>(null);
+  // In Web view there are no windows/widgets: app results scroll to the
+  // matching section, settings + widget results are hidden.
+  const isWeb = viewMode === 'web';
 
   const results = useMemo<Result[]>(() => {
     const q = query.trim().toLowerCase();
-    const apps: Result[] = APP_REGISTRY.map((a) => ({
-      kind: 'app',
-      id: a.id,
-      name: a.name,
-      sub: a.description ?? 'Application',
-      icon: a.icon,
-      run: () => launchApp(a.id as AppId),
-    }));
-    const widgets: Result[] = WIDGET_DEFS.map((w) => ({
+    const apps: Result[] = APP_REGISTRY
+      .filter((a) => !isWeb || a.id !== 'settings')
+      .map((a) => ({
+        kind: 'app',
+        id: a.id,
+        name: a.name,
+        sub: a.description ?? 'Application',
+        icon: (
+          <span className="inline-flex" style={{ color: a.color }}>
+            <a.icon size={16} />
+          </span>
+        ),
+        run: () => {
+          if (isWeb) {
+            document.getElementById(`section-${a.id}`)?.scrollIntoView({ behavior: 'smooth' });
+          } else {
+            launchApp(a.id as AppId);
+          }
+        },
+      }));
+    const widgets: Result[] = isWeb ? [] : WIDGET_DEFS.map((w) => ({
       kind: 'widget',
       id: w.id,
       name: w.name,
@@ -43,7 +58,7 @@ export default function Spotlight() {
     const all = [...apps, ...widgets];
     if (!q) return all.slice(0, 6);
     return all.filter((r) => r.name.toLowerCase().includes(q) || r.sub.toLowerCase().includes(q)).slice(0, 8);
-  }, [query, launchApp, addWidget]);
+  }, [query, launchApp, addWidget, isWeb]);
 
   useEffect(() => {
     if (spotlightOpen) {
@@ -86,7 +101,7 @@ export default function Spotlight() {
             ref={inputRef}
             value={query}
             onChange={(e) => { setQuery(e.target.value); setSel(0); }}
-            placeholder="Search apps, widgets…"
+            placeholder={isWeb ? 'Search sections…' : 'Search apps, widgets…'}
             className="flex-1 bg-transparent border-0 !p-0 text-sm focus:!shadow-none"
             style={{ minHeight: 0 }}
           />

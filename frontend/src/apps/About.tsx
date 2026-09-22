@@ -1,16 +1,9 @@
-import { useEffect, useState } from 'react';
-import { fetchProfile } from '@/lib/api';
-import type { Profile } from '@shared/types';
+import { useProfile } from '@/lib/hooks';
+import UserAvatar from '@/components/ui/UserAvatar';
 import { MapPin, Download, Briefcase } from 'lucide-react';
 
 export default function About() {
-  const [profile, setProfile] = useState<Profile | null>(null);
-
-  useEffect(() => {
-    let alive = true;
-    fetchProfile().then((p) => { if (alive) setProfile(p); });
-    return () => { alive = false; };
-  }, []);
+  const profile = useProfile();
 
   if (!profile) {
     return (
@@ -25,12 +18,7 @@ export default function About() {
   return (
     <div className="max-w-2xl space-y-5">
       <header className="flex items-center gap-4">
-        <div
-          className="w-16 h-16 rounded-2xl flex items-center justify-center text-2xl font-bold shrink-0"
-          style={{ background: 'var(--accent-soft)', color: 'var(--accent)' }}
-        >
-          {profile.name.charAt(0)}
-        </div>
+        <UserAvatar profile={profile} className="w-16 h-16 text-2xl" />
         <div>
           <h1 className="text-xl font-bold">{profile.name}</h1>
           <p className="text-sm" style={{ color: 'var(--accent)' }}>{profile.title}</p>

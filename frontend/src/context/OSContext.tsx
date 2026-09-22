@@ -23,12 +23,30 @@ import { sound } from '@/lib/sound';
 import { themeService } from '@/lib/api/themeService';
 import { APP_REGISTRY } from '@/apps/registry';
 
+export type ViewMode = 'web' | 'os';
+
+const VIEW_MODE_KEY = 'portfolio.viewMode';
+
+/** Shell view preference, localStorage-only (not server-synced). Default: OS. */
+function loadViewMode(): ViewMode {
+  try {
+    const v = window.localStorage.getItem(VIEW_MODE_KEY);
+    return v === 'web' || v === 'os' ? v : 'os';
+  } catch {
+    return 'os';
+  }
+}
+
 export interface OSContextValue {
   // theme
   theme: ThemeState;
   setTheme: (patch: Partial<ThemeState>) => void;
   resetTheme: () => void;
   wallpaperLabel: string;
+
+  // shell view mode (web ⇄ os), default os
+  viewMode: ViewMode;
+  setViewMode: (mode: ViewMode) => void;
 
   // windows
   windows: WindowState[];
@@ -111,6 +129,7 @@ function assignTopZ(ws: WindowState[], id: string, unminimize: boolean): WindowS
 
 export function OSProvider({ children }: { children: ReactNode }) {
   const [theme, setThemeState] = useState<ThemeState>(() => loadTheme());
+  const [viewMode, setViewModeState] = useState<ViewMode>(() => loadViewMode());
   const [windows, setWindows] = useState<WindowState[]>([]);
   const [focusedId, setFocusedId] = useState<string | null>(null);
   const [widgetMetaMap, setWidgetMetaMap] = useState<Record<string, WidgetMeta>>({});
@@ -142,6 +161,11 @@ export function OSProvider({ children }: { children: ReactNode }) {
   useEffect(() => {
     setTaskbarVisible(theme.taskbarMode === 'always');
   }, [theme.taskbarMode]);
+  // Expose the shell view on <html> so CSS can key off it
+  // (e.g. document scroll is locked in OS view, free in Web view).
+  useEffect(() => {
+    document.documentElement.dataset.view = viewMode;
+  }, [viewMode]);
   // Boot: server wins over local when it exists (single-user, no auth scope).
   // Stale exact-legacy startupWindows are force-cleared once; any other
   // saved pick (including an intentional []) is preserved.
@@ -182,6 +206,15 @@ export function OSProvider({ children }: { children: ReactNode }) {
 
   const setTheme = useCallback((patch: Partial<ThemeState>) => {
     setThemeState((t) => ({ ...t, ...patch }));
+  }, []);
+
+  const setViewMode = useCallback((mode: ViewMode) => {
+    setViewModeState(mode);
+    try {
+      window.localStorage.setItem(VIEW_MODE_KEY, mode);
+    } catch {
+      // storage unavailable (private mode) — view mode just won't persist
+    }
   }, []);
 
   const resetTheme = useCallback(() => {
@@ -462,6 +495,8 @@ export function OSProvider({ children }: { children: ReactNode }) {
       setTheme,
       resetTheme,
       wallpaperLabel: getWallpaper(theme.wallpaper).label,
+      viewMode,
+      setViewMode,
       windows,
       focusedId,
       launchApp,
@@ -495,7 +530,7 @@ export function OSProvider({ children }: { children: ReactNode }) {
       markNotificationsRead,
     }),
     [
-      theme, setTheme, resetTheme, windows, focusedId, launchApp, closeWindow, closeAllWindows, focusWindow,
+      theme, setTheme, resetTheme, viewMode, setViewMode, windows, focusedId, launchApp, closeWindow, closeAllWindows, focusWindow,
       minimizeWindow, toggleMaximize, toggleFullScreen, updateWindowRect, widgetMetaMap, registerWidgets,
       widgetPlacements, addWidget, removeWidget, updateWidgetPlacement, moveWidgetVariant,
       widgetsOpen, spotlightOpen, startMenuOpen, taskbarVisible, contactModalOpen, notifications, pushNotification,

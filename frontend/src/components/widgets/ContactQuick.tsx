@@ -1,17 +1,11 @@
-import { useEffect, useState } from 'react';
-import { fetchProfile } from '@/lib/api';
+import { useProfile } from '@/lib/hooks';
 import { Mail, Github, Linkedin } from 'lucide-react';
 import { useOS } from '@/context/OSContext';
 
 export default function ContactQuick() {
-  const [email, setEmail] = useState('');
+  const profile = useProfile();
+  const email = profile?.email ?? '';
   const { launchApp } = useOS();
-
-  useEffect(() => {
-    let alive = true;
-    fetchProfile().then((p) => { if (alive) setEmail(p.email); });
-    return () => { alive = false; };
-  }, []);
 
   return (
     <div className="flex flex-col gap-2 h-full justify-center">

@@ -30,8 +30,8 @@ const TABS = [
 type TabId = (typeof TABS)[number]['id'];
 
 const MODE_OPTIONS: { value: ThemeMode; label: string }[] = [
-  { value: 'light', label: '☀️ Light' },
-  { value: 'dark', label: '🌙 Dark' },
+  { value: 'light', label: 'Light' },
+  { value: 'dark', label: 'Dark' },
 ];
 
 const GLASS_OPTIONS = (Object.keys(GLASS_LEVELS) as GlassLevel[]).map((v) => ({
@@ -52,8 +52,8 @@ const TASKBAR_MODE_OPTIONS: { value: TaskbarMode; label: string }[] = [
 ];
 
 const TASKBAR_STYLE_OPTIONS: { value: TaskbarStyle; label: string }[] = [
-  { value: 'windows', label: '🪟 Windows' },
-  { value: 'macos', label: ' macOS' },
+  { value: 'windows', label: 'Windows' },
+  { value: 'macos', label: 'macOS' },
 ];
 
 const CLOCK_OPTIONS: { value: ClockFormat; label: string }[] = [
@@ -234,15 +234,15 @@ function PersonalizationTab({ isDark, palette, theme, setTheme }: {
 
       <SectionCard title="Glass & effects" icon={<Sparkles size={13} />}>
         <div className="grid grid-cols-12 gap-4">
-          <div className="col-span-12 @2xl:col-span-4">
+          <div className="col-span-12">
             <SubLabel>Glass</SubLabel>
             <SegmentedControl value={theme.glass} options={GLASS_OPTIONS} onChange={(v) => setTheme({ glass: v })} />
           </div>
-          <div className="col-span-12 @2xl:col-span-4">
+          <div className="col-span-12">
             <SubLabel>Blur</SubLabel>
             <SegmentedControl value={theme.blur} options={BLUR_OPTIONS} onChange={(v) => setTheme({ blur: v })} />
           </div>
-          <div className="col-span-12 @2xl:col-span-4">
+          <div className="col-span-12">
             <SubLabel>Corners</SubLabel>
             <SegmentedControl value={theme.radius} options={RADIUS_OPTIONS} onChange={(v) => setTheme({ radius: v })} />
           </div>
@@ -303,11 +303,11 @@ function InterfaceTab({ theme, setTheme }: { theme: ThemeState; setTheme: SetThe
     <>
     <SectionCard title="Interface" icon={<Type size={13} />}>
       <div className="grid grid-cols-12 gap-4 mb-4">
-        <div className="col-span-12 @md:col-span-6">
+        <div className="col-span-12">
           <SubLabel>Density</SubLabel>
           <SegmentedControl value={theme.density} options={DENSITY_OPTIONS} onChange={(v) => setTheme({ density: v })} />
         </div>
-        <div className="col-span-12 @md:col-span-6">
+        <div className="col-span-12">
           <SubLabel icon={<LayoutGrid size={12} />}>Desktop grid</SubLabel>
           <SegmentedControl
             value={theme.gridSize}
@@ -421,7 +421,9 @@ function TaskbarTab({ theme, setTheme }: { theme: ThemeState; setTheme: SetTheme
                   className="col-span-12 @md:col-span-6 flex items-center gap-2 p-2 rounded-[var(--radius-sm)] border"
                   style={{ background: 'var(--accent-soft)', borderColor: 'var(--border)' }}
                 >
-                  <span className="text-base leading-none shrink-0">{app?.icon ?? '·'}</span>
+                  <span className="leading-none shrink-0 inline-flex" style={{ color: app?.color }}>
+                    {app ? <app.icon size={16} /> : '·'}
+                  </span>
                   <span className="text-[12px] font-bold flex-1 min-w-0 truncate" style={{ color: 'var(--text-hi)' }}>
                     {app?.name ?? id}
                   </span>
@@ -466,7 +468,9 @@ function TaskbarTab({ theme, setTheme }: { theme: ThemeState; setTheme: SetTheme
                   className="col-span-12 @md:col-span-6 flex items-center gap-2 p-2 rounded-[var(--radius-sm)] border transition-all cursor-pointer text-left"
                   style={{ background: 'var(--accent-soft)', borderColor: 'var(--border)' }}
                 >
-                  <span className="text-base leading-none shrink-0">{a.icon}</span>
+                  <span className="leading-none shrink-0 inline-flex" style={{ color: a.color }}>
+                    <a.icon size={16} />
+                  </span>
                   <span className="text-[12px] font-bold flex-1 min-w-0 truncate" style={{ color: 'var(--text-hi)' }}>
                     {a.name}
                   </span>

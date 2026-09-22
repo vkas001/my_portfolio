@@ -2,6 +2,10 @@ import type { ApiError } from '@shared/types';
 
 const BASE = import.meta.env.VITE_API_URL ?? '/api';
 
+/** Fail fast so local fallbacks kick in when the backend is unreachable
+ *  (down, wrong LAN IP, blackholed) instead of hanging on skeletons. */
+const REQUEST_TIMEOUT_MS = 8000;
+
 export class HttpError extends Error {
   constructor(
     public status: number,
@@ -17,6 +21,7 @@ async function request<T>(path: string, init?: RequestInit): Promise<T> {
   try {
     res = await fetch(`${BASE}${path}`, {
       headers: { 'Content-Type': 'application/json', ...init?.headers },
+      signal: AbortSignal.timeout(REQUEST_TIMEOUT_MS),
       ...init,
     });
   } catch {
