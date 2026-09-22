@@ -6,6 +6,7 @@ import { Moon, Sun, RotateCcw, Search, Settings, Undo2, X } from 'lucide-react';
 export default function StartMenu() {
   const {
     startMenuOpen, setStartMenuOpen, launchApp, closeAllWindows, theme, setTheme, resetTheme,
+    windows,
   } = useOS();
   const ref = useRef<HTMLDivElement>(null);
   const inputRef = useRef<HTMLInputElement>(null);
@@ -47,8 +48,21 @@ export default function StartMenu() {
     setStartMenuOpen(false);
   };
 
+  // ibiz_v2 parity: the launcher sits above the bar in its own style —
+  // bottom-left over a Windows bar, centered over the macOS dock.
+  const macos = theme.taskbarStyle === 'macos';
+
+  // Above the fullscreen tab when one is open (matches the floating bar).
+  const menuLayer = windows.some((w) => w.isFullScreen && !w.minimized) ? 'z-[100]' : 'z-[80]';
+
   return (
-    <div ref={ref} className="menu-surface left-3 bottom-16 z-[80] w-80 max-w-[calc(100vw-24px)] p-3 slide-up">
+    <div
+      ref={ref}
+      className={`menu-surface ${menuLayer} w-80 max-w-[calc(100vw-24px)] p-3 ${
+        // slide-up animates transform, which would fight -translate-x-1/2
+        macos ? 'left-1/2 -translate-x-1/2 bottom-24 fade-in' : 'left-3 bottom-16 slide-up'
+      }`}
+    >
       {/* Search — ibiz_v2 StartMenu parity */}
       <div className="relative mb-2">
         <Search size={14} className="absolute left-3 top-1/2 -translate-y-1/2" style={{ color: 'var(--text-low)' }} />

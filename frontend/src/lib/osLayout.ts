@@ -8,6 +8,8 @@ import type { ThemeState } from '@/theme';
 export const TOPBAR_H = 40;
 export const TASKBAR_H = 56;
 export const TASKBAR_AUTOHIDE_H = 14;
+/** Breathing room between a maximized window and the bar — ibiz_v2 BOTTOM_GAP. */
+export const BOTTOM_GAP = 16;
 /** Bottom padding on the macOS centering wrapper (pb-5), outside the dock. */
 export const MACOS_DOCK_PAD = 20;
 /** Fallback dock height before it has painted (footer padding + content). */
@@ -20,8 +22,9 @@ export interface WorkspaceInsets {
 
 /**
  * Space to reserve at the bottom, measured from the DOM like ibiz_v2
- * (taskbarBottomInset over [data-os-taskbar]) so maximized windows sit
- * exactly above the bar in every style. Falls back to constants pre-paint.
+ * (taskbarBottomInset over [data-os-taskbar]) plus its BOTTOM_GAP, so a
+ * maximized window sits exactly above the bar in every style — never
+ * touching or overlapping the dock. Falls back to constants pre-paint.
  */
 export function taskbarBottomInset(
   theme: Pick<ThemeState, 'taskbarMode' | 'taskbarStyle'>,
@@ -33,7 +36,7 @@ export function taskbarBottomInset(
   }
   const pad = theme.taskbarStyle === 'macos' ? MACOS_DOCK_PAD : 0;
   const height = measured > 0 ? Math.round(measured) : theme.taskbarStyle === 'macos' ? MACOS_DOCK_FALLBACK_H : TASKBAR_H;
-  return height + pad;
+  return height + pad + BOTTOM_GAP;
 }
 
 export function workspaceInsets(theme: Pick<ThemeState, 'showTopBar' | 'taskbarMode' | 'taskbarStyle'>): WorkspaceInsets {

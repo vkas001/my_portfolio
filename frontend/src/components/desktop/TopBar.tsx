@@ -5,19 +5,11 @@ import { Bell, BellOff, Eye, EyeOff, Plus, X } from 'lucide-react';
 
 export default function TopBar() {
   const { notifications, dismissNotification, markNotificationsRead, theme, addWidget, widgetsOpen, setWidgetsOpen } = useOS();
-  const [now, setNow] = useState(new Date());
-  const hour12 = theme.clockFormat === '12h';
-  const showSeconds = theme.showSeconds;
   const [bellOpen, setBellOpen] = useState(false);
   const [pickerOpen, setPickerOpen] = useState(false);
   const bellRef = useRef<HTMLDivElement>(null);
   const pickerRef = useRef<HTMLDivElement>(null);
   const unread = notifications.filter((n) => !n.read).length;
-
-  useEffect(() => {
-    const t = setInterval(() => setNow(new Date()), showSeconds ? 1000 : 10_000);
-    return () => clearInterval(t);
-  }, [showSeconds]);
 
   useEffect(() => {
     if (!bellOpen && !pickerOpen) return;
@@ -42,16 +34,7 @@ export default function TopBar() {
         </span>
       </div>
 
-      {/* Center — date & time, absolutely centered */}
-      <div className="absolute left-1/2 top-1/2 -translate-x-1/2 -translate-y-1/2 pointer-events-none">
-        <span className="text-xs tabular-nums whitespace-nowrap" style={{ color: 'var(--text-mid)' }}>
-          {theme.dateFormat === 'long'
-            ? now.toLocaleDateString([], { weekday: 'long', year: 'numeric', month: 'long', day: 'numeric' })
-            : now.toLocaleDateString([], { weekday: 'short', month: 'short', day: 'numeric' })}{' '}
-          {now.toLocaleTimeString([], { hour: '2-digit', minute: '2-digit', ...(showSeconds ? { second: '2-digit' } : {}), hour12 })}
-        </span>
-      </div>
-
+      {/* Center — kept clear; the clock lives in the taskbar tray */}
       <div className="flex-1" />
 
       {/* Right — widgets visibility, add widget, notifications */}

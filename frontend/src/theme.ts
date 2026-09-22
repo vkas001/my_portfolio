@@ -356,6 +356,22 @@ export function applyTheme(theme: ThemeState): void {
   // Font
   set('--font-ui', font.stack);
 
+  // ibiz_v2 surface/text/border scale (themeToVars parity) so ibiz-sourced
+  // markup (taskbar, tray, menus) resolves its tokens verbatim.
+  const surfaceRgb = isDark ? '51 65 85' : '255 255 255';
+  for (const a of [10, 20, 25, 30, 40, 50, 60, 70, 75, 80, 85, 90]) {
+    set(`--surface-${a}`, `rgb(${surfaceRgb} / ${a / 100})`);
+  }
+  const borderScale = isDark ? 0.5 : 1;
+  for (const a of [20, 30, 40, 50, 60]) {
+    set(`--border-${a}`, `rgb(255 255 255 / ${(a / 100) * borderScale})`);
+  }
+  set('--text-primary', textHi);
+  set('--text-secondary', textMid);
+  set('--text-muted', textLow);
+  set('--control-radius', radius);
+  set('--glass-radius', radius);
+
   // Density / grid / window chrome (ibiz_v2 DENSITY_SPACING, GRID_SIZES, windowOpacity)
   set('--spacing', DENSITY_SPACING[theme.density] ?? DENSITY_SPACING.normal);
   set('--grid-size', String(theme.gridSize ?? 24));

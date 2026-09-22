@@ -27,6 +27,7 @@ export interface WindowState {
   z: number;
   minimized: boolean;
   maximized: boolean;
+  isFullScreen: boolean;        // ibiz_v2 parity: covers viewport, hides taskbar
   prevRect?: { x: number; y: number; w: number; h: number };
 }
 

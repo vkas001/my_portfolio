@@ -326,6 +326,23 @@ button { font-family: inherit; }
   border: 1px solid rgba(var(--accent-rgb), .25);
 }
 
+/* ═══ ibiz_v2 compat (taskbar/tray verbatim markup) ═════════════════════════ */
+.radius-glass {
+  border-radius: var(--glass-radius, 14px);
+}
+
+.animate-in {
+  animation-duration: 0.2s;
+  animation-timing-function: ease-out;
+  animation-fill-mode: both;
+}
+
+@keyframes slide-in-from-bottom-4 {
+  from { opacity: 0; transform: translateY(8px); }
+  to   { opacity: 1; transform: translateY(0); }
+}
+.slide-in-from-bottom-4 { animation-name: slide-in-from-bottom-4; }
+
 .btn-accent {
   display: inline-flex;
   align-items: center;

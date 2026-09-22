@@ -39,6 +39,7 @@ export interface OSContextValue {
   focusWindow: (id: string) => void;
   minimizeWindow: (id: string) => void;
   toggleMaximize: (id: string) => void;
+  toggleFullScreen: (id: string) => void;
   updateWindowRect: (id: string, rect: Partial<Pick<WindowState, 'x' | 'y' | 'w' | 'h'>>) => void;
 
   // widgets
@@ -88,6 +89,26 @@ export function getWorkspaceBounds(
 
 let instanceCounter = 0;
 
+// Window stacking (ibiz_v2 displayZ parity): tabs stack above widgets (30)
+// and below the taskbar/overlays (80).
+const Z_BASE = 41;
+const Z_MAX = 79;
+
+/** Return windows with `id` on top (`unminimize`). Order is compacted oldest-first
+ * on every call, so z stays in [Z_BASE, Z_MAX] forever and can never creep
+ * over the taskbar layer no matter how often windows are focused/launched. */
+function assignTopZ(ws: WindowState[], id: string, unminimize: boolean): WindowState[] {
+  const others = [...ws].sort((a, b) => a.z - b.z).filter((w) => w.id !== id);
+  const mapped = new Map<string, number>();
+  others.forEach((w, i) => mapped.set(w.id, Z_BASE + Math.min(i, Z_MAX - Z_BASE - 1)));
+  const top = Z_BASE + Math.min(others.length, Z_MAX - Z_BASE);
+  return ws.map((w) =>
+    w.id === id
+      ? { ...w, z: top, ...(unminimize ? { minimized: false } : {}) }
+      : { ...w, z: mapped.get(w.id) ?? w.z },
+  );
+}
+
 export function OSProvider({ children }: { children: ReactNode }) {
   const [theme, setThemeState] = useState<ThemeState>(() => loadTheme());
   const [windows, setWindows] = useState<WindowState[]>([]);
@@ -100,9 +121,6 @@ export function OSProvider({ children }: { children: ReactNode }) {
   const [taskbarVisible, setTaskbarVisible] = useState(true);
   const [contactModalOpen, setContactModalOpen] = useState(false);
   const [notifications, setNotifications] = useState<NotificationItem[]>([]);
-  // Window z starts above widgets (30) and the topbar (40), below the
-  // taskbar/overlays (80) — ibiz_v2 window layer parity (z 41-52).
-  const zCounter = useRef(41);
   const startedRef = useRef(false);
   const hydratedRef = useRef(false);
   const saveTimer = useRef<number | undefined>(undefined);
@@ -172,10 +190,11 @@ export function OSProvider({ children }: { children: ReactNode }) {
   }, []);
 
   // ─── Window management ────────────────────────────────────────────────────
+  // Window z lives in [Z_BASE, Z_TASKBAR) so tabs — maximized or not — can
+  // never cover the taskbar (z-80). ibiz_v2 parity: displayZ = 40 + min(z,12).
+  // When the range fills, z values are renormalized oldest-first.
   const focusWindow = useCallback((id: string) => {
-    zCounter.current += 1;
-    const z = zCounter.current;
-    setWindows((ws) => ws.map((w) => (w.id === id ? { ...w, z, minimized: false } : w)));
+    setWindows((ws) => assignTopZ(ws, id, false));
     setFocusedId(id);
   }, []);
 
@@ -199,7 +218,6 @@ export function OSProvider({ children }: { children: ReactNode }) {
       const offset = (windows.length % 6) * 28;
       instanceCounter += 1;
       const id = `${appId}#${instanceCounter}`;
-      zCounter.current += 1;
       const fitted = fitRectInBounds(
         {
           x: Math.max(12, (bounds.width - w) / 2 - 60 + offset),
@@ -211,17 +229,13 @@ export function OSProvider({ children }: { children: ReactNode }) {
         { w: minW, h: minH },
       );
 
-      setWindows((ws) => [
-        ...ws,
-        {
+      setWindows((ws) =>
+        assignTopZ(
+          [...ws, { id, appId, ...fitted, z: Z_BASE, minimized: false, maximized: false, isFullScreen: false }],
           id,
-          appId,
-          ...fitted,
-          z: zCounter.current,
-          minimized: false,
-          maximized: false,
-        },
-      ]);
+          false,
+        ),
+      );
       setFocusedId(id);
       sound.open();
     },
@@ -265,11 +279,33 @@ export function OSProvider({ children }: { children: ReactNode }) {
     focusWindow(id);
   }, [focusWindow]);
 
+  // ibiz_v2 toggleFullScreen parity: the tab covers the entire viewport
+  // (above topbar and taskbar) while the taskbar auto-hides. prevRect is
+  // shared with maximize: maximized windows keep their restore geometry in
+  // x/y/w/h, so entering fullscreen from maximized preserves it.
+  const toggleFullScreen = useCallback((id: string) => {
+    setWindows((ws) =>
+      ws.map((w) => {
+        if (w.id !== id) return w;
+        if (w.isFullScreen) {
+          const p = w.prevRect ?? { x: 80, y: 60, w: 900, h: 600 };
+          return { ...w, isFullScreen: false, ...p, prevRect: undefined };
+        }
+        return {
+          ...w,
+          isFullScreen: true,
+          prevRect: { x: w.x, y: w.y, w: w.w, h: w.h },
+        };
+      }),
+    );
+    focusWindow(id);
+  }, [focusWindow]);
+
   const updateWindowRect = useCallback(
     (id: string, rect: Partial<Pick<WindowState, 'x' | 'y' | 'w' | 'h'>>) => {
       setWindows((ws) =>
         ws.map((w) => {
-          if (w.id !== id || w.maximized) return w;
+          if (w.id !== id || w.maximized || w.isFullScreen) return w;
           const next = { ...w, ...rect };
           const app = APP_REGISTRY.find((a) => a.id === w.appId);
           // Safety net: no caller can push a window outside the workspace.
@@ -390,7 +426,7 @@ export function OSProvider({ children }: { children: ReactNode }) {
       lastBoundsRef.current = b;
       setWindows((ws) =>
         ws.map((w) => {
-          if (w.maximized) return w;
+          if (w.maximized || w.isFullScreen) return w;
           const app = APP_REGISTRY.find((a) => a.id === w.appId);
           return {
             ...w,
@@ -434,6 +470,7 @@ export function OSProvider({ children }: { children: ReactNode }) {
       focusWindow,
       minimizeWindow,
       toggleMaximize,
+      toggleFullScreen,
       updateWindowRect,
       widgetMeta: widgetMetaMap,
       registerWidgets,
@@ -459,7 +496,7 @@ export function OSProvider({ children }: { children: ReactNode }) {
     }),
     [
       theme, setTheme, resetTheme, windows, focusedId, launchApp, closeWindow, closeAllWindows, focusWindow,
-      minimizeWindow, toggleMaximize, updateWindowRect, widgetMetaMap, registerWidgets,
+      minimizeWindow, toggleMaximize, toggleFullScreen, updateWindowRect, widgetMetaMap, registerWidgets,
       widgetPlacements, addWidget, removeWidget, updateWidgetPlacement, moveWidgetVariant,
       widgetsOpen, spotlightOpen, startMenuOpen, taskbarVisible, contactModalOpen, notifications, pushNotification,
       dismissNotification, markNotificationsRead,

@@ -2,7 +2,7 @@ import { useCallback, useRef, type ReactNode } from 'react';
 import { useOS, getWorkspaceBounds } from '@/context/OSContext';
 import { APP_REGISTRY } from '@/apps/registry';
 import type { WindowState } from '@/types';
-import { Minus, Square, X } from 'lucide-react';
+import { Expand, Minus, Shrink, Square, X } from 'lucide-react';
 
 interface Props {
   win: WindowState;
@@ -10,7 +10,7 @@ interface Props {
 }
 
 export default function WindowFrame({ win, children }: Props) {
-  const { theme, focusedId, focusWindow, closeWindow, minimizeWindow, toggleMaximize, updateWindowRect } = useOS();
+  const { theme, focusedId, focusWindow, closeWindow, minimizeWindow, toggleMaximize, toggleFullScreen, updateWindowRect } = useOS();
   const app = APP_REGISTRY.find((a) => a.id === win.appId);
   const focused = focusedId === win.id;
   const frameRef = useRef<HTMLDivElement>(null);
@@ -25,6 +25,7 @@ export default function WindowFrame({ win, children }: Props) {
   const startDrag = useCallback(
     (mode: 'move' | 'resize') => (e: React.PointerEvent) => {
       if (e.button !== 0) return;
+      if (win.isFullScreen) return;
       if (win.maximized && mode === 'move') return;
       focusWindow(win.id);
       dragState.current = { mode, sx: e.clientX, sy: e.clientY, ox: win.x, oy: win.y, ow: win.w, oh: win.h };
@@ -67,14 +68,28 @@ export default function WindowFrame({ win, children }: Props) {
     [win, app, theme, focusWindow, updateWindowRect],
   );
 
-  const style: React.CSSProperties = {
-    left: rect.x,
-    top: rect.y,
-    width: rect.w,
-    height: rect.h,
-    zIndex: win.z,
-    display: win.minimized ? 'none' : undefined,
-  };
+  // ibiz_v2 fullscreen parity: covers the entire viewport, above the top
+  // bar and taskbar, with flat edges and no shadow.
+  const style: React.CSSProperties = win.isFullScreen
+    ? {
+        position: 'fixed',
+        top: 0,
+        left: 0,
+        width: '100vw',
+        height: '100vh',
+        zIndex: 90,
+        borderRadius: 0,
+        boxShadow: 'none',
+        display: win.minimized ? 'none' : undefined,
+      }
+    : {
+        left: rect.x,
+        top: rect.y,
+        width: rect.w,
+        height: rect.h,
+        zIndex: win.z,
+        display: win.minimized ? 'none' : undefined,
+      };
 
   return (
     <div
@@ -97,6 +112,16 @@ export default function WindowFrame({ win, children }: Props) {
           </span>
         </div>
         <div className="flex items-center gap-1.5">
+          <button
+            className="icon-btn w-5 h-5"
+            aria-label={win.isFullScreen ? 'Exit full screen' : 'Full screen'}
+            title={win.isFullScreen ? 'Exit full screen' : 'Full screen'}
+            onClick={(e) => { e.stopPropagation(); toggleFullScreen(win.id); }}
+            onPointerDown={(e) => e.stopPropagation()}
+            style={{ color: 'var(--text-mid)' }}
+          >
+            {win.isFullScreen ? <Shrink size={11} /> : <Expand size={11} />}
+          </button>
           <button className="tl-btn tl-min" aria-label="Minimize" onClick={(e) => { e.stopPropagation(); minimizeWindow(win.id); }} onPointerDown={(e) => e.stopPropagation()} />
           <button className="tl-btn tl-max" aria-label="Maximize" onClick={(e) => { e.stopPropagation(); toggleMaximize(win.id); }} onPointerDown={(e) => e.stopPropagation()} />
           <button className="tl-btn tl-close" aria-label="Close" onClick={(e) => { e.stopPropagation(); closeWindow(win.id); }} onPointerDown={(e) => e.stopPropagation()} />
@@ -105,7 +130,7 @@ export default function WindowFrame({ win, children }: Props) {
 
       <div className="window-body">{children}</div>
 
-      {app?.resizable !== false && !win.maximized && (
+      {app?.resizable !== false && !win.maximized && !win.isFullScreen && (
         <>
           {/* corner + edge resize handles */}
           <div onPointerDown={startDrag('resize')} className="absolute right-0 bottom-0 w-4 h-4 cursor-nwse-resize" />
