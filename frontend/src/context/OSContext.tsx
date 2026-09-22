@@ -17,7 +17,7 @@ import {
   saveTheme,
   type ThemeState,
 } from '@/theme';
-import { fitRectInBounds, getWorkspaceBoundsFor } from '@/lib/osLayout';
+import { fitRectInBounds, fitWidgetRect, getWorkspaceBoundsFor, nextWidgetSlot } from '@/lib/osLayout';
 import type { AppDef, AppId, NotificationItem, WindowState, WidgetMeta, WidgetPlacement, WidgetVariant } from '@/types';
 import { sound } from '@/lib/sound';
 import { themeService } from '@/lib/api/themeService';
@@ -376,14 +376,10 @@ export function OSProvider({ children }: { children: ReactNode }) {
       const size = meta.variants[variant] ?? { w: 300, h: 200 };
       const bounds = getWorkspaceBounds(theme);
       const instance = `${id}#${Date.now().toString(36)}${Math.floor(Math.random() * 1e4).toString(36)}`;
-      // Simple cascade placement, fitted so new widgets never spawn cut off.
-      const cascade = {
-        x: Math.min(bounds.width - size.w, 24 + (widgetPlacements.length % 4) * 40),
-        y: Math.min(bounds.height - size.h, 24 + (widgetPlacements.length % 4) * 40),
-        w: size.w,
-        h: size.h,
-      };
-      const fitted = fitRectInBounds(cascade, bounds);
+      // Spawn top-right, stacking down and wrapping left — fitted so new
+      // widgets never spawn inside the header, cut off, or overlapping.
+      const slot = nextWidgetSlot(widgetPlacements, size, bounds);
+      const fitted = fitWidgetRect({ ...slot, w: size.w, h: size.h }, bounds);
       setWidgetPlacements((ps) => [...ps, { id, instance, ...fitted, variant }]);
       sound.click();
     },
@@ -396,9 +392,9 @@ export function OSProvider({ children }: { children: ReactNode }) {
   }, []);
 
   const updateWidgetPlacement = useCallback((instance: string, patch: Partial<WidgetPlacement>) => {
-    // Safety net: placements can never leave the workspace.
+    // Safety net: placements can never leave the workspace (nor enter the header).
     setWidgetPlacements((ps) =>
-      ps.map((p) => (p.instance === instance ? { ...p, ...fitRectInBounds({ ...p, ...patch }, lastBoundsRef.current) } : p)),
+      ps.map((p) => (p.instance === instance ? { ...p, ...fitWidgetRect({ ...p, ...patch }, lastBoundsRef.current) } : p)),
     );
   }, []);
 
@@ -409,7 +405,10 @@ export function OSProvider({ children }: { children: ReactNode }) {
           if (p.instance !== instance) return p;
           const meta = widgetMetaMap[p.id];
           const size = meta?.variants[variant] ?? { w: p.w, h: p.h };
-          return { ...p, variant, w: size.w, h: size.h };
+          // Variant growth is top-left anchored: clamp so it can't spill
+          // under the taskbar (or inside the header on tiny viewports).
+          const fitted = fitWidgetRect({ ...p, w: size.w, h: size.h }, lastBoundsRef.current);
+          return { ...p, variant, w: fitted.w, h: fitted.h, x: fitted.x, y: fitted.y };
         }),
       );
     },
@@ -467,7 +466,7 @@ export function OSProvider({ children }: { children: ReactNode }) {
           };
         }),
       );
-      setWidgetPlacements((ps) => ps.map((p) => ({ ...p, ...fitRectInBounds(p, b) })));
+      setWidgetPlacements((ps) => ps.map((p) => ({ ...p, ...fitWidgetRect(p, b) })));
     };
     reflow();
     // The taskbar is DOM-measured: re-run after paint so a style/mode

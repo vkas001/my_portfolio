@@ -2,6 +2,7 @@ import { useEffect, useRef, useState, type ReactNode } from 'react';
 import { useOS, getWorkspaceBounds } from '@/context/OSContext';
 import type { WidgetPlacement, WidgetVariant } from '@/types';
 import { snapToGrid } from '@/lib/gridUtils';
+import { fitWidgetRect } from '@/lib/osLayout';
 import { X, Shrink, Expand } from 'lucide-react';
 
 interface Props {
@@ -24,8 +25,16 @@ export default function WidgetCard({ placement, children }: Props) {
 
   const startDrag = (e: React.PointerEvent<HTMLDivElement>) => {
     if (e.button !== 0) return;
-    // Header buttons handle their own clicks — don't start a drag from them.
-    if ((e.target as HTMLElement).closest('button')) return;
+    // Interactive elements keep their own behavior — drag only starts from
+    // empty space (buttons, links, form fields, editable regions, the resize
+    // handle, or anything marked data-no-drag).
+    if (
+      (e.target as HTMLElement).closest(
+        'button, a, input, select, textarea, [contenteditable="true"], [data-no-drag], .widget-resize-handle',
+      )
+    ) {
+      return;
+    }
     e.preventDefault();
     setDragging(true);
     e.currentTarget.setPointerCapture(e.pointerId);
@@ -35,10 +44,9 @@ export default function WidgetCard({ placement, children }: Props) {
 
     const onMove = (ev: PointerEvent) => {
       const bounds = getWorkspaceBounds(theme);
-      updateWidgetPlacement(placement.instance, {
-        x: Math.min(Math.max(0, ox + ev.clientX - sx), Math.max(0, bounds.width - w)),
-        y: Math.min(Math.max(0, oy + ev.clientY - sy), Math.max(0, bounds.height - h)),
-      });
+      // Viewport-relative clamp: never inside the header, never past the taskbar.
+      const fitted = fitWidgetRect({ x: ox + ev.clientX - sx, y: oy + ev.clientY - sy, w, h }, bounds);
+      updateWidgetPlacement(placement.instance, { x: fitted.x, y: fitted.y });
     };
     const onUp = () => {
       // Snap the *live* position, not the stale render-time one.
@@ -66,8 +74,10 @@ export default function WidgetCard({ placement, children }: Props) {
     const onMove = (ev: PointerEvent) => {
       const bounds = getWorkspaceBounds(theme);
       // Max yields to the minimums on tiny viewports so size never inverts.
+      // Widget coords are viewport-relative: the usable height below y runs
+      // to the taskbar (workspace height + top inset), not bounds.height.
       const maxW = Math.max(160, bounds.width - x);
-      const maxH = Math.max(110, bounds.height - y);
+      const maxH = Math.max(110, bounds.height + bounds.top - y);
       updateWidgetPlacement(placement.instance, {
         w: Math.min(Math.max(160, ow + ev.clientX - sx), maxW),
         h: Math.min(Math.max(110, oh + ev.clientY - sy), maxH),
@@ -102,14 +112,20 @@ export default function WidgetCard({ placement, children }: Props) {
 
   return (
     <div
-      className={`widget-card ${dragging ? 'dragging' : ''}`}
-      style={{ left: placement.x, top: placement.y, width: placement.w, height: placement.h, zIndex: 30 }}
+      className={`widget-card cursor-grab active:cursor-grabbing ${dragging ? 'dragging' : ''}`}
+      style={{
+        left: placement.x,
+        top: placement.y,
+        width: placement.w,
+        height: placement.h,
+        zIndex: 30,
+        touchAction: 'none',
+      }}
+      onPointerDown={startDrag}
     >
-      {/* header — the only drag handle */}
+      {/* header — title + variant/remove controls (double-click cycles variant) */}
       <div
-        className="flex items-center gap-1 px-2 h-7 cursor-grab active:cursor-grabbing select-none"
-        style={{ touchAction: 'none' }}
-        onPointerDown={startDrag}
+        className="flex items-center gap-1 px-2 h-7 select-none"
         onDoubleClick={cycleVariant}
       >
         <span className="text-[10px] font-medium truncate flex-1" style={{ color: 'var(--text-mid)' }}>
