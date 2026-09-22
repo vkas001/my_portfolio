@@ -44,10 +44,16 @@ export default function About() {
         <p className="text-sm leading-relaxed" style={{ color: 'var(--text-mid)' }}>{profile.bio}</p>
       </section>
 
-      <section className="grid grid-cols-3 gap-3">
-        <Highlight icon={<Briefcase size={13} />} label="Open to" value="New roles" />
-        <Highlight icon={<Briefcase size={13} />} label="Focus" value="Full-stack" />
-        <Highlight icon={<Briefcase size={13} />} label="Timezone" value={profile.location} />
+      <section className="grid grid-cols-12 gap-3">
+        <div className="col-span-12 @md:col-span-6 @2xl:col-span-4">
+          <Highlight icon={<Briefcase size={13} />} label="Open to" value="New roles" />
+        </div>
+        <div className="col-span-12 @md:col-span-6 @2xl:col-span-4">
+          <Highlight icon={<Briefcase size={13} />} label="Focus" value="Full-stack" />
+        </div>
+        <div className="col-span-12 @md:col-span-6 @2xl:col-span-4">
+          <Highlight icon={<Briefcase size={13} />} label="Timezone" value={profile.location} />
+        </div>
       </section>
 
       <section className="flex flex-wrap gap-2">

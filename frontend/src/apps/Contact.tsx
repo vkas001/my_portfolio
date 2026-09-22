@@ -72,9 +72,9 @@ export default function Contact() {
         </div>
       ) : (
         <form onSubmit={submit} className="space-y-3">
-          <div className="grid grid-cols-2 gap-3">
-            <input required placeholder="Your name" value={form.name} onChange={(e) => setForm({ ...form, name: e.target.value })} className="w-full text-sm" />
-            <input required type="email" placeholder="Email" value={form.email} onChange={(e) => setForm({ ...form, email: e.target.value })} className="w-full text-sm" />
+          <div className="grid grid-cols-12 gap-3">
+            <input required placeholder="Your name" value={form.name} onChange={(e) => setForm({ ...form, name: e.target.value })} className="col-span-12 @md:col-span-6 w-full text-sm" />
+            <input required type="email" placeholder="Email" value={form.email} onChange={(e) => setForm({ ...form, email: e.target.value })} className="col-span-12 @md:col-span-6 w-full text-sm" />
           </div>
           <input required placeholder="Subject" value={form.subject} onChange={(e) => setForm({ ...form, subject: e.target.value })} className="w-full text-sm" />
           <textarea required rows={5} placeholder="Tell me about your project…" value={form.message} onChange={(e) => setForm({ ...form, message: e.target.value })} className="w-full text-sm resize-none" />

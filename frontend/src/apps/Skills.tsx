@@ -63,9 +63,9 @@ export default function Skills() {
         ))}
       </div>
 
-      <div className="grid grid-cols-2 gap-x-6 gap-y-3">
+      <div className="grid grid-cols-12 gap-x-6 gap-y-3">
         {filtered.map((s) => (
-          <div key={s.id} className="group">
+          <div key={s.id} className="group col-span-12 @md:col-span-6">
             <div className="flex items-baseline justify-between mb-1">
               <span className="text-xs font-medium">{s.name}</span>
               <span className="text-[10px] tabular-nums" style={{ color: 'var(--text-low)' }}>

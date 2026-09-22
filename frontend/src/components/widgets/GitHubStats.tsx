@@ -32,7 +32,7 @@ export default function GitHubStatsWidget() {
 
   return (
     <div className="flex flex-col h-full gap-2">
-      <div className="grid grid-cols-2 gap-1.5">
+      <div className="grid grid-cols-1 @min-[240px]:grid-cols-2 gap-1.5">
         <Stat icon={<BookOpen size={11} />} label="Repos" value={stats.publicRepos} />
         <Stat icon={<Star size={11} />} label="Stars" value={stats.starsEarned} />
         <Stat icon={<GitFork size={11} />} label="Forks" value={Math.round(stats.starsEarned / 4)} />

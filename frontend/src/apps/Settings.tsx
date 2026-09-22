@@ -173,7 +173,7 @@ function PersonalizationTab({ isDark, palette, theme, setTheme }: {
         <p className="text-[11px] mb-2.5" style={{ color: 'var(--text-low)' }}>
           {isDark ? 'Light tints, tuned for dark glass' : 'Deep tones, tuned for light surfaces'}
         </p>
-        <div className="grid grid-cols-2 sm:grid-cols-3 gap-2">
+        <div className="grid grid-cols-12 gap-2">
           {palette.map((a) => {
             const isSelected = theme.accent === a.name;
             return (
@@ -181,7 +181,7 @@ function PersonalizationTab({ isDark, palette, theme, setTheme }: {
                 key={a.name}
                 aria-pressed={isSelected}
                 onClick={() => setTheme({ accent: a.name, customAccent: null })}
-                className="flex items-center gap-2 p-2 rounded-[var(--radius-sm)] border transition-all cursor-pointer"
+                className="col-span-12 @md:col-span-6 @2xl:col-span-4 flex items-center gap-2 p-2 rounded-[var(--radius-sm)] border transition-all cursor-pointer"
                 style={
                   isSelected
                     ? { borderColor: 'var(--accent)', boxShadow: '0 0 0 2px var(--accent-soft)', background: 'var(--accent-soft)' }
@@ -233,16 +233,16 @@ function PersonalizationTab({ isDark, palette, theme, setTheme }: {
       </SectionCard>
 
       <SectionCard title="Glass & effects" icon={<Sparkles size={13} />}>
-        <div className="grid grid-cols-1 sm:grid-cols-3 gap-4">
-          <div>
+        <div className="grid grid-cols-12 gap-4">
+          <div className="col-span-12 @2xl:col-span-4">
             <SubLabel>Glass</SubLabel>
             <SegmentedControl value={theme.glass} options={GLASS_OPTIONS} onChange={(v) => setTheme({ glass: v })} />
           </div>
-          <div>
+          <div className="col-span-12 @2xl:col-span-4">
             <SubLabel>Blur</SubLabel>
             <SegmentedControl value={theme.blur} options={BLUR_OPTIONS} onChange={(v) => setTheme({ blur: v })} />
           </div>
-          <div>
+          <div className="col-span-12 @2xl:col-span-4">
             <SubLabel>Corners</SubLabel>
             <SegmentedControl value={theme.radius} options={RADIUS_OPTIONS} onChange={(v) => setTheme({ radius: v })} />
           </div>
@@ -251,11 +251,11 @@ function PersonalizationTab({ isDark, palette, theme, setTheme }: {
 
       {/* Wallpaper picker */}
       <SectionCard title="Wallpaper" icon={<LayoutGrid size={13} />}>
-        <div className="grid grid-cols-4 gap-2">
+        <div className="grid grid-cols-12 gap-2">
           {WALLPAPERS.map((w) => (
             <button
               key={w.id}
-              className="h-16 rounded-[var(--radius-sm)] relative overflow-hidden transition-transform hover:scale-[1.03]"
+              className="col-span-6 @md:col-span-4 @2xl:col-span-3 h-16 rounded-[var(--radius-sm)] relative overflow-hidden transition-transform hover:scale-[1.03]"
               style={{
                 background: w.css.startsWith('var(') ? 'var(--wp-accent-dark)' : w.css,
                 border: theme.wallpaper === w.id ? '2px solid var(--accent)' : '1px solid var(--border)',
@@ -302,12 +302,12 @@ function InterfaceTab({ theme, setTheme }: { theme: ThemeState; setTheme: SetThe
   return (
     <>
     <SectionCard title="Interface" icon={<Type size={13} />}>
-      <div className="grid grid-cols-1 sm:grid-cols-2 gap-4 mb-4">
-        <div>
+      <div className="grid grid-cols-12 gap-4 mb-4">
+        <div className="col-span-12 @md:col-span-6">
           <SubLabel>Density</SubLabel>
           <SegmentedControl value={theme.density} options={DENSITY_OPTIONS} onChange={(v) => setTheme({ density: v })} />
         </div>
-        <div>
+        <div className="col-span-12 @md:col-span-6">
           <SubLabel icon={<LayoutGrid size={12} />}>Desktop grid</SubLabel>
           <SegmentedControl
             value={theme.gridSize}
@@ -412,13 +412,13 @@ function TaskbarTab({ theme, setTheme }: { theme: ThemeState; setTheme: SetTheme
         {pinned.length === 0 ? (
           <p className="text-[12px]" style={{ color: 'var(--text-low)' }}>Nothing pinned.</p>
         ) : (
-          <div className="grid grid-cols-1 sm:grid-cols-2 gap-2 mb-3">
+          <div className="grid grid-cols-12 gap-2 mb-3">
             {pinned.map((id, i) => {
               const app = APP_REGISTRY.find((a) => a.id === id);
               return (
                 <div
                   key={id}
-                  className="flex items-center gap-2 p-2 rounded-[var(--radius-sm)] border"
+                  className="col-span-12 @md:col-span-6 flex items-center gap-2 p-2 rounded-[var(--radius-sm)] border"
                   style={{ background: 'var(--accent-soft)', borderColor: 'var(--border)' }}
                 >
                   <span className="text-base leading-none shrink-0">{app?.icon ?? '·'}</span>
@@ -458,12 +458,12 @@ function TaskbarTab({ theme, setTheme }: { theme: ThemeState; setTheme: SetTheme
             <p className="text-[10px] font-bold uppercase tracking-widest mb-2" style={{ color: 'var(--text-low)' }}>
               Add from catalog
             </p>
-            <div className="grid grid-cols-1 sm:grid-cols-2 gap-2">
+            <div className="grid grid-cols-12 gap-2">
               {available.map((a) => (
                 <button
                   key={a.id}
                   onClick={() => add(a.id)}
-                  className="flex items-center gap-2 p-2 rounded-[var(--radius-sm)] border transition-all cursor-pointer text-left"
+                  className="col-span-12 @md:col-span-6 flex items-center gap-2 p-2 rounded-[var(--radius-sm)] border transition-all cursor-pointer text-left"
                   style={{ background: 'var(--accent-soft)', borderColor: 'var(--border)' }}
                 >
                   <span className="text-base leading-none shrink-0">{a.icon}</span>
@@ -483,9 +483,10 @@ function TaskbarTab({ theme, setTheme }: { theme: ThemeState; setTheme: SetTheme
         <p className="text-[12px] mb-3" style={{ color: 'var(--text-low)' }}>
           Apps that open automatically when the desktop loads.
         </p>
-        <div className="grid grid-cols-1 sm:grid-cols-2 gap-x-4">
+        <div className="grid grid-cols-12 gap-x-4">
           {APP_REGISTRY.map((app) => (
-            <SettingRow key={app.id} label={app.name}>
+            <div key={app.id} className="col-span-12 @md:col-span-6">
+            <SettingRow label={app.name}>
               <Toggle
                 enabled={theme.startupWindows.includes(app.id)}
                 onChange={(v) => setTheme({
@@ -495,6 +496,7 @@ function TaskbarTab({ theme, setTheme }: { theme: ThemeState; setTheme: SetTheme
                 })}
               />
             </SettingRow>
+            </div>
           ))}
         </div>
       </SectionCard>
@@ -560,9 +562,9 @@ function WidgetsTab({ widgetPlacements, addWidget, removeWidget }: {
 function ShortcutsTab() {
   return (
     <SectionCard title="Keyboard shortcuts" icon={<Keyboard size={13} />}>
-      <div className="grid grid-cols-1 sm:grid-cols-2 gap-x-6 gap-y-1.5">
+      <div className="grid grid-cols-12 gap-x-6 gap-y-1.5">
         {SHORTCUTS.map((s) => (
-          <div key={s.id} className="flex items-center justify-between text-xs">
+          <div key={s.id} className="col-span-12 @md:col-span-6 flex items-center justify-between text-xs">
             <span style={{ color: 'var(--text-mid)' }}>{s.label}</span>
             <kbd
               className="text-[10px] px-1.5 py-0.5 rounded"

@@ -31,13 +31,13 @@ export default function Projects() {
         ))}
       </div>
 
-      <div className="grid grid-cols-2 gap-3">
+      <div className="grid grid-cols-12 gap-3">
         {filtered.map((p) => {
           const open = expanded === p.id;
           return (
             <article
               key={p.id}
-              className="rounded-xl p-4 flex flex-col gap-2 cursor-pointer transition-transform hover:-translate-y-0.5"
+              className="col-span-12 @md:col-span-6 rounded-xl p-4 flex flex-col gap-2 cursor-pointer transition-transform hover:-translate-y-0.5"
               style={{ background: 'var(--accent-soft)', border: '1px solid var(--border)' }}
               onClick={() => setExpanded(open ? null : p.id)}
             >

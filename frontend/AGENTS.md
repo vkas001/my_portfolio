@@ -75,6 +75,22 @@ relative `../` imports. Shared API types come from `@shared/types`.
   validation lives in the backend controller. If a second form appears, build
   the shared layer first (see ibiz_v2's Rule 14 as reference, not as law).
 
+### 4b. Responsive — container queries, never viewport breakpoints (ibiz parity)
+
+- `.window-frame` root and `.window-body` are `@container` anchors;
+  `.widget-card` too. Everything inside windows/widgets keys off the
+  **container**, never the viewport: use `@sm:`/`@md:` (or `@min-[…]:`)
+  variants. `sm:`/`md:`/`lg:` viewport prefixes inside windows are banned.
+- Every grid is `grid grid-cols-12` with explicit `col-span-*` cells.
+  Container variants use Tailwind v4's container scale (`@md` = 28rem/448px,
+  `@2xl` = 42rem/672px — NOT viewport breakpoints). Ladder for OS windows:
+  `col-span-12` → `@md:col-span-6` (2-up) → `@2xl:col-span-4` (3-up).
+  Span cells total 12 per visual row.
+- Page heroes use `components/ui/CompactPageHero`; dense rows use
+  `components/ui/CompactRow` — both collapse automatically in narrow windows
+  (540/600px `@container` rules in `index.css`). Don't hand-roll hero cards
+  or list rows when these cover the need.
+
 ### 5. Settings & theme
 
 - `theme.ts` is the source of truth (`ThemeState`, `DEFAULT_THEME`,

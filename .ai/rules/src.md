@@ -33,3 +33,11 @@ Never hardcode bar offsets (`40/56`) — use `getWorkspaceBounds(theme)` and
 `fitRectInBounds()` from `lib/osLayout.ts`. Window z must stay in `[41, 79]`
 (`assignTopZ` in `OSContext`); the taskbar is DOM-measured
 (`[data-os-taskbar]`) for maximized rects.
+
+## Responsive goes through container queries
+
+`.window-frame`, `.window-body`, and `.widget-card` are `@container` anchors.
+Inside them, never use viewport breakpoints (`sm:`/`md:`/`lg:`) — use
+`@sm:`/`@md:`/`@min-[…]:` container variants. Grids are `grid-cols-12` with
+`col-span-*` cells (`12` → `@md:6` → `@2xl:4`); heroes/rows use the shared
+`CompactPageHero`/`CompactRow` components.
