@@ -12,10 +12,12 @@ import {
   applyTheme,
   DEFAULT_THEME,
   getWallpaper,
+  LEGACY_DEFAULT_STARTUP_WINDOWS,
   loadTheme,
   saveTheme,
   type ThemeState,
 } from '@/theme';
+import { fitRectInBounds, getWorkspaceBoundsFor } from '@/lib/osLayout';
 import type { AppDef, AppId, NotificationItem, WindowState, WidgetMeta, WidgetPlacement, WidgetVariant } from '@/types';
 import { sound } from '@/lib/sound';
 import { themeService } from '@/lib/api/themeService';
@@ -33,6 +35,7 @@ export interface OSContextValue {
   focusedId: string | null;
   launchApp: (appId: AppId) => void;
   closeWindow: (id: string) => void;
+  closeAllWindows: () => void;
   focusWindow: (id: string) => void;
   minimizeWindow: (id: string) => void;
   toggleMaximize: (id: string) => void;
@@ -54,6 +57,10 @@ export interface OSContextValue {
   setSpotlightOpen: (open: boolean) => void;
   startMenuOpen: boolean;
   setStartMenuOpen: (open: boolean) => void;
+  // Auto-hide taskbar visibility (ibiz_v2 isTaskbarVisible parity).
+  // True = bar shown; only meaningful when theme.taskbarMode === 'auto-hide'.
+  taskbarVisible: boolean;
+  setTaskbarVisible: (open: boolean) => void;
   contactModalOpen: boolean;
   setContactModalOpen: (open: boolean) => void;
   notifications: NotificationItem[];
@@ -71,10 +78,12 @@ export function useOS(): OSContextValue {
 }
 
 /** Resolve viewport bounds available to windows/widgets (between bars). */
-export function getWorkspaceBounds() {
-  const width = window.innerWidth;
-  const height = window.innerHeight - 40 /* topbar */ - 56 /* taskbar */;
-  return { width, height };
+export function getWorkspaceBounds(
+  theme?: Pick<ThemeState, 'showTopBar' | 'taskbarMode' | 'taskbarStyle'> | null,
+) {
+  return getWorkspaceBoundsFor(
+    theme ?? { showTopBar: true, taskbarMode: 'always', taskbarStyle: 'windows' },
+  );
 }
 
 let instanceCounter = 0;
@@ -88,12 +97,16 @@ export function OSProvider({ children }: { children: ReactNode }) {
   const [widgetsOpen, setWidgetsOpen] = useState(true);
   const [spotlightOpen, setSpotlightOpen] = useState(false);
   const [startMenuOpen, setStartMenuOpen] = useState(false);
+  const [taskbarVisible, setTaskbarVisible] = useState(true);
   const [contactModalOpen, setContactModalOpen] = useState(false);
   const [notifications, setNotifications] = useState<NotificationItem[]>([]);
-  const zCounter = useRef(10);
+  // Window z starts above widgets (30) and the topbar (40), below the
+  // taskbar/overlays (80) — ibiz_v2 window layer parity (z 41-52).
+  const zCounter = useRef(41);
   const startedRef = useRef(false);
   const hydratedRef = useRef(false);
   const saveTimer = useRef<number | undefined>(undefined);
+  const lastBoundsRef = useRef(getWorkspaceBounds());
 
   // ─── Theme application + persistence (local + server, ibiz_v2 parity) ──────
   useEffect(() => {
@@ -107,7 +120,13 @@ export function OSProvider({ children }: { children: ReactNode }) {
     return () => window.clearTimeout(saveTimer.current);
   }, [theme]);
 
-  // Boot: server wins over local when it exists (single-user, no auth scope)
+  // 'always' mode implies a visible bar; auto-hide starts hidden.
+  useEffect(() => {
+    setTaskbarVisible(theme.taskbarMode === 'always');
+  }, [theme.taskbarMode]);
+  // Boot: server wins over local when it exists (single-user, no auth scope).
+  // Stale exact-legacy startupWindows are force-cleared once; any other
+  // saved pick (including an intentional []) is preserved.
   useEffect(() => {
     let cancelled = false;
     void themeService.get().then((server) => {
@@ -115,11 +134,27 @@ export function OSProvider({ children }: { children: ReactNode }) {
         hydratedRef.current = true;
         return;
       }
+      const startup = (server.startupWindows as string[] | undefined) ?? [];
+      const isLegacyStale =
+        Array.isArray(startup) &&
+        startup.length === LEGACY_DEFAULT_STARTUP_WINDOWS.length &&
+        LEGACY_DEFAULT_STARTUP_WINDOWS.every((id) => startup.includes(id));
+      const serverWidgets = (server.widgets as ThemeState['widgets']) ?? undefined;
       setThemeState((prev) => ({
         ...DEFAULT_THEME,
         ...server,
-        widgets: (server.widgets as ThemeState['widgets']) ?? prev.widgets,
+        startupWindows: isLegacyStale ? [] : startup,
+        widgets: serverWidgets ?? prev.widgets,
       }));
+      // Server-saved widgets must appear: placements were seeded from the
+      // first-render local theme before hydration completed. Fitted so
+      // placements saved on a larger screen never load cut off.
+      if (Array.isArray(serverWidgets) && serverWidgets.length > 0) {
+        const b = getWorkspaceBounds(theme);
+        lastBoundsRef.current = b;
+        const fitted = serverWidgets.map((p) => ({ ...p, ...fitRectInBounds(p, b) }));
+        setWidgetPlacements((prev) => (prev.length === 0 ? fitted : prev));
+      }
       hydratedRef.current = true;
     });
     return () => {
@@ -156,23 +191,32 @@ export function OSProvider({ children }: { children: ReactNode }) {
         return;
       }
 
-      const bounds = getWorkspaceBounds();
+      const bounds = getWorkspaceBounds(theme);
+      const minW = app.minSize?.w ?? 360;
+      const minH = app.minSize?.h ?? 240;
       const w = Math.min(app.defaultSize.w, bounds.width - 24);
       const h = Math.min(app.defaultSize.h, bounds.height - 24);
       const offset = (windows.length % 6) * 28;
       instanceCounter += 1;
       const id = `${appId}#${instanceCounter}`;
       zCounter.current += 1;
+      const fitted = fitRectInBounds(
+        {
+          x: Math.max(12, (bounds.width - w) / 2 - 60 + offset),
+          y: Math.max(12, (bounds.height - h) / 2 - 40 + offset),
+          w,
+          h,
+        },
+        bounds,
+        { w: minW, h: minH },
+      );
 
       setWindows((ws) => [
         ...ws,
         {
           id,
           appId,
-          x: Math.max(12, (bounds.width - w) / 2 - 60 + offset),
-          y: Math.max(12, (bounds.height - h) / 2 - 40 + offset),
-          w,
-          h,
+          ...fitted,
           z: zCounter.current,
           minimized: false,
           maximized: false,
@@ -181,12 +225,19 @@ export function OSProvider({ children }: { children: ReactNode }) {
       setFocusedId(id);
       sound.open();
     },
-    [windows, focusWindow],
+    [windows, focusWindow, theme],
   );
 
   const closeWindow = useCallback((id: string) => {
     setWindows((ws) => ws.filter((w) => w.id !== id));
     setFocusedId((f) => (f === id ? null : f));
+    sound.close();
+  }, []);
+
+  // ibiz_v2 parity (resetWindowsLayout): close everything, e.g. StartMenu → Restore Layout.
+  const closeAllWindows = useCallback(() => {
+    setWindows([]);
+    setFocusedId(null);
     sound.close();
   }, []);
 
@@ -216,7 +267,19 @@ export function OSProvider({ children }: { children: ReactNode }) {
 
   const updateWindowRect = useCallback(
     (id: string, rect: Partial<Pick<WindowState, 'x' | 'y' | 'w' | 'h'>>) => {
-      setWindows((ws) => ws.map((w) => (w.id === id ? { ...w, ...rect } : w)));
+      setWindows((ws) =>
+        ws.map((w) => {
+          if (w.id !== id || w.maximized) return w;
+          const next = { ...w, ...rect };
+          const app = APP_REGISTRY.find((a) => a.id === w.appId);
+          // Safety net: no caller can push a window outside the workspace.
+          const fitted = fitRectInBounds(next, lastBoundsRef.current, {
+            w: app?.minSize?.w ?? 0,
+            h: app?.minSize?.h ?? 0,
+          });
+          return { ...w, ...fitted };
+        }),
+      );
     },
     [],
   );
@@ -233,20 +296,29 @@ export function OSProvider({ children }: { children: ReactNode }) {
   const addWidget = useCallback(
     (id: string) => {
       const meta = widgetMetaMap[id];
-      if (!meta) return;
+      if (!meta) {
+        if (import.meta.env.DEV) {
+          // eslint-disable-next-line no-console
+          console.warn(`[os] addWidget: unknown widget "${id}" (metadata not registered yet)`);
+        }
+        return;
+      }
       const variant = meta.defaultVariant;
       const size = meta.variants[variant] ?? { w: 300, h: 200 };
-      const bounds = getWorkspaceBounds();
+      const bounds = getWorkspaceBounds(theme);
       const instance = `${id}#${Date.now().toString(36)}${Math.floor(Math.random() * 1e4).toString(36)}`;
-      const existing = widgetPlacements.map((p) => ({ x: p.x, y: p.y, w: p.w, h: p.h }));
-      // Simple cascade placement
-      const x = Math.min(bounds.width - size.w, 24 + (widgetPlacements.length % 4) * 40);
-      const y = Math.min(bounds.height - size.h, 24 + (widgetPlacements.length % 4) * 40);
-      void existing;
-      setWidgetPlacements((ps) => [...ps, { id, instance, x, y, w: size.w, h: size.h, variant }]);
+      // Simple cascade placement, fitted so new widgets never spawn cut off.
+      const cascade = {
+        x: Math.min(bounds.width - size.w, 24 + (widgetPlacements.length % 4) * 40),
+        y: Math.min(bounds.height - size.h, 24 + (widgetPlacements.length % 4) * 40),
+        w: size.w,
+        h: size.h,
+      };
+      const fitted = fitRectInBounds(cascade, bounds);
+      setWidgetPlacements((ps) => [...ps, { id, instance, ...fitted, variant }]);
       sound.click();
     },
-    [widgetMetaMap, widgetPlacements],
+    [widgetMetaMap, widgetPlacements, theme],
   );
 
   const removeWidget = useCallback((instance: string) => {
@@ -255,7 +327,10 @@ export function OSProvider({ children }: { children: ReactNode }) {
   }, []);
 
   const updateWidgetPlacement = useCallback((instance: string, patch: Partial<WidgetPlacement>) => {
-    setWidgetPlacements((ps) => ps.map((p) => (p.instance === instance ? { ...p, ...patch } : p)));
+    // Safety net: placements can never leave the workspace.
+    setWidgetPlacements((ps) =>
+      ps.map((p) => (p.instance === instance ? { ...p, ...fitRectInBounds({ ...p, ...patch }, lastBoundsRef.current) } : p)),
+    );
   }, []);
 
   const moveWidgetVariant = useCallback(
@@ -306,6 +381,45 @@ export function OSProvider({ children }: { children: ReactNode }) {
       : { ...t, widgets: widgetPlacements }));
   }, [widgetPlacements]);
 
+  // Keep every window/widget fully on-screen when the viewport shrinks or
+  // the bars change (topbar toggle, taskbar mode/style). Oversized rects
+  // shrink to fit instead of hanging cut off past an edge.
+  useEffect(() => {
+    const reflow = () => {
+      const b = getWorkspaceBounds(theme);
+      lastBoundsRef.current = b;
+      setWindows((ws) =>
+        ws.map((w) => {
+          if (w.maximized) return w;
+          const app = APP_REGISTRY.find((a) => a.id === w.appId);
+          return {
+            ...w,
+            ...fitRectInBounds(w, b, { w: app?.minSize?.w ?? 0, h: app?.minSize?.h ?? 0 }),
+          };
+        }),
+      );
+      setWidgetPlacements((ps) => ps.map((p) => ({ ...p, ...fitRectInBounds(p, b) })));
+    };
+    reflow();
+    // The taskbar is DOM-measured: re-run after paint so a style/mode
+    // switch measures the new bar, not the previous one.
+    const raf = requestAnimationFrame(reflow);
+    const settled = window.setTimeout(reflow, 300);
+    let t: number | undefined;
+    const onResize = () => {
+      window.clearTimeout(t);
+      t = window.setTimeout(reflow, 150);
+    };
+    window.addEventListener('resize', onResize);
+    return () => {
+      window.removeEventListener('resize', onResize);
+      window.clearTimeout(t);
+      window.clearTimeout(settled);
+      cancelAnimationFrame(raf);
+    };
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [theme.showTopBar, theme.taskbarMode, theme.taskbarStyle]);
+
   const value = useMemo<OSContextValue>(
     () => ({
       theme,
@@ -316,6 +430,7 @@ export function OSProvider({ children }: { children: ReactNode }) {
       focusedId,
       launchApp,
       closeWindow,
+      closeAllWindows,
       focusWindow,
       minimizeWindow,
       toggleMaximize,
@@ -333,6 +448,8 @@ export function OSProvider({ children }: { children: ReactNode }) {
       setSpotlightOpen,
       startMenuOpen,
       setStartMenuOpen,
+      taskbarVisible,
+      setTaskbarVisible,
       contactModalOpen,
       setContactModalOpen,
       notifications,
@@ -341,10 +458,10 @@ export function OSProvider({ children }: { children: ReactNode }) {
       markNotificationsRead,
     }),
     [
-      theme, setTheme, resetTheme, windows, focusedId, launchApp, closeWindow, focusWindow,
+      theme, setTheme, resetTheme, windows, focusedId, launchApp, closeWindow, closeAllWindows, focusWindow,
       minimizeWindow, toggleMaximize, updateWindowRect, widgetMetaMap, registerWidgets,
       widgetPlacements, addWidget, removeWidget, updateWidgetPlacement, moveWidgetVariant,
-      widgetsOpen, spotlightOpen, startMenuOpen, contactModalOpen, notifications, pushNotification,
+      widgetsOpen, spotlightOpen, startMenuOpen, taskbarVisible, contactModalOpen, notifications, pushNotification,
       dismissNotification, markNotificationsRead,
     ],
   );

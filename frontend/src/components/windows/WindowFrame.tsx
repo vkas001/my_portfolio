@@ -4,24 +4,23 @@ import { APP_REGISTRY } from '@/apps/registry';
 import type { WindowState } from '@/types';
 import { Minus, Square, X } from 'lucide-react';
 
-const TOPBAR_H = 40;
-const TASKBAR_H = 56;
-
 interface Props {
   win: WindowState;
   children: ReactNode;
 }
 
 export default function WindowFrame({ win, children }: Props) {
-  const { focusedId, focusWindow, closeWindow, minimizeWindow, toggleMaximize, updateWindowRect } = useOS();
+  const { theme, focusedId, focusWindow, closeWindow, minimizeWindow, toggleMaximize, updateWindowRect } = useOS();
   const app = APP_REGISTRY.find((a) => a.id === win.appId);
   const focused = focusedId === win.id;
   const frameRef = useRef<HTMLDivElement>(null);
   const dragState = useRef<{ mode: 'move' | 'resize'; sx: number; sy: number; ox: number; oy: number; ow: number; oh: number } | null>(null);
 
+  // Maximized windows fill exactly the theme-aware workspace (no overlap/gap).
+  const bounds = getWorkspaceBounds(theme);
   const rect = win.maximized
-    ? { x: 0, y: TOPBAR_H, w: window.innerWidth, h: window.innerHeight - TOPBAR_H - TASKBAR_H }
-    : { x: win.x, y: win.y + TOPBAR_H, w: win.w, h: win.h };
+    ? { x: 0, y: bounds.top, w: bounds.width, h: bounds.height }
+    : { x: win.x, y: win.y + bounds.top, w: win.w, h: win.h };
 
   const startDrag = useCallback(
     (mode: 'move' | 'resize') => (e: React.PointerEvent) => {
@@ -37,19 +36,20 @@ export default function WindowFrame({ win, children }: Props) {
         if (!s) return;
         const dx = ev.clientX - s.sx;
         const dy = ev.clientY - s.sy;
-        const bounds = getWorkspaceBounds();
+        const b = getWorkspaceBounds(theme);
         const minW = app?.minSize?.w ?? 360;
         const minH = app?.minSize?.h ?? 240;
 
         if (s.mode === 'move') {
+          // Fully-contained: the window can never be pushed past an edge.
           updateWindowRect(win.id, {
-            x: Math.min(Math.max(-s.ow + 120, s.ox + dx), bounds.width - 120),
-            y: Math.min(Math.max(0, s.oy + dy), bounds.height - 40),
+            x: Math.min(Math.max(0, s.ox + dx), Math.max(0, b.width - s.ow)),
+            y: Math.min(Math.max(0, s.oy + dy), Math.max(0, b.height - s.oh)),
           });
         } else {
           updateWindowRect(win.id, {
-            w: Math.max(minW, s.ow + dx),
-            h: Math.max(minH, s.oh + dy),
+            w: Math.min(Math.max(minW, s.ow + dx), Math.max(minW, b.width - s.ox)),
+            h: Math.min(Math.max(minH, s.oh + dy), Math.max(minH, b.height - s.oy)),
           });
         }
       };
@@ -64,7 +64,7 @@ export default function WindowFrame({ win, children }: Props) {
       window.addEventListener('pointermove', onMove);
       window.addEventListener('pointerup', onUp);
     },
-    [win, app, focusWindow, updateWindowRect],
+    [win, app, theme, focusWindow, updateWindowRect],
   );
 
   const style: React.CSSProperties = {

@@ -12,14 +12,21 @@ use Illuminate\Http\Request;
  */
 class ThemeController extends Controller
 {
+    /** Legacy default that must never auto-open again (force-cleared once). */
+    private const LEGACY_STARTUP = ['about', 'skills'];
+
     public function show(): JsonResponse
     {
         $row = ThemeSetting::query()->first();
+        $settings = $row?->settings;
+        if (is_array($settings) && $this->isLegacyStartup($settings['startupWindows'] ?? null)) {
+            $settings['startupWindows'] = [];
+        }
 
         return response()->json([
             'ok' => true,
             'data' => [
-                'theme' => $row?->settings,
+                'theme' => $settings,
                 'exists' => $row !== null,
             ],
         ]);
@@ -57,6 +64,9 @@ class ThemeController extends Controller
 
         $existing = ThemeSetting::query()->first();
         $merged = array_merge($existing?->settings ?? [], $validated);
+        if ($this->isLegacyStartup($merged['startupWindows'] ?? null)) {
+            $merged['startupWindows'] = [];
+        }
 
         $row = ThemeSetting::query()->updateOrCreate(
             ['id' => $existing?->id ?? 1],
@@ -77,5 +87,19 @@ class ThemeController extends Controller
             'ok' => true,
             'data' => ['theme' => null, 'exists' => false],
         ]);
+    }
+
+    private function isLegacyStartup(mixed $value): bool
+    {
+        if (! is_array($value) || count($value) !== count(self::LEGACY_STARTUP)) {
+            return false;
+        }
+        foreach (self::LEGACY_STARTUP as $id) {
+            if (! in_array($id, $value, true)) {
+                return false;
+            }
+        }
+
+        return true;
     }
 }

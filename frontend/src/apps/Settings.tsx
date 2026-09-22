@@ -386,7 +386,7 @@ function TaskbarTab({ theme, setTheme }: { theme: ThemeState; setTheme: SetTheme
           onChange={(v) => setTheme({ taskbarMode: v })}
         />
         <p className="text-[11px] mt-2" style={{ color: 'var(--text-low)' }}>
-          Auto-hide collapses the taskbar to a thin strip until you hover it.
+          Auto-hide slides the taskbar away until you hover the bottom edge (or press Ctrl+T).
         </p>
       </SectionCard>
 

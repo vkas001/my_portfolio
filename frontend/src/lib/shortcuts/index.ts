@@ -19,6 +19,7 @@ export const SHORTCUTS: ShortcutDef[] = [
   { id: 'experience',  label: 'Open Experience',     keys: 'Ctrl+4',      match: (e) => mod(e) && e.key === '4',               action: 'launch', payload: 'experience' },
   { id: 'contact',     label: 'Open Contact',        keys: 'Ctrl+5',      match: (e) => mod(e) && e.key === '5',               action: 'launch', payload: 'contact' },
   { id: 'close-window',label: 'Close Focused Window',keys: 'Ctrl+Q',      match: (e) => mod(e) && e.key.toLowerCase() === 'q', action: 'close-focused' },
+  { id: 'taskbar',     label: 'Toggle Taskbar',        keys: 'Ctrl+T',      match: (e) => mod(e) && e.key.toLowerCase() === 't', action: 'taskbar' },
 ];
 
 export function matchShortcut(e: KeyboardEvent): ShortcutDef | undefined {

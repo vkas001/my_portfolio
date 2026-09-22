@@ -224,10 +224,13 @@ export const DEFAULT_THEME: ThemeState = {
   animationsEnabled: true,
   soundsEnabled: false,
   widgets: [],
-  startupWindows: ['about', 'skills'],
+  startupWindows: [],
   clockFormat: '12h',
   dateFormat: 'short',
 };
+
+// Legacy default that must never auto-open again (force-cleared on load).
+export const LEGACY_DEFAULT_STARTUP_WINDOWS: string[] = ['about', 'skills'];
 
 // ─── Color helpers ──────────────────────────────────────────────────────────
 function hexToRgb(hex: string): [number, number, number] {
@@ -383,8 +386,12 @@ export function applyTheme(theme: ThemeState): void {
   set('--wallpaper-dim', String(Math.min(60, Math.max(0, theme.wallpaperDim)) / 100));
   set('--wallpaper-blur', `${Math.min(25, Math.max(0, theme.wallpaperBlur))}px`);
 
-  // Taskbar height — collapses when auto-hide is on so windows use the space
-  set('--taskbar-h', theme.taskbarMode === 'auto-hide' ? '14px' : '56px');
+  // Taskbar height — collapses when auto-hide is on so windows use the space.
+  // macOS reserves the floating dock (footer + wrapper padding); keep in
+  // sync with osLayout MACOS_DOCK_FALLBACK_H + MACOS_DOCK_PAD.
+  set('--taskbar-h', theme.taskbarMode === 'auto-hide' ? '14px' : theme.taskbarStyle === 'macos' ? '84px' : '56px');
+  // Topbar height — collapses when hidden so windows/widgets use the space
+  set('--topbar-h', theme.showTopBar ? '40px' : '0px');
 
   root.dataset.mode = theme.mode;
   root.dataset.accent = theme.accent;
@@ -411,6 +418,16 @@ export function loadTheme(): ThemeState {
     if (typeof merged.showSeconds !== 'boolean') merged.showSeconds = false;
     if (typeof merged.showHomeIndicator !== 'boolean') merged.showHomeIndicator = false;
     if (!Array.isArray(merged.taskbarApps)) merged.taskbarApps = [...DEFAULT_THEME.taskbarApps];
+    // One-time stale clear: the old default auto-opened About+Skills. An
+    // explicit user pick (anything else, including []) is preserved.
+    if (
+      Array.isArray(merged.startupWindows) &&
+      merged.startupWindows.length === LEGACY_DEFAULT_STARTUP_WINDOWS.length &&
+      LEGACY_DEFAULT_STARTUP_WINDOWS.every((id) => (merged.startupWindows as string[]).includes(id))
+    ) {
+      merged.startupWindows = [];
+    }
+    if (!Array.isArray(merged.startupWindows)) merged.startupWindows = [];
     return merged;
   } catch {
     return { ...DEFAULT_THEME };

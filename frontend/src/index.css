@@ -40,6 +40,8 @@
   --spacing: 0.25rem;
   --grid-size: 24;
   --window-opacity: 1;
+  --topbar-h: 40px;
+  --taskbar-h: 56px;
 }
 
 /* ═══ Base ═════════════════════════════════════════════════════════════════ */
@@ -124,7 +126,7 @@ button { font-family: inherit; }
 
 .desktop-area {
   position: absolute;
-  inset: 40px 0 var(--taskbar-h, 56px) 0; /* topbar 40px, taskbar var */
+  inset: var(--topbar-h, 40px) 0 var(--taskbar-h, 56px) 0; /* topbar / taskbar vars */
 }
 
 /* ═══ Window chrome ════════════════════════════════════════════════════════ */

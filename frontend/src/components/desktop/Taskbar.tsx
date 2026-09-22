@@ -2,7 +2,7 @@ import { useEffect, useRef, useState } from 'react';
 import { useOS } from '@/context/OSContext';
 import { APP_REGISTRY } from '@/apps/registry';
 import type { AppId } from '@/types';
-import { LayoutGrid, Search, Sparkles, Wifi, Volume2, VolumeX } from 'lucide-react';
+import { LayoutGrid, Search, Sparkles, Wifi, Volume2, VolumeX, ChevronUp } from 'lucide-react';
 import SystemTrayModal from './SystemTrayModal';
 
 // Active indicators, ported from ibiz_v2 Taskbar (WindowsIndicator / MacIndicator).
@@ -62,6 +62,7 @@ export default function Taskbar() {
     theme,
     windows, focusedId, launchApp, focusWindow, minimizeWindow,
     startMenuOpen, setStartMenuOpen, setSpotlightOpen, widgetsOpen, setWidgetsOpen,
+    taskbarVisible, setTaskbarVisible,
   } = useOS();
 
   // Pinned apps are the source of truth (ibiz_v2); unknown ids dropped, running appended.
@@ -76,9 +77,18 @@ export default function Taskbar() {
   const Indicator = windowsStyle ? WindowsIndicator : MacIndicator;
   const { time, date } = useClock(theme.clockFormat, theme.dateFormat, theme.showSeconds);
 
-  const [peek, setPeek] = useState(false);
   const [trayOpen, setTrayOpen] = useState(false);
   const trayRef = useRef<HTMLDivElement>(null);
+
+  // Auto-hide, ibiz_v2 parity: the bar hides fully; a bottom hover zone +
+  // chevron affordance reveals it (works over maximized windows too, since
+  // the zone sits above them). It stays put while the menu/tray are open.
+  const autoHide = theme.taskbarMode === 'auto-hide';
+  const hidden = autoHide && !taskbarVisible;
+
+  const hideBar = () => {
+    if (!startMenuOpen && !trayOpen) setTaskbarVisible(false);
+  };
 
   useEffect(() => {
     if (!trayOpen) return;
@@ -89,7 +99,7 @@ export default function Taskbar() {
     return () => window.removeEventListener('mousedown', onDown);
   }, [trayOpen]);
 
-  const hidden = theme.taskbarMode === 'auto-hide' && !peek && !trayOpen;
+  const reveal = () => setTaskbarVisible(true);
 
   const handleAppClick = (appId: AppId) => {
     const wins = windows.filter((w) => w.appId === appId);
@@ -109,18 +119,49 @@ export default function Taskbar() {
     : 'h-12 w-12 flex items-center justify-center rounded-xl relative group transition-all cursor-pointer';
   const tooltipPos = windowsStyle ? 'bottom-12' : 'bottom-16';
 
+  // ibiz_v2 parity: the bar is measured from the DOM ([data-os-taskbar])
+  // for workspace insets. macOS floats centered with bottom padding (pb-5,
+  // accounted for in osLayout); Windows is a full-width fixed bar.
+  // Auto-hide fully translates the bar away and reveals via the bottom
+  // hover zone + chevron below (both above maximized windows).
   return (
+    <>
+      {hidden && (
+        <>
+          <button
+            type="button"
+            aria-label="Show taskbar (Ctrl+T)"
+            title="Show taskbar (Ctrl+T)"
+            onClick={reveal}
+            onMouseEnter={reveal}
+            className="fixed bottom-0 left-1/2 -translate-x-1/2 z-[70] flex items-center justify-center px-3 py-0.5 rounded-t-lg cursor-pointer"
+            style={{ background: 'var(--bg-elev)', border: '1px solid var(--border)', borderBottom: 'none', color: 'var(--text-mid)' }}
+          >
+            <ChevronUp size={14} />
+          </button>
+          <div onMouseEnter={reveal} className="fixed bottom-0 inset-x-0 h-2.5 z-[69]" />
+        </>
+      )}
     <div
-      className={windowsStyle ? '' : 'absolute inset-x-0 bottom-3 flex justify-center pointer-events-none z-50'}
+      className={
+        windowsStyle
+          ? ''
+          : 'absolute inset-x-0 bottom-0 flex justify-center pointer-events-none z-[80] pb-5'
+      }
     >
       <footer
-        className={windowsStyle ? 'taskbar z-50' : 'z-50 pointer-events-auto'}
-        onMouseEnter={() => setPeek(true)}
-        onMouseLeave={() => setPeek(false)}
+        data-os-taskbar
+        className={windowsStyle ? 'taskbar z-[80]' : 'z-[80] pointer-events-auto'}
+        onMouseEnter={reveal}
+        onMouseLeave={hideBar}
         style={
           windowsStyle
             ? {
-                transform: hidden ? 'translateY(calc(100% - 14px))' : 'translateY(0)',
+                // --taskbar-h shrinks to 14px in auto-hide (reserved space for
+                // the desktop area), so pin the bar's own height to full 56px —
+                // otherwise the revealed bar renders as a clipped 14px strip.
+                height: '56px',
+                transform: hidden ? 'translateY(100%)' : 'translateY(0)',
                 transition: 'transform .25s ease',
               }
             : {
@@ -134,7 +175,7 @@ export default function Taskbar() {
                 background: theme.mode === 'light' ? 'rgba(255, 255, 255, .72)' : 'rgba(10, 10, 20, .62)',
                 border: '1px solid var(--glass-border)',
                 boxShadow: '0 18px 60px rgba(0,0,0,.45)',
-                transform: hidden ? 'translateY(calc(100% + 12px))' : 'translateY(0)',
+                transform: hidden ? 'translateY(calc(100% + 20px))' : 'translateY(0)',
                 transition: 'transform .25s ease',
               }
         }
@@ -225,5 +266,6 @@ export default function Taskbar() {
         </div>
       </footer>
     </div>
+    </>
   );
 }

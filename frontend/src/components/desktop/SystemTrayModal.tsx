@@ -1,5 +1,5 @@
 import { useEffect, useState } from 'react';
-import { Wifi, WifiOff, Volume2, VolumeX, Monitor, Moon, Sun, AppWindow, X } from 'lucide-react';
+import { Wifi, WifiOff, Volume2, VolumeX, Monitor, Moon, Sun, AppWindow, Server, X } from 'lucide-react';
 import { useOS } from '@/context/OSContext';
 
 // Quick-settings tray modal, adapted from ibiz_v2 SystemTrayModal.
@@ -9,6 +9,9 @@ export default function SystemTrayModal({ onClose }: { onClose: () => void }) {
   const [wifiEnabled, setWifiEnabled] = useState(true);
   const [volume, setVolume] = useState(85);
   const [online, setOnline] = useState(() => (typeof navigator === 'undefined' ? true : navigator.onLine));
+  // Live backend reachability — ibiz_v2 ConnectionStatus parity (tooltip on hover).
+  const [backend, setBackend] = useState<'checking' | 'up' | 'down'>('checking');
+  const [showBackendTip, setShowBackendTip] = useState(false);
 
   useEffect(() => {
     const on = () => setOnline(true);
@@ -18,6 +21,25 @@ export default function SystemTrayModal({ onClose }: { onClose: () => void }) {
     return () => {
       window.removeEventListener('online', on);
       window.removeEventListener('offline', off);
+    };
+  }, []);
+
+  useEffect(() => {
+    let cancelled = false;
+    const check = async () => {
+      try {
+        const base = import.meta.env.VITE_API_URL ?? '/api';
+        const res = await fetch(`${base}/health`);
+        if (!cancelled) setBackend(res.ok ? 'up' : 'down');
+      } catch {
+        if (!cancelled) setBackend('down');
+      }
+    };
+    void check();
+    const t = window.setInterval(check, 30000);
+    return () => {
+      cancelled = true;
+      window.clearInterval(t);
     };
   }, []);
 
@@ -89,6 +111,33 @@ export default function SystemTrayModal({ onClose }: { onClose: () => void }) {
       )}
 
       <div className="space-y-2 pt-3" style={{ borderTop: '1px solid var(--border)' }}>
+        <div
+          className="flex items-center justify-between text-[12px] relative"
+          onMouseEnter={() => setShowBackendTip(true)}
+          onMouseLeave={() => setShowBackendTip(false)}
+        >
+          <span className="flex items-center gap-2" style={{ color: 'var(--text-mid)' }}>
+            <Server size={14} style={{ color: 'var(--accent)' }} />
+            Backend API
+          </span>
+          <span className="flex items-center gap-1.5 text-[11px] font-bold">
+            <span
+              className="w-2 h-2 rounded-full"
+              style={{
+                background: backend === 'up' ? 'var(--success)' : backend === 'down' ? 'var(--error)' : 'var(--warning)',
+              }}
+            />
+            {backend === 'up' ? 'Connected' : backend === 'down' ? 'Unreachable' : 'Checking…'}
+          </span>
+          {showBackendTip && (
+            <span
+              className="absolute bottom-full right-0 mb-2 px-2 py-1 rounded-lg text-[11px] whitespace-nowrap shadow-lg z-[100]"
+              style={{ background: 'var(--bg-elev)', border: '1px solid var(--border)', color: 'var(--text-hi)' }}
+            >
+              {backend === 'up' ? 'Backend connected' : backend === 'down' ? 'Backend disconnected' : 'Probing backend…'}
+            </span>
+          )}
+        </div>
         <div className="flex items-center justify-between text-[12px]">
           <span className="flex items-center gap-2" style={{ color: 'var(--text-mid)' }}>
             <Monitor size={14} style={{ color: 'var(--accent)' }} />

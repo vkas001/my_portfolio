@@ -51,4 +51,19 @@ class ThemeSettingTest extends TestCase
         $this->getJson('/api/theme')->assertOk()
             ->assertJsonPath('data.exists', false);
     }
+
+    public function test_legacy_startup_windows_are_force_cleared(): void
+    {
+        $this->putJson('/api/theme', ['startupWindows' => ['about', 'skills']])->assertOk()
+            ->assertJsonPath('data.theme.startupWindows', []);
+
+        $this->getJson('/api/theme')->assertOk()
+            ->assertJsonPath('data.theme.startupWindows', []);
+    }
+
+    public function test_intentional_startup_windows_are_preserved(): void
+    {
+        $this->putJson('/api/theme', ['startupWindows' => ['contact']])->assertOk()
+            ->assertJsonPath('data.theme.startupWindows', ['contact']);
+    }
 }

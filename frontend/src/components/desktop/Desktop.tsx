@@ -17,6 +17,7 @@ import MobileNotice from './MobileNotice';
 export default function Desktop() {
   const {
     theme, windows, focusedId, launchApp, setSpotlightOpen, setWidgetsOpen, widgetsOpen, closeWindow,
+    taskbarVisible, setTaskbarVisible,
   } = useOS();
   const isMobile = useIsMobile();
 
@@ -29,6 +30,7 @@ export default function Desktop() {
       switch (sc.action) {
         case 'spotlight': setSpotlightOpen(true); break;
         case 'widgets': setWidgetsOpen(!widgetsOpen); break;
+        case 'taskbar': setTaskbarVisible(!taskbarVisible); break;
         case 'launch': launchApp(sc.payload as AppId); break;
         case 'close-focused': {
           if (focusedId) closeWindow(focusedId);
@@ -38,7 +40,7 @@ export default function Desktop() {
     };
     window.addEventListener('keydown', onKey);
     return () => window.removeEventListener('keydown', onKey);
-  }, [windows, widgetsOpen, focusedId, launchApp, setSpotlightOpen, setWidgetsOpen, closeWindow]);
+  }, [windows, widgetsOpen, focusedId, launchApp, setSpotlightOpen, setWidgetsOpen, taskbarVisible, setTaskbarVisible, closeWindow]);
 
   if (isMobile) return <MobileNotice />;
 
