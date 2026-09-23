@@ -1,4 +1,5 @@
 import type { ApiError } from '@shared/types';
+import { getAuthToken } from './tokenStore';
 
 const BASE = import.meta.env.VITE_API_URL ?? '/api';
 
@@ -18,9 +19,14 @@ export class HttpError extends Error {
 
 async function request<T>(path: string, init?: RequestInit): Promise<T> {
   let res: Response;
+  const token = getAuthToken();
   try {
     res = await fetch(`${BASE}${path}`, {
-      headers: { 'Content-Type': 'application/json', ...init?.headers },
+      headers: {
+        'Content-Type': 'application/json',
+        ...(token ? { Authorization: `Bearer ${token}` } : {}),
+        ...init?.headers,
+      },
       signal: AbortSignal.timeout(REQUEST_TIMEOUT_MS),
       ...init,
     });

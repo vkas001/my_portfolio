@@ -12,11 +12,14 @@ import {
   applyTheme,
   DEFAULT_THEME,
   getWallpaper,
+  GUEST_THEME_KEY,
   LEGACY_DEFAULT_STARTUP_WINDOWS,
   loadTheme,
   saveTheme,
+  themeKeyFor,
   type ThemeState,
 } from '@/theme';
+import { useAuth } from '@/context/AuthContext';
 import { fitRectInBounds, fitWidgetRect, getWorkspaceBoundsFor, nextWidgetSlot } from '@/lib/osLayout';
 import type { AppDef, AppId, NotificationItem, WindowState, WidgetMeta, WidgetPlacement, WidgetVariant } from '@/types';
 import { sound } from '@/lib/sound';
@@ -44,6 +47,10 @@ export interface OSContextValue {
   resetTheme: () => void;
   wallpaperLabel: string;
 
+  // auth session (owned by AuthContext; surfaced here for shell consumers)
+  isAdmin: boolean;
+  authReady: boolean;
+
   // shell view mode (web ⇄ os), default os
   viewMode: ViewMode;
   setViewMode: (mode: ViewMode) => void;
@@ -55,6 +62,7 @@ export interface OSContextValue {
   closeWindow: (id: string) => void;
   closeAllWindows: () => void;
   focusWindow: (id: string) => void;
+  restoreWindow: (id: string) => void;
   minimizeWindow: (id: string) => void;
   toggleMaximize: (id: string) => void;
   toggleFullScreen: (id: string) => void;
@@ -128,7 +136,12 @@ function assignTopZ(ws: WindowState[], id: string, unminimize: boolean): WindowS
 }
 
 export function OSProvider({ children }: { children: ReactNode }) {
+  const { user, isAdmin, authReady } = useAuth();
   const [theme, setThemeState] = useState<ThemeState>(() => loadTheme());
+  // Guests and each signed-in identity keep their own local theme. Only the
+  // admin's key is ever server-synced — guest tweaks stay in the browser and
+  // can never overwrite the admin's live site settings.
+  const [themeKey, setThemeKey] = useState<string>(GUEST_THEME_KEY);
   const [viewMode, setViewModeState] = useState<ViewMode>(() => loadViewMode());
   const [windows, setWindows] = useState<WindowState[]>([]);
   const [focusedId, setFocusedId] = useState<string | null>(null);
@@ -144,18 +157,25 @@ export function OSProvider({ children }: { children: ReactNode }) {
   const hydratedRef = useRef(false);
   const saveTimer = useRef<number | undefined>(undefined);
   const lastBoundsRef = useRef(getWorkspaceBounds());
-
-  // ─── Theme application + persistence (local + server, ibiz_v2 parity) ──────
+  // Mirrors for the identity-switch effect (runs on auth changes only).
+  const themeRef = useRef(theme);
+  themeRef.current = theme;
+  const themeKeyRef = useRef(themeKey);
+  themeKeyRef.current = themeKey;
+  const placementsRef = useRef(widgetPlacements);
+  placementsRef.current = widgetPlacements;  // ─── Theme application + persistence (local + server, ibiz_v2 parity) ──────
   useEffect(() => {
     applyTheme(theme);
-    saveTheme(theme);
-    if (!hydratedRef.current) return; // skip server push until first pull completes
+    saveTheme(theme, themeKey);
+    // Guests are local-only: never push to the server, so visitor settings
+    // can't overwrite the admin's live site. Skip until hydration completes.
+    if (!hydratedRef.current || !isAdmin) return;
     window.clearTimeout(saveTimer.current);
     saveTimer.current = window.setTimeout(() => {
       void themeService.save(theme);
     }, 800);
     return () => window.clearTimeout(saveTimer.current);
-  }, [theme]);
+  }, [theme, themeKey, isAdmin]);
 
   // 'always' mode implies a visible bar; auto-hide starts hidden.
   useEffect(() => {
@@ -166,10 +186,40 @@ export function OSProvider({ children }: { children: ReactNode }) {
   useEffect(() => {
     document.documentElement.dataset.view = viewMode;
   }, [viewMode]);
-  // Boot: server wins over local when it exists (single-user, no auth scope).
-  // Stale exact-legacy startupWindows are force-cleared once; any other
-  // saved pick (including an intentional []) is preserved.
+  // Identity switch: park the outgoing theme (with live placements) under
+  // its own key, then load the incoming identity's theme + placements
+  // (stored copy or defaults). Switching into an admin forces a fresh
+  // server pull below.
   useEffect(() => {
+    if (!authReady) return;
+    const nextKey = themeKeyFor(user?.id ?? null);
+    if (nextKey === themeKeyRef.current) {
+      if (!isAdmin) hydratedRef.current = true; // guest: nothing to pull
+      return;
+    }
+    saveTheme({ ...themeRef.current, widgets: placementsRef.current }, themeKeyRef.current);
+    const incoming = loadTheme(nextKey);
+    const b = getWorkspaceBounds(themeRef.current);
+    lastBoundsRef.current = b;
+    setThemeKey(nextKey);
+    setThemeState(incoming);
+    setWidgetPlacements(
+      (incoming.widgets ?? []).map((p) => ({ ...p, ...fitRectInBounds(p, b) })),
+    );
+    hydratedRef.current = false;
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [authReady, user]);
+
+  // Boot/pull: server wins over local when it exists (admin only — guests
+  // never touch the server). Stale exact-legacy startupWindows are
+  // force-cleared once; any other saved pick (including an intentional [])
+  // is preserved.
+  useEffect(() => {
+    if (!authReady) return;
+    if (!isAdmin || hydratedRef.current) {
+      hydratedRef.current = true;
+      return;
+    }
     let cancelled = false;
     void themeService.get().then((server) => {
       if (cancelled || !server || typeof server !== 'object') {
@@ -192,7 +242,7 @@ export function OSProvider({ children }: { children: ReactNode }) {
       // first-render local theme before hydration completed. Fitted so
       // placements saved on a larger screen never load cut off.
       if (Array.isArray(serverWidgets) && serverWidgets.length > 0) {
-        const b = getWorkspaceBounds(theme);
+        const b = getWorkspaceBounds(themeRef.current);
         lastBoundsRef.current = b;
         const fitted = serverWidgets.map((p) => ({ ...p, ...fitRectInBounds(p, b) }));
         setWidgetPlacements((prev) => (prev.length === 0 ? fitted : prev));
@@ -202,7 +252,8 @@ export function OSProvider({ children }: { children: ReactNode }) {
     return () => {
       cancelled = true;
     };
-  }, []);
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [authReady, themeKey]);
 
   const setTheme = useCallback((patch: Partial<ThemeState>) => {
     setThemeState((t) => ({ ...t, ...patch }));
@@ -219,8 +270,9 @@ export function OSProvider({ children }: { children: ReactNode }) {
 
   const resetTheme = useCallback(() => {
     setThemeState({ ...DEFAULT_THEME });
-    void themeService.reset();
-  }, []);
+    // Guests reset their local theme only; only an admin clears the server row.
+    if (isAdmin) void themeService.reset();
+  }, [isAdmin]);
 
   // ─── Window management ────────────────────────────────────────────────────
   // Window z lives in [Z_BASE, Z_TASKBAR) so tabs — maximized or not — can
@@ -231,15 +283,26 @@ export function OSProvider({ children }: { children: ReactNode }) {
     setFocusedId(id);
   }, []);
 
+  // Bring a minimized window back (focusWindow alone never clears mirrored
+  // minimized state — the taskbar restore path depends on this).
+  const restoreWindow = useCallback(
+    (id: string) => {
+      setWindows((ws) => ws.map((w) => (w.id === id ? { ...w, minimized: false } : w)));
+      focusWindow(id);
+    },
+    [focusWindow],
+  );
+
   const launchApp = useCallback(
     (appId: AppId) => {
       const app: AppDef | undefined = APP_REGISTRY.find((a) => a.id === appId);
       if (!app) return;
 
-      // Single instance: focus if already open
+      // Single instance: focus if already open (unminimize when collapsed)
       const existing = windows.find((w) => w.appId === appId);
       if (existing && app.singleInstance !== false) {
-        focusWindow(existing.id);
+        if (existing.minimized) restoreWindow(existing.id);
+        else focusWindow(existing.id);
         return;
       }
 
@@ -272,7 +335,7 @@ export function OSProvider({ children }: { children: ReactNode }) {
       setFocusedId(id);
       sound.open();
     },
-    [windows, focusWindow, theme],
+    [windows, focusWindow, restoreWindow, theme],
   );
 
   const closeWindow = useCallback((id: string) => {
@@ -494,6 +557,8 @@ export function OSProvider({ children }: { children: ReactNode }) {
       setTheme,
       resetTheme,
       wallpaperLabel: getWallpaper(theme.wallpaper).label,
+      isAdmin,
+      authReady,
       viewMode,
       setViewMode,
       windows,
@@ -502,6 +567,7 @@ export function OSProvider({ children }: { children: ReactNode }) {
       closeWindow,
       closeAllWindows,
       focusWindow,
+      restoreWindow,
       minimizeWindow,
       toggleMaximize,
       toggleFullScreen,
@@ -529,8 +595,8 @@ export function OSProvider({ children }: { children: ReactNode }) {
       markNotificationsRead,
     }),
     [
-      theme, setTheme, resetTheme, viewMode, setViewMode, windows, focusedId, launchApp, closeWindow, closeAllWindows, focusWindow,
-      minimizeWindow, toggleMaximize, toggleFullScreen, updateWindowRect, widgetMetaMap, registerWidgets,
+      theme, setTheme, resetTheme, isAdmin, authReady, viewMode, setViewMode, windows, focusedId, launchApp, closeWindow, closeAllWindows, focusWindow,
+      restoreWindow, minimizeWindow, toggleMaximize, toggleFullScreen, updateWindowRect, widgetMetaMap, registerWidgets,
       widgetPlacements, addWidget, removeWidget, updateWidgetPlacement, moveWidgetVariant,
       widgetsOpen, spotlightOpen, startMenuOpen, taskbarVisible, contactModalOpen, notifications, pushNotification,
       dismissNotification, markNotificationsRead,

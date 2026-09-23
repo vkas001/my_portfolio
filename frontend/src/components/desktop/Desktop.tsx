@@ -29,7 +29,7 @@ export default function Desktop() {
       {/* Desktop icons */}
       <div className="desktop-area">
         <div className="absolute left-4 top-4 flex flex-col gap-2">
-          {APP_REGISTRY.map((app) => (
+          {APP_REGISTRY.filter((app) => !app.system).map((app) => (
             <button
               key={app.id}
               className="flex flex-col items-center gap-1 w-20 p-2 rounded-xl hover:bg-white/10 transition-colors group"
@@ -42,7 +42,10 @@ export default function Desktop() {
               >
                 <app.icon size={20} />
               </span>
-              <span className="text-[10px] text-center leading-tight" style={{ textShadow: '0 1px 4px rgba(0,0,0,.6)' }}>
+              <span
+                className="text-[10px] text-center leading-tight"
+                style={{ color: 'var(--wp-fg-hi)', textShadow: 'var(--wp-fg-shadow)' }}
+              >
                 {app.name}
               </span>
             </button>

@@ -94,6 +94,26 @@ export interface GitHubStats {
   fetchedAt: string;
 }
 
+// ─── Auth ───────────────────────────────────────────────────────────────────
+// Single-admin auth (hand-rolled bearer tokens). Guests browse + keep a
+// local-only theme; only a signed-in admin persists site settings.
+export interface AuthUser {
+  id: number;
+  name: string;
+  email: string;
+  isAdmin: boolean;
+}
+
+export interface LoginPayload {
+  email: string;
+  password: string;
+}
+
+export interface LoginResponse {
+  token: string;
+  user: AuthUser;
+}
+
 // ─── API Envelope ───────────────────────────────────────────────────────────
 export interface ApiResponse<T> {
   ok: boolean;

@@ -5,7 +5,7 @@ import type { WidgetPlacement } from '@/theme';
 export type { WidgetPlacement };
 
 export type AppId =
-  | 'about' | 'skills' | 'projects' | 'experience' | 'contact' | 'settings';
+  | 'about' | 'skills' | 'projects' | 'experience' | 'contact' | 'settings' | 'auth';
 
 export interface AppDef {
   id: AppId;
@@ -18,6 +18,9 @@ export interface AppDef {
   singleInstance?: boolean;
   resizable?: boolean;
   description?: string;
+  /** System apps launch from shell chrome (e.g. StartMenu rows) and stay
+   *  out of the app grid. */
+  system?: boolean;
 }
 
 export interface WindowState {

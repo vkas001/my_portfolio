@@ -1,5 +1,6 @@
 <?php
 
+use App\Http\Controllers\AuthController;
 use App\Http\Controllers\ContactController;
 use App\Http\Controllers\GitHubController;
 use App\Http\Controllers\PortfolioController;
@@ -37,5 +38,19 @@ Route::post('/contact', [ContactController::class, 'store'])
 Route::get('/github/stats', [GitHubController::class, 'stats']);
 
 Route::get('/theme', [ThemeController::class, 'show']);
-Route::put('/theme', [ThemeController::class, 'update']);
-Route::delete('/theme/reset', [ThemeController::class, 'reset']);
+
+// Theme writes persist the admin's live site — admins only. Guests keep a
+// local-only theme in the browser that never reaches these endpoints.
+Route::middleware('auth.token')->group(function () {
+    Route::put('/theme', [ThemeController::class, 'update']);
+    Route::delete('/theme/reset', [ThemeController::class, 'reset']);
+});
+
+// Single-admin auth: hand-rolled bearer tokens (no Sanctum — see conventions).
+Route::post('/auth/login', [AuthController::class, 'login'])
+    ->middleware('throttle:login');
+
+Route::middleware('auth.token')->group(function () {
+    Route::get('/auth/me', [AuthController::class, 'me']);
+    Route::post('/auth/logout', [AuthController::class, 'logout']);
+});

@@ -29,11 +29,21 @@ class AppServiceProvider extends ServiceProvider
      * Named rate limiters matching the Express backend:
      * - api:     120 requests/minute across /api
      * - contact: 5 requests per 10 minutes on POST /api/contact
+     * - login:   5 attempts per minute on POST /api/auth/login
      */
     protected function configureRateLimiting(): void
     {
         RateLimiter::for('api', function (Request $request) {
             return Limit::perMinute(120)->by($request->user()?->id ?: $request->ip());
+        });
+
+        RateLimiter::for('login', function (Request $request) {
+            return Limit::perMinute(5)->by($request->ip())->response(function () {
+                return response()->json([
+                    'ok' => false,
+                    'error' => 'Too many login attempts. Try again in a minute.',
+                ], 429);
+            });
         });
 
         RateLimiter::for('contact', function (Request $request) {

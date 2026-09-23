@@ -100,7 +100,7 @@ const ConnectionDot: React.FC<{ online: boolean }> = ({ online }) => {
 const Taskbar = memo(function Taskbar() {
   const {
     theme,
-    windows, focusedId, launchApp, focusWindow, minimizeWindow,
+    windows, focusedId, launchApp, focusWindow, restoreWindow, minimizeWindow,
     startMenuOpen, setStartMenuOpen, setSpotlightOpen, widgetsOpen, setWidgetsOpen,
     taskbarVisible, setTaskbarVisible,
   } = useOS();
@@ -154,7 +154,9 @@ const Taskbar = memo(function Taskbar() {
     if (focused) {
       minimizeWindow(focused.id);
     } else {
-      focusWindow((wins.find((w) => !w.minimized) ?? wins[0]).id);
+      const target = wins.find((w) => !w.minimized) ?? wins[0];
+      if (target.minimized) restoreWindow(target.id);
+      else focusWindow(target.id);
     }
   };
 
@@ -239,7 +241,7 @@ const Taskbar = memo(function Taskbar() {
             onClick={reveal}
             onMouseEnter={reveal}
             className={`fixed bottom-0 left-1/2 -translate-x-1/2 ${revealLayer} flex items-center justify-center px-3 py-0.5 rounded-t-lg cursor-pointer`}
-            style={{ background: 'var(--bg-elev)', border: '1px solid var(--border)', borderBottom: 'none', color: 'var(--text-mid)' }}
+            style={{ background: 'var(--bg-elev)', border: '1px solid var(--border)', borderBottom: 'none', color: 'var(--wp-fg-mid)' }}
           >
             <ChevronUp size={14} />
           </button>
@@ -288,7 +290,7 @@ const Taskbar = memo(function Taskbar() {
             title="App Launcher & Start Menu"
           >
             <LayoutGrid
-              className={`text-(--accent) transition-transform ${
+              className={`text-(--wp-accent-fg) transition-transform ${
                 windowsStyle ? 'w-6 h-6' : 'w-7 h-7'
               } ${startMenuOpen ? 'scale-110' : 'group-hover:scale-110'}`}
             />
@@ -302,7 +304,7 @@ const Taskbar = memo(function Taskbar() {
             aria-label="Search"
             title="Search (Ctrl+K)"
           >
-            <Search className={`text-(--accent) ${windowsStyle ? 'w-5 h-5' : 'w-6 h-6'}`} />
+            <Search className={`text-(--wp-accent-fg) ${windowsStyle ? 'w-5 h-5' : 'w-6 h-6'}`} />
           </button>
 
           <div className={`w-[1px] bg-(--surface-30) ${windowsStyle ? 'h-5 mx-1.5' : 'h-8 mx-2'}`} />
@@ -322,12 +324,8 @@ const Taskbar = memo(function Taskbar() {
                     onClick={() => handleAppClick(app.id as AppId)}
                     className={`${appBtnBase} ${
                       isActive
-                        ? 'bg-(--surface-50) text-(--accent) shadow-sm'
-                        : isOpen && !isMinimized
-                        ? 'bg-(--surface-25) text-(--accent)'
-                        : isOpen && isMinimized
-                        ? 'bg-(--surface-10) text-(--accent)/60 hover:text-(--accent)'
-                        : 'hover:bg-(--surface-20) text-(--accent)/70 hover:text-(--accent)'
+                        ? 'bg-(--surface-40) text-(--wp-accent-fg) shadow-[0_1px_5px_rgba(15,23,42,.14)]'
+                        : 'hover:bg-(--surface-20) text-(--wp-accent-fg)/70 hover:text-(--wp-accent-fg)'
                     }`}
                     title={isOpen && isMinimized ? `Restore ${app.name}` : app.name}
                   >
@@ -349,7 +347,7 @@ const Taskbar = memo(function Taskbar() {
             <button
               onClick={() => setWidgetsOpen(!widgetsOpen)}
               className={`${windowsStyle ? 'h-9 w-9 rounded-lg' : 'h-12 w-12 rounded-xl'} flex items-center justify-center relative group transition-all cursor-pointer ${
-                widgetsOpen ? 'bg-(--surface-50) text-(--accent)' : 'hover:bg-(--surface-20) text-(--accent)/70 hover:text-(--accent)'
+                widgetsOpen ? 'bg-(--surface-50) text-(--wp-accent-fg)' : 'hover:bg-(--surface-20) text-(--wp-accent-fg)/70 hover:text-(--wp-accent-fg)'
               }`}
               title="Toggle widgets (Ctrl+W)"
             >
@@ -365,7 +363,7 @@ const Taskbar = memo(function Taskbar() {
             <button
               data-trigger="tray"
               onClick={onToggleTray}
-              className={`flex items-center text-(--accent)/90 rounded-xl hover:bg-(--surface-30) transition-colors cursor-pointer ${
+              className={`flex items-center text-(--wp-accent-fg)/90 rounded-xl hover:bg-(--surface-30) transition-colors cursor-pointer ${
                 windowsStyle ? 'gap-2 px-2.5 py-1.5 rounded-lg' : 'gap-4 px-3 py-1.5'
               } ${isTrayOpen ? 'bg-(--surface-50) shadow-sm' : ''}`}
               title="System Tray & Quick Controls"
@@ -375,10 +373,10 @@ const Taskbar = memo(function Taskbar() {
                 {theme.soundsEnabled ? <Volume2 className="w-4 h-4" /> : <VolumeX className="w-4 h-4" />}
               </div>
               <div className="flex flex-col items-end leading-none justify-center">
-                <span className="text-[12px] font-bold tracking-tight text-(--accent)">
+                <span className="text-[12px] font-bold tracking-tight text-(--wp-accent-fg)">
                   {currentTime || '09:41 AM'}
                 </span>
-                <span className="text-[10px] opacity-70 font-bold uppercase mt-0.5 text-(--text-muted) whitespace-nowrap">
+                <span className="text-[10px] opacity-70 font-bold uppercase mt-0.5 text-(--wp-fg-low) whitespace-nowrap">
                   {currentWeekday ? `${currentWeekday} · ${currentDate}` : currentDate || 'SEP 22, 2026'}
                 </span>
               </div>

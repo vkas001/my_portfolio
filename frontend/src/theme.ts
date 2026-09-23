@@ -203,7 +203,7 @@ export interface WidgetPlacement {
 
 export const DEFAULT_THEME: ThemeState = {
   mode: 'dark',
-  accent: 'violet',
+  accent: 'orange',
   customAccent: null,
   glass: 'normal',
   blur: 'normal',
@@ -211,13 +211,13 @@ export const DEFAULT_THEME: ThemeState = {
   font: 'Inter',
   density: 'normal',
   gridSize: 24,
-  windowOpacity: 1,
+  windowOpacity: 0.85,
   showTopBar: true,
-  wallpaper: 'violet-dream',
+  wallpaper: 'mint',
   wallpaperDim: 0,
   wallpaperBlur: 0,
   taskbarMode: 'always',
-  taskbarStyle: 'windows',
+  taskbarStyle: 'macos',
   taskbarApps: ['about', 'skills', 'projects', 'experience', 'contact', 'settings'],
   showHomeIndicator: false,
   showSeconds: false,
@@ -398,6 +398,23 @@ export function applyTheme(theme: ThemeState): void {
   const fallback = isDark ? 'var(--wp-accent-dark)' : 'var(--wp-accent-light)';
   set('--wallpaper', wp.css.startsWith('var(') ? fallback : wp.css);
 
+  // Wallpaper-aware ink: desktop icon names + taskbar glyphs sit directly on
+  // the wallpaper, so their color flips with wallpaper lightness. A light
+  // wallpaper (e.g. Mint) under a dark OS washes out default light text.
+  const wpLight = wp.mode === 'light';
+  const wpHi = wpLight ? '#1b1e24' : '#f1f5f9';
+  const wpMid = wpLight ? '#4b5563' : '#cbd5e1';
+  const wpLow = wpLight ? '#64748b' : '#94a3b8';
+  const wpShadow = wpLight
+    ? '0 1px 2px rgba(255,255,255,.6), 0 1px 6px rgba(255,255,255,.35)'
+    : '0 1px 3px rgba(0,0,0,.6), 0 1px 6px rgba(0,0,0,.4)';
+  const wpAccent = resolveAccent(wpLight ? 'light' : 'dark', theme.accent, theme.customAccent).base;
+  set('--wp-fg-hi', wpHi);
+  set('--wp-fg-mid', wpMid);
+  set('--wp-fg-low', wpLow);
+  set('--wp-fg-shadow', wpShadow);
+  set('--wp-accent-fg', wpAccent);
+
   // Wallpaper effects (ibiz_v2 wallpaperDim / wallpaperBlur)
   set('--wallpaper-dim', String(Math.min(60, Math.max(0, theme.wallpaperDim)) / 100));
   set('--wallpaper-blur', `${Math.min(25, Math.max(0, theme.wallpaperBlur))}px`);
@@ -415,21 +432,28 @@ export function applyTheme(theme: ThemeState): void {
   root.style.colorScheme = theme.mode;
 }
 
-/** Persist theme to localStorage (with ssr-safety noop). */
-export function saveTheme(theme: ThemeState): void {
-  try { localStorage.setItem('portfolio.theme', JSON.stringify(theme)); } catch { /* noop */ }
+/** Guest theme storage key. Signed-in identities use `portfolio.theme.u<id>`. */
+export const GUEST_THEME_KEY = 'portfolio.theme';
+
+export function themeKeyFor(userId: number | null): string {
+  return userId === null ? GUEST_THEME_KEY : `portfolio.theme.u${userId}`;
 }
 
-export function loadTheme(): ThemeState {
+/** Persist theme to localStorage (with ssr-safety noop). */
+export function saveTheme(theme: ThemeState, key: string = GUEST_THEME_KEY): void {
+  try { localStorage.setItem(key, JSON.stringify(theme)); } catch { /* noop */ }
+}
+
+export function loadTheme(key: string = GUEST_THEME_KEY): ThemeState {
   try {
-    const raw = localStorage.getItem('portfolio.theme');
+    const raw = localStorage.getItem(key);
     if (!raw) return { ...DEFAULT_THEME };
     const parsed = JSON.parse(raw) as Partial<ThemeState>;
     const merged = { ...DEFAULT_THEME, ...parsed };
     // Sanitize backfilled fields from older saves (ibiz_v2 parity)
     if (!['compact', 'normal', 'comfortable'].includes(merged.density as string)) merged.density = 'normal';
     if (![16, 24, 32].includes(merged.gridSize as number)) merged.gridSize = 24;
-    if (typeof merged.windowOpacity !== 'number' || Number.isNaN(merged.windowOpacity)) merged.windowOpacity = 1;
+    if (typeof merged.windowOpacity !== 'number' || Number.isNaN(merged.windowOpacity)) merged.windowOpacity = DEFAULT_THEME.windowOpacity;
     if (typeof merged.showTopBar !== 'boolean') merged.showTopBar = true;
     if (typeof merged.showSeconds !== 'boolean') merged.showSeconds = false;
     if (typeof merged.showHomeIndicator !== 'boolean') merged.showHomeIndicator = false;

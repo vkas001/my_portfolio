@@ -1,13 +1,15 @@
 import { useEffect, useMemo, useRef, useState } from 'react';
 import { useOS } from '@/context/OSContext';
+import { useAuth } from '@/context/AuthContext';
 import { APP_REGISTRY } from '@/apps/registry';
-import { Moon, Sun, RotateCcw, Search, Settings, Undo2, X } from 'lucide-react';
+import { Moon, Sun, RotateCcw, Search, Settings, Undo2, X, LogIn, CircleUserRound } from 'lucide-react';
 
 export default function StartMenu() {
   const {
     startMenuOpen, setStartMenuOpen, launchApp, closeAllWindows, theme, setTheme, resetTheme,
     windows,
   } = useOS();
+  const { user } = useAuth();
   const ref = useRef<HTMLDivElement>(null);
   const inputRef = useRef<HTMLInputElement>(null);
   const [searchTerm, setSearchTerm] = useState('');
@@ -34,9 +36,10 @@ export default function StartMenu() {
   }, [startMenuOpen]);
 
   const apps = useMemo(() => {
+    const visible = APP_REGISTRY.filter((a) => !a.system);
     const q = searchTerm.trim().toLowerCase();
-    if (!q) return APP_REGISTRY;
-    return APP_REGISTRY.filter(
+    if (!q) return visible;
+    return visible.filter(
       (a) => a.name.toLowerCase().includes(q) || (a.description ?? '').toLowerCase().includes(q),
     );
   }, [searchTerm]);
@@ -45,6 +48,11 @@ export default function StartMenu() {
 
   const openSettings = () => {
     launchApp('settings');
+    setStartMenuOpen(false);
+  };
+
+  const openAuth = () => {
+    launchApp('auth');
     setStartMenuOpen(false);
   };
 
@@ -129,6 +137,16 @@ export default function StartMenu() {
         >
           <Undo2 size={14} className="shrink-0" style={{ color: 'var(--accent)' }} />
           <span className="truncate">Restore Layout</span>
+        </button>
+        <button
+          onClick={openAuth}
+          className="w-full flex items-center gap-2.5 px-2.5 py-2 rounded-xl text-[12.5px] font-medium transition-colors cursor-pointer hover:bg-white/5"
+          style={{ color: 'var(--text-mid)' }}
+        >
+          {user
+            ? <CircleUserRound size={14} className="shrink-0" style={{ color: 'var(--accent)' }} />
+            : <LogIn size={14} className="shrink-0" style={{ color: 'var(--accent)' }} />}
+          <span className="truncate">{user ? user.name : 'Sign in'}</span>
         </button>
       </div>
 

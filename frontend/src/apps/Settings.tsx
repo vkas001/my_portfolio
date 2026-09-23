@@ -79,7 +79,7 @@ const TAB_DESCRIPTIONS: Record<TabId, string> = {
 
 export default function Settings() {
   const {
-    theme, setTheme, resetTheme,
+    theme, setTheme, resetTheme, isAdmin,
     widgetPlacements, addWidget, removeWidget,
   } = useOS();
   const [activeTab, setActiveTab] = useState<TabId>('personalization');
@@ -132,7 +132,7 @@ export default function Settings() {
           </div>
 
           {activeTab === 'personalization' && (
-            <PersonalizationTab isDark={isDark} palette={palette} theme={theme} setTheme={setTheme} />
+            <PersonalizationTab isDark={isDark} palette={palette} theme={theme} setTheme={setTheme} isAdmin={isAdmin} />
           )}
           {activeTab === 'interface' && <InterfaceTab theme={theme} setTheme={setTheme} />}
           {activeTab === 'taskbar' && <TaskbarTab theme={theme} setTheme={setTheme} />}
@@ -152,14 +152,21 @@ export default function Settings() {
 type SetTheme = (patch: Partial<ThemeState>) => void;
 
 // ─── Personalization ────────────────────────────────────────────────────────
-function PersonalizationTab({ isDark, palette, theme, setTheme }: {
+function PersonalizationTab({ isDark, palette, theme, setTheme, isAdmin }: {
   isDark: boolean;
   palette: typeof ACCENTS;
   theme: ThemeState;
   setTheme: SetTheme;
+  isAdmin: boolean;
 }) {
   return (
     <>
+      {!isAdmin && (
+        <p className="text-[11px] -mb-2" style={{ color: 'var(--text-low)' }}>
+          Browsing as guest — your changes apply to this session only.
+          Sign in as admin to update the live site.
+        </p>
+      )}
       <SectionCard title="Theme mode" icon={<Sun size={13} />}>
         <SegmentedControl
           value={theme.mode}
@@ -364,7 +371,7 @@ function InterfaceTab({ theme, setTheme }: { theme: ThemeState; setTheme: SetThe
 // ─── Taskbar — ported from ibiz_v2 TaskbarPanel ─────────────────────────────
 function TaskbarTab({ theme, setTheme }: { theme: ThemeState; setTheme: SetTheme }) {
   const pinned = theme.taskbarApps;
-  const available = APP_REGISTRY.filter((a) => !pinned.includes(a.id));
+  const available = APP_REGISTRY.filter((a) => !a.system && !pinned.includes(a.id));
 
   const add = (id: string) => setTheme({ taskbarApps: [...pinned, id] });
   const remove = (id: string) => setTheme({ taskbarApps: pinned.filter((x) => x !== id) });
@@ -488,7 +495,7 @@ function TaskbarTab({ theme, setTheme }: { theme: ThemeState; setTheme: SetTheme
           Apps that open automatically when the desktop loads.
         </p>
         <div className="grid grid-cols-12 gap-x-4">
-          {APP_REGISTRY.map((app) => (
+          {APP_REGISTRY.filter((app) => !app.system).map((app) => (
             <div key={app.id} className="col-span-12 @md:col-span-6">
             <SettingRow label={app.name}>
               <Toggle

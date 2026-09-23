@@ -1,5 +1,5 @@
 import { lazy } from 'react';
-import { User, Sparkles, Folder, Briefcase, Mail, Settings as SettingsIcon } from 'lucide-react';
+import { User, Code2, Folder, Briefcase, Mail, Settings as SettingsIcon, LogIn } from 'lucide-react';
 import type { AppDef } from '@/types';
 
 const About = lazy(() => import('./About'));
@@ -8,6 +8,7 @@ const Projects = lazy(() => import('./Projects'));
 const Experience = lazy(() => import('./Experience'));
 const Contact = lazy(() => import('./Contact'));
 const Settings = lazy(() => import('./Settings'));
+const Auth = lazy(() => import('./Auth'));
 
 export const APP_REGISTRY: AppDef[] = [
   {
@@ -23,7 +24,7 @@ export const APP_REGISTRY: AppDef[] = [
   {
     id: 'skills',
     name: 'Skills',
-    icon: Sparkles,
+    icon: Code2,
     color: '#06b6d4',
     component: Skills,
     defaultSize: { w: 640, h: 540 },
@@ -69,5 +70,17 @@ export const APP_REGISTRY: AppDef[] = [
     defaultSize: { w: 720, h: 560 },
     minSize: { w: 480, h: 400 },
     description: 'Theme, wallpaper and widgets',
+  },
+  {
+    id: 'auth',
+    name: 'Sign in',
+    icon: LogIn,
+    color: '#38bdf8',
+    component: Auth,
+    defaultSize: { w: 480, h: 540 },
+    minSize: { w: 400, h: 440 },
+    singleInstance: true,
+    system: true,
+    description: 'Admin sign in and account',
   },
 ];
