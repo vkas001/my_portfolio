@@ -1,8 +1,17 @@
 import { useCallback, useRef, type ReactNode } from 'react';
 import { useOS, getWorkspaceBounds } from '@/context/OSContext';
+import { useAuth } from '@/context/AuthContext';
 import { APP_REGISTRY } from '@/apps/registry';
-import type { WindowState } from '@/types';
-import { Expand, Minus, Shrink, Square, X } from 'lucide-react';
+import type { AppId, EditorSection, WindowState } from '@/types';
+import { Expand, Minus, Plus, Shrink, Square, X } from 'lucide-react';
+
+/** Content windows map to the portfolio section their editor manages. */
+const CONTENT_SECTION: Partial<Record<AppId, EditorSection>> = {
+  about: 'profile',
+  skills: 'skills',
+  projects: 'projects',
+  experience: 'experience',
+};
 
 interface Props {
   win: WindowState;
@@ -10,9 +19,12 @@ interface Props {
 }
 
 export default function WindowFrame({ win, children }: Props) {
-  const { theme, focusedId, focusWindow, closeWindow, minimizeWindow, toggleMaximize, toggleFullScreen, updateWindowRect } = useOS();
+  const { theme, focusedId, focusWindow, closeWindow, minimizeWindow, toggleMaximize, toggleFullScreen, updateWindowRect, launchApp } = useOS();
+  const { isAdmin } = useAuth();
   const app = APP_REGISTRY.find((a) => a.id === win.appId);
   const focused = focusedId === win.id;
+  const section = CONTENT_SECTION[win.appId];
+  const canEdit = isAdmin && !!section && !win.isFullScreen;
   const frameRef = useRef<HTMLDivElement>(null);
   const dragState = useRef<{ mode: 'move' | 'resize'; sx: number; sy: number; ox: number; oy: number; ow: number; oh: number } | null>(null);
 
@@ -68,6 +80,23 @@ export default function WindowFrame({ win, children }: Props) {
     [win, app, theme, focusWindow, updateWindowRect],
   );
 
+  // Admin "+"/edit: tile the current window into one half of the workspace
+  // and open the section editor docked into the other half, side by side.
+  const editContent = useCallback(() => {
+    if (!section) return;
+    if (win.maximized) toggleMaximize(win.id); // unmaximize before tiling
+    const b = getWorkspaceBounds(theme);
+    const gap = 12;
+    const editorMin = APP_REGISTRY.find((a) => a.id === 'editor')?.minSize ?? { w: 420, h: 460 };
+    const w = Math.max(editorMin.w, Math.floor((b.width - gap * 3) / 2));
+    const h = Math.max(editorMin.h, Math.floor(b.height - gap * 2));
+    const onLeft = win.x + win.w / 2 < b.width / 2;
+    const right = { x: Math.max(gap, b.width - gap - w), y: gap, w, h };
+    const left = { x: gap, y: gap, w, h };
+    updateWindowRect(win.id, onLeft ? left : right);
+    launchApp('editor', { rect: onLeft ? right : left, data: { section } });
+  }, [section, win.x, win.w, win.maximized, theme, toggleMaximize, updateWindowRect, launchApp]);
+
   // ibiz_v2 fullscreen parity: covers the entire viewport, above the top
   // bar and taskbar, with flat edges and no shadow.
   const style: React.CSSProperties = win.isFullScreen
@@ -114,6 +143,18 @@ export default function WindowFrame({ win, children }: Props) {
           </span>
         </div>
         <div className="flex items-center gap-1.5">
+          {canEdit && (
+            <button
+              className="icon-btn w-5 h-5"
+              aria-label="Edit content"
+              title={`Edit ${app?.name} content`}
+              onClick={(e) => { e.stopPropagation(); editContent(); }}
+              onPointerDown={(e) => e.stopPropagation()}
+              style={{ color: 'var(--accent)' }}
+            >
+              <Plus size={11} />
+            </button>
+          )}
           <button
             className="icon-btn w-5 h-5"
             aria-label={win.isFullScreen ? 'Exit full screen' : 'Full screen'}

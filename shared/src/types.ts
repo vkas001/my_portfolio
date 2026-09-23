@@ -114,6 +114,65 @@ export interface LoginResponse {
   user: AuthUser;
 }
 
+// ─── Admin content inputs ─────────────────────────────────────────────────────
+// Payloads for the auth.token-gated /admin/* endpoints. The frontend generates
+// a short id (crypto.randomUUID().slice(0,8)) for new records; PUTs key off the
+// URL id and may omit it from the body.
+export interface ProfileInput {
+  name: string;
+  title: string;
+  shortBio: string;
+  bio: string;
+  avatarUrl?: string | null;
+  resumeUrl?: string | null;
+  email: string;
+  location: string;
+  yearsExperience: number;
+  socials: {
+    id?: string;
+    label: string;
+    url: string;
+    icon: SocialLink['icon'];
+  }[];
+}
+
+export interface SkillInput {
+  id?: string;
+  name: string;
+  category: SkillCategory;
+  proficiency: number;
+  yearsUsed?: number;
+  icon?: string | null;
+}
+
+export interface ProjectInput {
+  id?: string;
+  title: string;
+  description: string;
+  longDescription?: string;
+  techStack?: string[];
+  category: string;
+  featured?: boolean;
+  liveUrl?: string | null;
+  githubUrl?: string | null;
+  imageUrl?: string | null;
+  year: number;
+  order?: number;
+}
+
+export interface ExperienceInput {
+  id?: string;
+  company: string;
+  role: string;
+  startDate: string; // YYYY-MM-DD
+  endDate?: string | null; // null = current
+  location: string;
+  employmentType: string;
+  highlights?: string[];
+  techStack?: string[];
+  order?: number;
+}
+
 // ─── API Envelope ───────────────────────────────────────────────────────────
 export interface ApiResponse<T> {
   ok: boolean;

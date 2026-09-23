@@ -1,9 +1,10 @@
 import { Suspense, useEffect, useState, type ComponentType, type ReactNode, Component } from 'react';
 import { APP_REGISTRY } from '@/apps/registry';
-import type { AppId } from '@/types';
+import type { AppId, WindowData } from '@/types';
 
-/** Hosts a lazy-loaded app module with loading + error fallbacks. */
-export default function ModuleHost({ appId }: { appId: AppId }) {
+/** Hosts a lazy-loaded app module with loading + error fallbacks. Passes the
+ *  window's launch data (editor section, focus target) into the module. */
+export default function ModuleHost({ appId, data }: { appId: AppId; data?: WindowData }) {
   const [error, setError] = useState<Error | null>(null);
   const app = APP_REGISTRY.find((a) => a.id === appId);
 
@@ -13,7 +14,7 @@ export default function ModuleHost({ appId }: { appId: AppId }) {
     return <p className="text-sm" style={{ color: 'var(--text-mid)' }}>Unknown app: {appId}</p>;
   }
 
-  const Comp = app.component as ComponentType;
+  const Comp = app.component as ComponentType<{ data?: WindowData }>;
 
   if (error) {
     return (
@@ -38,7 +39,7 @@ export default function ModuleHost({ appId }: { appId: AppId }) {
       }
     >
       <ErrorBoundary onError={setError}>
-        <Comp />
+        <Comp data={data} />
       </ErrorBoundary>
     </Suspense>
   );

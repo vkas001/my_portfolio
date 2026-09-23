@@ -1,5 +1,6 @@
 <?php
 
+use App\Http\Controllers\AdminController;
 use App\Http\Controllers\AuthController;
 use App\Http\Controllers\ContactController;
 use App\Http\Controllers\GitHubController;
@@ -44,6 +45,24 @@ Route::get('/theme', [ThemeController::class, 'show']);
 Route::middleware('auth.token')->group(function () {
     Route::put('/theme', [ThemeController::class, 'update']);
     Route::delete('/theme/reset', [ThemeController::class, 'reset']);
+});
+
+// Admin portfolio content CRUD — the theme guard above is the same one these
+// hang off: only a signed-in admin can write the live site.
+Route::middleware('auth.token')->group(function () {
+    Route::put('/admin/profile', [AdminController::class, 'updateProfile']);
+
+    Route::post('/admin/skills', [AdminController::class, 'storeSkill']);
+    Route::put('/admin/skills/{skill}', [AdminController::class, 'updateSkill']);
+    Route::delete('/admin/skills/{skill}', [AdminController::class, 'destroySkill']);
+
+    Route::post('/admin/projects', [AdminController::class, 'storeProject']);
+    Route::put('/admin/projects/{project}', [AdminController::class, 'updateProject']);
+    Route::delete('/admin/projects/{project}', [AdminController::class, 'destroyProject']);
+
+    Route::post('/admin/experience', [AdminController::class, 'storeExperience']);
+    Route::put('/admin/experience/{experience}', [AdminController::class, 'updateExperience']);
+    Route::delete('/admin/experience/{experience}', [AdminController::class, 'destroyExperience']);
 });
 
 // Single-admin auth: hand-rolled bearer tokens (no Sanctum — see conventions).

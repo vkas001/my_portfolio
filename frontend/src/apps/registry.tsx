@@ -1,5 +1,5 @@
 import { lazy } from 'react';
-import { User, Code2, Folder, Briefcase, Mail, Settings as SettingsIcon, LogIn } from 'lucide-react';
+import { Briefcase, Code2, Folder, LogIn, Mail, PencilLine, Settings as SettingsIcon, User } from 'lucide-react';
 import type { AppDef } from '@/types';
 
 const About = lazy(() => import('./About'));
@@ -9,6 +9,7 @@ const Experience = lazy(() => import('./Experience'));
 const Contact = lazy(() => import('./Contact'));
 const Settings = lazy(() => import('./Settings'));
 const Auth = lazy(() => import('./Auth'));
+const Editor = lazy(() => import('./Editor'));
 
 export const APP_REGISTRY: AppDef[] = [
   {
@@ -82,5 +83,17 @@ export const APP_REGISTRY: AppDef[] = [
     singleInstance: true,
     system: true,
     description: 'Admin sign in and account',
+  },
+  {
+    id: 'editor',
+    name: 'Editor',
+    icon: PencilLine,
+    color: '#38bdf8',
+    component: Editor,
+    defaultSize: { w: 620, h: 640 },
+    minSize: { w: 480, h: 520 },
+    singleInstance: false,
+    system: true,
+    description: 'Manage portfolio content live',
   },
 ];

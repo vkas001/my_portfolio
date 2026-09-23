@@ -1,6 +1,5 @@
-import { useEffect, useState } from 'react';
-import { fetchExperience } from '@/lib/api';
-import type { Experience } from '@shared/types';
+import { useMemo } from 'react';
+import { useContent } from '@/context/ContentContext';
 import { Building2 } from 'lucide-react';
 
 function fmt(iso: string) {
@@ -8,13 +7,8 @@ function fmt(iso: string) {
 }
 
 export default function Experience() {
-  const [items, setItems] = useState<Experience[]>([]);
-
-  useEffect(() => {
-    let alive = true;
-    fetchExperience().then((xs) => { if (alive) setItems(xs.sort((a, b) => a.order - b.order)); });
-    return () => { alive = false; };
-  }, []);
+  const { experience } = useContent();
+  const items = useMemo(() => [...experience].sort((a, b) => a.order - b.order), [experience]);
 
   if (!items.length) {
     return <p className="text-xs" style={{ color: 'var(--text-low)' }}>No experience data — add entries in backend/data/experience.json.</p>;

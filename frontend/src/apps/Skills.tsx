@@ -1,6 +1,6 @@
-import { useEffect, useMemo, useState } from 'react';
-import { fetchSkills } from '@/lib/api';
-import type { Skill, SkillCategory } from '@shared/types';
+import { useMemo, useState } from 'react';
+import { useContent } from '@/context/ContentContext';
+import type { SkillCategory } from '@shared/types';
 
 const CATEGORY_LABELS: Record<SkillCategory, string> = {
   languages: 'Languages',
@@ -23,14 +23,8 @@ const CATEGORY_COLORS: Record<SkillCategory, string> = {
 };
 
 export default function Skills() {
-  const [skills, setSkills] = useState<Skill[]>([]);
+  const { skills } = useContent();
   const [active, setActive] = useState<SkillCategory | 'all'>('all');
-
-  useEffect(() => {
-    let alive = true;
-    fetchSkills().then((s) => { if (alive) setSkills(s); });
-    return () => { alive = false; };
-  }, []);
 
   const categories = useMemo(
     () => [...new Set(skills.map((s) => s.category))],

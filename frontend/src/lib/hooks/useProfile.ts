@@ -1,24 +1,8 @@
-import { useEffect, useState } from 'react';
-import { fetchProfile } from '@/lib/api';
+import { useContent } from '@/context/ContentContext';
 import type { Profile } from '@shared/types';
 
-/** Shared profile fetch: one in-flight request reused by every consumer
- *  (About, TopBar, ProfileCard) instead of one fetch each. */
-let cached: Promise<Profile> | null = null;
-
-function getProfile(): Promise<Profile> {
-  if (!cached) cached = fetchProfile();
-  return cached;
-}
-
+/** Shared profile store: one fetch owned by ContentProvider, so every
+ *  consumer (About, TopBar, ProfileCard, editor) sees the same live data. */
 export function useProfile(): Profile | null {
-  const [profile, setProfile] = useState<Profile | null>(null);
-
-  useEffect(() => {
-    let alive = true;
-    getProfile().then((p) => { if (alive) setProfile(p); });
-    return () => { alive = false; };
-  }, []);
-
-  return profile;
+  return useContent().profile;
 }

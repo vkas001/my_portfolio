@@ -1,21 +1,16 @@
-import { useEffect, useMemo, useState } from 'react';
-import { fetchProjects } from '@/lib/api';
-import type { Project } from '@shared/types';
+import { useMemo, useState } from 'react';
+import { useContent } from '@/context/ContentContext';
 import { ExternalLink, Github, Star } from 'lucide-react';
 
 export default function Projects() {
-  const [projects, setProjects] = useState<Project[]>([]);
+  const { projects } = useContent();
   const [category, setCategory] = useState<string>('all');
   const [expanded, setExpanded] = useState<string | null>(null);
 
-  useEffect(() => {
-    let alive = true;
-    fetchProjects().then((ps) => { if (alive) setProjects(ps.sort((a, b) => a.order - b.order)); });
-    return () => { alive = false; };
-  }, []);
+  const sorted = useMemo(() => [...projects].sort((a, b) => a.order - b.order), [projects]);
 
   const categories = useMemo(() => [...new Set(projects.map((p) => p.category))], [projects]);
-  const filtered = projects.filter((p) => category === 'all' || p.category === category);
+  const filtered = sorted.filter((p) => category === 'all' || p.category === category);
 
   return (
     <div className="space-y-4">

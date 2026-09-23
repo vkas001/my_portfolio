@@ -5,7 +5,16 @@ import type { WidgetPlacement } from '@/theme';
 export type { WidgetPlacement };
 
 export type AppId =
-  | 'about' | 'skills' | 'projects' | 'experience' | 'contact' | 'settings' | 'auth';
+  | 'about' | 'skills' | 'projects' | 'experience' | 'contact' | 'settings' | 'auth' | 'editor';
+
+/** Which portfolio section an admin editor window manages. */
+export type EditorSection = 'profile' | 'skills' | 'projects' | 'experience';
+
+/** Per-window payload passed through launchApp into the app module. */
+export interface WindowData {
+  section?: EditorSection;
+  itemId?: string;
+}
 
 export interface AppDef {
   id: AppId;
@@ -33,6 +42,7 @@ export interface WindowState {
   maximized: boolean;
   isFullScreen: boolean;        // ibiz_v2 parity: covers viewport, hides taskbar
   prevRect?: { x: number; y: number; w: number; h: number };
+  data?: WindowData;
 }
 
 export type WidgetVariant = 'small' | 'medium' | 'large' | 'wide' | 'tall';

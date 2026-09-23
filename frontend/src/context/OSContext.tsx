@@ -21,12 +21,19 @@ import {
 } from '@/theme';
 import { useAuth } from '@/context/AuthContext';
 import { fitRectInBounds, fitWidgetRect, getWorkspaceBoundsFor, nextWidgetSlot } from '@/lib/osLayout';
-import type { AppDef, AppId, NotificationItem, WindowState, WidgetMeta, WidgetPlacement, WidgetVariant } from '@/types';
+import type { AppDef, AppId, NotificationItem, WindowData, WindowState, WidgetMeta, WidgetPlacement, WidgetVariant } from '@/types';
 import { sound } from '@/lib/sound';
 import { themeService } from '@/lib/api/themeService';
 import { APP_REGISTRY } from '@/apps/registry';
 
 export type ViewMode = 'web' | 'os';
+
+/** Extra launch input: a spawn rectangle (already in workspace coords) and
+ *  arbitrary per-window data the app module may read (editor section…). */
+export interface LaunchOptions {
+  rect?: { x: number; y: number; w: number; h: number };
+  data?: WindowData;
+}
 
 const VIEW_MODE_KEY = 'portfolio.viewMode';
 
@@ -58,7 +65,7 @@ export interface OSContextValue {
   // windows
   windows: WindowState[];
   focusedId: string | null;
-  launchApp: (appId: AppId) => void;
+  launchApp: (appId: AppId, opts?: LaunchOptions) => void;
   closeWindow: (id: string) => void;
   closeAllWindows: () => void;
   focusWindow: (id: string) => void;
@@ -294,13 +301,18 @@ export function OSProvider({ children }: { children: ReactNode }) {
   );
 
   const launchApp = useCallback(
-    (appId: AppId) => {
+    (appId: AppId, opts?: LaunchOptions) => {
       const app: AppDef | undefined = APP_REGISTRY.find((a) => a.id === appId);
       if (!app) return;
 
-      // Single instance: focus if already open (unminimize when collapsed)
-      const existing = windows.find((w) => w.appId === appId);
-      if (existing && app.singleInstance !== false) {
+      // Single instance (or one editor per section): focus if already open
+      const existing =
+        app.id === 'editor'
+          ? windows.find((w) => w.appId === appId && w.data?.section === opts?.data?.section)
+          : app.singleInstance !== false
+            ? windows.find((w) => w.appId === appId)
+            : undefined;
+      if (existing) {
         if (existing.minimized) restoreWindow(existing.id);
         else focusWindow(existing.id);
         return;
@@ -309,25 +321,39 @@ export function OSProvider({ children }: { children: ReactNode }) {
       const bounds = getWorkspaceBounds(theme);
       const minW = app.minSize?.w ?? 360;
       const minH = app.minSize?.h ?? 240;
-      const w = Math.min(app.defaultSize.w, bounds.width - 24);
-      const h = Math.min(app.defaultSize.h, bounds.height - 24);
+      const w = opts?.rect?.w ?? Math.min(app.defaultSize.w, bounds.width - 24);
+      const h = opts?.rect?.h ?? Math.min(app.defaultSize.h, bounds.height - 24);
       const offset = (windows.length % 6) * 28;
       instanceCounter += 1;
       const id = `${appId}#${instanceCounter}`;
       const fitted = fitRectInBounds(
-        {
-          x: Math.max(12, (bounds.width - w) / 2 - 60 + offset),
-          y: Math.max(12, (bounds.height - h) / 2 - 40 + offset),
-          w,
-          h,
-        },
+        opts?.rect
+          ? { x: opts.rect.x, y: opts.rect.y, w, h }
+          : {
+              x: Math.max(12, (bounds.width - w) / 2 - 60 + offset),
+              y: Math.max(12, (bounds.height - h) / 2 - 40 + offset),
+              w,
+              h,
+            },
         bounds,
         { w: minW, h: minH },
       );
 
       setWindows((ws) =>
         assignTopZ(
-          [...ws, { id, appId, ...fitted, z: Z_BASE, minimized: false, maximized: false, isFullScreen: false }],
+          [
+            ...ws,
+            {
+              id,
+              appId,
+              ...fitted,
+              z: Z_BASE,
+              minimized: false,
+              maximized: false,
+              isFullScreen: false,
+              ...(opts?.data ? { data: opts.data } : {}),
+            },
+          ],
           id,
           false,
         ),
