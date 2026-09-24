@@ -14,6 +14,10 @@ export type EditorSection = 'profile' | 'skills' | 'projects' | 'experience';
 export interface WindowData {
   section?: EditorSection;
   itemId?: string;
+  /** Editor windows only: the content window docked beside them via the "+"
+   *  action, plus that window's pre-tile rect so closing the editor can
+   *  restore it to its original size/position. */
+  dock?: { contentId: string; rect: { x: number; y: number; w: number; h: number } };
 }
 
 export interface AppDef {
@@ -40,7 +44,7 @@ export interface WindowState {
   z: number;
   minimized: boolean;
   maximized: boolean;
-  isFullScreen: boolean;        // ibiz_v2 parity: covers viewport, hides taskbar
+  isFullScreen: boolean;        // full screen: covers viewport, hides taskbar
   prevRect?: { x: number; y: number; w: number; h: number };
   data?: WindowData;
 }

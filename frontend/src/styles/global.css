@@ -192,6 +192,7 @@ button { font-family: inherit; }
 
 /* Traffic lights */
 .tl-btn {
+  position: relative;
   width: 12px;
   height: 12px;
   border-radius: 50%;
@@ -200,6 +201,15 @@ button { font-family: inherit; }
   cursor: pointer;
   opacity: .85;
   transition: transform .12s ease, opacity .12s ease;
+}
+/* Invisible 22px hit area: the pointer cursor kicks in immediately around
+   the 12px dot, not only on the dot itself (the titlebar drag grab no longer
+   shields the icons' vicinity). */
+.tl-btn::before {
+  content: '';
+  position: absolute;
+  inset: -5px;
+  border-radius: 50%;
 }
 .tl-btn:hover { transform: scale(1.18); opacity: 1; }
 .tl-close { background: #ff5f57; }
@@ -590,6 +600,7 @@ input:focus, textarea:focus, select:focus {
   min-height: 100vh;
   background: var(--wallpaper, var(--bg));
   color: var(--text-hi);
+  overflow-x: clip;
 }
 /* Reuse the OS topbar as a sticky web header. Later in the file + equal
  * specificity wins over both the OS absolute positioning and the
@@ -599,47 +610,110 @@ input:focus, textarea:focus, select:focus {
   top: 0;
   display: flex;
 }
-.web-nav {
+/* YouTube-style left rail: sticky under the topbar, icon + label rows.
+ * Collapses to icon-only on tablets and to a bottom tab bar on phones. */
+.web-shell {
+  display: flex;
+  align-items: flex-start;
+  width: 100%;
+  margin: 0 auto;
+}
+.web-rail {
   position: sticky;
   top: 40px;
-  z-index: 30;
+  z-index: 20;
+  width: 216px;
+  flex-shrink: 0;
   display: flex;
-  justify-content: center;
-  flex-wrap: wrap;
-  gap: 4px;
-  padding: 10px 16px;
-  backdrop-filter: blur(var(--glass-blur)) saturate(1.4);
-  -webkit-backdrop-filter: blur(var(--glass-blur)) saturate(1.4);
-  background: rgba(10, 10, 20, .45);
-  border-bottom: 1px solid var(--glass-border);
+  flex-direction: column;
+  gap: 2px;
+  padding: 10px 8px 0;
+  transition: width .18s ease;
 }
-:root[data-mode='light'] .web-nav {
-  background: rgba(255, 255, 255, .5);
-}
-.web-nav-link {
-  display: inline-flex;
+/* Pinned-left toggle: collapses the rail to icon-only and back. */
+.web-rail-toggle {
+  display: flex;
   align-items: center;
-  gap: 6px;
-  padding: 6px 12px;
+  gap: 12px;
+  margin-bottom: 4px;
+  padding: 8px 12px;
+  border: none;
   border-radius: var(--radius-sm);
+  background: transparent;
+  color: var(--text-mid);
   font-size: 12px;
+  font-weight: 600;
+  cursor: pointer;
+  transition: background .12s ease, color .12s ease;
+}
+.web-rail-toggle:hover {
+  background: rgba(var(--accent-rgb), .12);
+  color: var(--text-hi);
+}
+.web-rail-link {
+  display: flex;
+  align-items: center;
+  gap: 12px;
+  padding: 8px 12px;
+  border-radius: var(--radius-sm);
+  font-size: 13px;
   font-weight: 600;
   color: var(--text-mid);
   text-decoration: none;
+  transition: background .12s ease, color .12s ease;
 }
-.web-nav-link:hover {
-  background: rgba(var(--accent-rgb), .14);
+.web-rail-link:hover {
+  background: rgba(var(--accent-rgb), .12);
   color: var(--text-hi);
 }
+.web-rail-link.active {
+  background: rgba(var(--accent-rgb), .16);
+  color: var(--text-hi);
+}
+.web-rail-link.active .web-rail-ic,
+.web-rail-link:hover .web-rail-ic {
+  color: var(--accent);
+}
+.web-rail-ic {
+  display: inline-flex;
+  color: var(--text-low);
+}
+
+/* Collapsed (icon-only, YouTube-style mini rail). */
+.web-rail.collapsed {
+  width: 76px;
+  align-items: center;
+}
+.web-rail.collapsed .web-rail-link {
+  flex-direction: column;
+  gap: 2px;
+  padding: 8px 4px;
+  width: 100%;
+}
+.web-rail.collapsed .web-rail-label,
+.web-rail.collapsed .web-rail-toggle span {
+  display: none;
+}
+.web-rail.collapsed .web-rail-toggle {
+  padding: 10px 4px;
+  justify-content: center;
+}
+
+.web-content {
+  flex: 1;
+  min-width: 0;
+  display: flex;
+  justify-content: center;
+}
 .web-main {
+  width: 100%;
   max-width: 1080px;
-  margin: 0 auto;
-  padding: 28px 20px 72px;
+  padding: 28px 24px 72px;
   display: flex;
   flex-direction: column;
   gap: 48px;
 }
-.web-section-wrap { scroll-margin-top: 112px; }
+.web-section-wrap { scroll-margin-top: 56px; }
 .web-section {
   container-type: inline-size; /* anchor for reused OS app container queries */
   background: var(--bg-elev);
@@ -681,14 +755,17 @@ input:focus, textarea:focus, select:focus {
 }
 
 /* Web view is the public, document-level site (no OS window), so viewport
- * media are fair here — tight phone gutters so section content keeps room.
- */
-@media (max-width: 640px) {
-  .web-main { padding: 20px 14px 72px; gap: 40px; }
+ * media are fair here — the rail always stays leftmost, phones just get a
+ * slightly tighter shell and a narrower expanded rail. */
+@media (max-width: 639px) {
+  .web-shell { max-width: 100%; margin: 0; }
+  .web-rail { width: 190px; }
+  .web-rail.collapsed { width: 64px; }
+  .web-main { padding: 14px 10px 72px; gap: 40px; }
   .web-section { padding: 18px 14px; }
-  .web-nav { padding: 8px 10px; gap: 2px; }
+  .web-section-wrap { scroll-margin-top: 48px; }
 }
 @media (max-width: 380px) {
-  .web-main { padding: 16px 10px 64px; }
+  .web-main { padding: 12px 10px 72px; }
   .web-section { padding: 16px 12px; }
 }

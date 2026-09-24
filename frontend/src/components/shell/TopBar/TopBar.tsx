@@ -5,7 +5,7 @@ import { useShellUI } from '@/context/ShellUIContext';
 import { useProfile } from '@/modules/about';
 import UserAvatar from '@/components/ui/UserAvatar/UserAvatar';
 import { WIDGET_DEFS } from '@/modules/widgets';
-import { Bell, BellOff, Eye, EyeOff, Plus, X } from 'lucide-react';
+import { Bell, Eye, EyeOff, Plus, X } from 'lucide-react';
 import ViewToggle from '@/components/shell/ViewToggle/ViewToggle';
 
 export default function TopBar() {
@@ -92,7 +92,7 @@ export default function TopBar() {
             onClick={() => { setBellOpen((o) => !o); setPickerOpen(false); markNotificationsRead(); }}
             aria-label="Notifications"
           >
-            {unread ? <Bell size={14} /> : <BellOff size={14} />}
+            <Bell size={14} />
             {unread > 0 && (
               <span
                 className="absolute -top-0.5 -right-0.5 w-3.5 h-3.5 rounded-full text-[8px] flex items-center justify-center font-bold"

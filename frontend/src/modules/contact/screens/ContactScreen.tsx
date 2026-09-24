@@ -51,12 +51,12 @@ export default function Contact() {
         <div className="min-w-0">
           <p className="text-sm font-semibold">Let's build something</p>
           <button
-            className="text-xs flex items-center gap-1 hover:underline"
+            className="text-xs flex items-center gap-1 hover:underline min-w-0"
             style={{ color: 'var(--text-mid)' }}
             onClick={copyEmail}
             title="Copy email"
           >
-            {profile?.email ?? '…'} <Copy size={10} />
+            <span className="break-all">{profile?.email ?? '…'}</span> <Copy size={10} />
             {copied && <span style={{ color: 'var(--accent)' }}>copied!</span>}
           </button>
         </div>
@@ -72,7 +72,7 @@ export default function Contact() {
         </div>
       ) : (
         <form onSubmit={submit} className="space-y-3">
-          <div className="grid grid-cols-12 gap-3">
+          <div className="grid grid-cols-12 gap-x-2 gap-y-4 @md:gap-x-4">
             <Input required placeholder="Your name" value={form.name} onChange={(e) => setForm({ ...form, name: e.target.value })} className="col-span-12 @md:col-span-6" />
             <Input required type="email" placeholder="Email" value={form.email} onChange={(e) => setForm({ ...form, email: e.target.value })} className="col-span-12 @md:col-span-6" />
           </div>

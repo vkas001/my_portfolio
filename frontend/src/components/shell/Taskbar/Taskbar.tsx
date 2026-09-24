@@ -172,27 +172,26 @@ const Taskbar = memo(function Taskbar() {
   const allOsApps = [...pinnedOsApps, ...unpinnedRunning];
 
   // Auto-hide, ibiz_v2 parity: the bar hides fully; a bottom hover zone +
-  // chevron affordance reveals it (above maximized windows). A fullscreen
-  // tab forces auto-hide (ibiz hasFullScreenWindow) and hides the bar as
-  // soon as fullscreen opens. Stays put while menu/tray are open.
-  // NOTE: Escape deliberately does NOT exit fullscreen — ibiz_v2 parity —
-  // leave only via the titlebar full-screen button.
+  // chevron affordance reveals it. Stays put while menu/tray are open. A
+  // maximized tab pins the bar visible (the frame runs behind it); a full
+  // screen tab forces auto-hide and hides the bar as soon as fullscreen opens.
   const hasFullScreenWindow = windows.some((w) => w.isFullScreen && !w.minimized);
-  const autoHide = theme.taskbarMode === 'auto-hide' || hasFullScreenWindow;
+  const hasMaximizedWindow = windows.some((w) => w.maximized && !w.minimized);
+  const autoHide = hasFullScreenWindow || (theme.taskbarMode === 'auto-hide' && !hasMaximizedWindow);
   const hidden = autoHide && !taskbarVisible;
   const reveal = () => setTaskbarVisible(true);
   const hideBar = () => {
     if (!startMenuOpen && !isTrayOpen) setTaskbarVisible(false);
   };
 
-  // Hide the bar as soon as a tab goes fullscreen (ibiz_v2 Desktop parity);
-  // it stays revealed while the pointer is over the bar or bottom zone.
+const [isTrayOpen, setIsTrayOpen] = useState(false);
+  const trayRef = useRef<HTMLDivElement>(null);
+
+  // Hide the bar as soon as a tab goes fullscreen: the frame covers the
+  // whole viewport, so a lingering bar would float mid-screen over it.
   useEffect(() => {
     if (hasFullScreenWindow) setTaskbarVisible(false);
   }, [hasFullScreenWindow, setTaskbarVisible]);
-
-  const [isTrayOpen, setIsTrayOpen] = useState(false);
-  const trayRef = useRef<HTMLDivElement>(null);
 
   useEffect(() => {
     if (!isTrayOpen) return;
@@ -221,7 +220,7 @@ const Taskbar = memo(function Taskbar() {
     : 'h-12 w-12 flex items-center justify-center rounded-xl relative group transition-all cursor-pointer';
   const tooltipPos = windowsStyle ? 'bottom-12' : 'bottom-16';
 
-  // While a fullscreen tab is open the revealed bar must float above it
+  // While a full screen tab is open the revealed bar must float above it
   // (z-90), otherwise reveal would slide it invisibly underneath. Otherwise
   // the bar keeps its normal layer below fullscreen content.
   const floatAbove = hasFullScreenWindow && !hidden;

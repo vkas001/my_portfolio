@@ -34,7 +34,7 @@ export default function AboutHero() {
         borderColor: 'var(--border)',
       }}
     >
-      <div className="grid grid-cols-12 gap-5 items-center @2xl:gap-7 @2xl:items-start">
+      <div className="grid grid-cols-12 gap-2 items-center @sm:gap-5 @2xl:gap-7 @2xl:items-start">
         <div className="col-span-12 @2xl:col-span-7 flex items-center gap-4 min-w-0 @2xl:gap-5">
           <div
             className="shrink-0 p-[3px] rounded-full"
@@ -52,7 +52,7 @@ export default function AboutHero() {
           </div>
         </div>
 
-        <div className="col-span-12 @2xl:col-span-5 flex flex-col gap-3 @2xl:gap-4">
+        <div className="col-span-12 @2xl:col-span-5 flex flex-col gap-3 min-w-0 @2xl:gap-4">
           <div className="flex flex-wrap items-center gap-2">
             <span
               className="inline-flex items-center gap-1 rounded-full border px-2.5 py-1 text-xs"

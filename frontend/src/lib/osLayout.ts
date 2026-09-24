@@ -76,6 +76,25 @@ export function getWorkspaceBounds(
   );
 }
 
+/**
+ * Window bounds: the usable bottom edge is the very bottom of the viewport,
+ * *behind* the taskbar. The bar floats above tabs (z-80; window z stays in
+ * [41, 79]), so maximized/dragged tabs fill to the bottom of the screen.
+ * Widgets keep `getWorkspaceBounds` so they still sit above the bar.
+ */
+export function getWindowBounds(
+  theme?: Pick<ThemeState, 'showTopBar' | 'taskbarMode' | 'taskbarStyle'> | null,
+): ViewportBounds {
+  const t = theme ?? { showTopBar: true, taskbarMode: 'always', taskbarStyle: 'windows' };
+  const { top } = workspaceInsets(t);
+  return {
+    width: window.innerWidth,
+    height: Math.max(0, window.innerHeight - top),
+    top,
+    bottom: 0,
+  };
+}
+
 export interface Rect {
   x: number;
   y: number;

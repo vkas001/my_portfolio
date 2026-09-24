@@ -1,11 +1,11 @@
 import { useCallback, useRef, type ReactNode } from 'react';
 import { useTheme } from '@/context/ThemeContext';
 import { useWindows } from '@/context/WindowsContext';
-import { getWorkspaceBounds } from '@/lib/osLayout';
+import { getWindowBounds } from '@/lib/osLayout';
 import { useAuth } from '@/context/AuthContext';
 import { APP_REGISTRY } from '@/apps/registry';
 import type { AppId, EditorSection, WindowState } from '@/types';
-import { Expand, Minus, Plus, Shrink, Square, X } from 'lucide-react';
+import { Minus, Plus, Square, X } from 'lucide-react';
 
 /** Content windows map to the portfolio section their editor manages. */
 const CONTENT_SECTION: Partial<Record<AppId, EditorSection>> = {
@@ -29,50 +29,88 @@ export default function WindowFrame({ win, children }: Props) {
   const section = CONTENT_SECTION[win.appId];
   const canEdit = isAdmin && !!section && !win.isFullScreen;
   const frameRef = useRef<HTMLDivElement>(null);
-  const dragState = useRef<{ mode: 'move' | 'resize'; sx: number; sy: number; ox: number; oy: number; ow: number; oh: number } | null>(null);
 
-  // Maximized windows fill exactly the theme-aware workspace (no overlap/gap).
-  const bounds = getWorkspaceBounds(theme);
+  // Maximized windows fill the workspace down to the bottom of the viewport
+  // (the taskbar floats above the frame, so tabs run behind it).
+  const bounds = getWindowBounds(theme);
   const rect = win.maximized
     ? { x: 0, y: bounds.top, w: bounds.width, h: bounds.height }
     : { x: win.x, y: win.y + bounds.top, w: win.w, h: win.h };
 
+  // Drag/resize writes the frame geometry straight to the DOM on an
+  // rAF-coalesced schedule, so the window tracks the pointer with zero React
+  // re-renders and zero layout reads mid-drag (both used to make it lurch
+  // behind the mouse). The final rect is committed to context once on release.
   const startDrag = useCallback(
     (mode: 'move' | 'resize') => (e: React.PointerEvent) => {
       if (e.button !== 0) return;
       if (win.isFullScreen) return;
       if (win.maximized && mode === 'move') return;
       focusWindow(win.id);
-      dragState.current = { mode, sx: e.clientX, sy: e.clientY, ox: win.x, oy: win.y, ow: win.w, oh: win.h };
-      frameRef.current?.classList.add('window-dragging');
+      const el = frameRef.current;
+      if (!el) return;
+      el.classList.add('window-dragging');
       (e.target as HTMLElement).setPointerCapture(e.pointerId);
 
-      const onMove = (ev: PointerEvent) => {
-        const s = dragState.current;
-        if (!s) return;
-        const dx = ev.clientX - s.sx;
-        const dy = ev.clientY - s.sy;
-        const b = getWorkspaceBounds(theme);
-        const minW = app?.minSize?.w ?? 360;
-        const minH = app?.minSize?.h ?? 240;
+      // Bars can't change mid-drag, so measure the workspace once up front.
+      const s = {
+        mode,
+        sx: e.clientX,
+        sy: e.clientY,
+        ox: win.x,
+        oy: win.y,
+        ow: win.w,
+        oh: win.h,
+        minW: app?.minSize?.w ?? 360,
+        minH: app?.minSize?.h ?? 240,
+        bounds: getWindowBounds(theme),
+      };
+      let px = s.sx;
+      let py = s.sy;
+      let raf = 0;
 
-        if (s.mode === 'move') {
-          // Fully-contained: the window can never be pushed past an edge.
-          updateWindowRect(win.id, {
-            x: Math.min(Math.max(0, s.ox + dx), Math.max(0, b.width - s.ow)),
-            y: Math.min(Math.max(0, s.oy + dy), Math.max(0, b.height - s.oh)),
-          });
-        } else {
-          updateWindowRect(win.id, {
-            w: Math.min(Math.max(minW, s.ow + dx), Math.max(minW, b.width - s.ox)),
-            h: Math.min(Math.max(minH, s.oh + dy), Math.max(minH, b.height - s.oy)),
-          });
-        }
+      const compute = () => {
+        const dx = px - s.sx;
+        const dy = py - s.sy;
+        return s.mode === 'move'
+          ? {
+              x: Math.min(Math.max(0, s.ox + dx), Math.max(0, s.bounds.width - s.ow)),
+              y: Math.min(Math.max(0, s.oy + dy), Math.max(0, s.bounds.height - s.oh)),
+              w: s.ow,
+              h: s.oh,
+            }
+          : {
+              x: s.ox,
+              y: s.oy,
+              w: Math.min(Math.max(s.minW, s.ow + dx), Math.max(s.minW, s.bounds.width - s.ox)),
+              h: Math.min(Math.max(s.minH, s.oh + dy), Math.max(s.minH, s.bounds.height - s.oy)),
+            };
+      };
+
+      const paint = () => {
+        raf = 0;
+        const r = compute();
+        el.style.left = `${r.x}px`;
+        // State y is workspace-relative; the frame renders at + bounds.top
+        // (top bar). Write viewport coords to the DOM so drag/resize tracks
+        // the pointer, but keep the committed rect in workspace space.
+        el.style.top = `${r.y + s.bounds.top}px`;
+        el.style.width = `${r.w}px`;
+        el.style.height = `${r.h}px`;
+      };
+
+      const onMove = (ev: PointerEvent) => {
+        px = ev.clientX;
+        py = ev.clientY;
+        if (!raf) raf = window.requestAnimationFrame(paint);
       };
 
       const onUp = () => {
-        dragState.current = null;
-        frameRef.current?.classList.remove('window-dragging');
+        if (raf) window.cancelAnimationFrame(raf);
+        el.classList.remove('window-dragging');
+        const r = compute(); // last pointer wins even if a rAF never fired
+        paint();
+        updateWindowRect(win.id, r);
         window.removeEventListener('pointermove', onMove);
         window.removeEventListener('pointerup', onUp);
       };
@@ -88,7 +126,7 @@ export default function WindowFrame({ win, children }: Props) {
   const editContent = useCallback(() => {
     if (!section) return;
     if (win.maximized) toggleMaximize(win.id); // unmaximize before tiling
-    const b = getWorkspaceBounds(theme);
+    const b = getWindowBounds(theme);
     const gap = 12;
     const editorMin = APP_REGISTRY.find((a) => a.id === 'editor')?.minSize ?? { w: 420, h: 460 };
     const w = Math.max(editorMin.w, Math.floor((b.width - gap * 3) / 2));
@@ -97,11 +135,20 @@ export default function WindowFrame({ win, children }: Props) {
     const right = { x: Math.max(gap, b.width - gap - w), y: gap, w, h };
     const left = { x: gap, y: gap, w, h };
     updateWindowRect(win.id, onLeft ? left : right);
-    launchApp('editor', { rect: onLeft ? right : left, data: { section } });
-  }, [section, win.x, win.w, win.maximized, theme, toggleMaximize, updateWindowRect, launchApp]);
+    launchApp('editor', {
+      rect: onLeft ? right : left,
+      data: {
+        section,
+        // Remember the content window's pre-tile geometry so closing the
+        // editor can restore it (win.x/y/w/h hold the restore geometry even
+        // when the window started maximized).
+        dock: { contentId: win.id, rect: { x: win.x, y: win.y, w: win.w, h: win.h } },
+      },
+    });
+  }, [section, win.id, win.x, win.w, win.maximized, theme, toggleMaximize, updateWindowRect, launchApp]);
 
-  // ibiz_v2 fullscreen parity: covers the entire viewport, above the top
-  // bar and taskbar, with flat edges and no shadow.
+  // Full screen (green traffic light): covers the entire viewport, above the
+  // top bar and taskbar (which auto-hides), with flat edges and no shadow.
   const style: React.CSSProperties = win.isFullScreen
     ? {
         position: 'fixed',
@@ -159,17 +206,18 @@ export default function WindowFrame({ win, children }: Props) {
             </button>
           )}
           <button
-            className="icon-btn w-5 h-5"
+            className="tl-btn tl-min"
+            aria-label="Minimize"
+            onClick={(e) => { e.stopPropagation(); minimizeWindow(win.id); }}
+            onPointerDown={(e) => e.stopPropagation()}
+          />
+          <button
+            className="tl-btn tl-max"
             aria-label={win.isFullScreen ? 'Exit full screen' : 'Full screen'}
             title={win.isFullScreen ? 'Exit full screen' : 'Full screen'}
             onClick={(e) => { e.stopPropagation(); toggleFullScreen(win.id); }}
             onPointerDown={(e) => e.stopPropagation()}
-            style={{ color: 'var(--text-mid)' }}
-          >
-            {win.isFullScreen ? <Shrink size={11} /> : <Expand size={11} />}
-          </button>
-          <button className="tl-btn tl-min" aria-label="Minimize" onClick={(e) => { e.stopPropagation(); minimizeWindow(win.id); }} onPointerDown={(e) => e.stopPropagation()} />
-          <button className="tl-btn tl-max" aria-label="Maximize" onClick={(e) => { e.stopPropagation(); toggleMaximize(win.id); }} onPointerDown={(e) => e.stopPropagation()} />
+          />
           <button className="tl-btn tl-close" aria-label="Close" onClick={(e) => { e.stopPropagation(); closeWindow(win.id); }} onPointerDown={(e) => e.stopPropagation()} />
         </div>
       </div>
@@ -178,10 +226,12 @@ export default function WindowFrame({ win, children }: Props) {
 
       {app?.resizable !== false && !win.maximized && !win.isFullScreen && (
         <>
-          {/* corner + edge resize handles */}
-          <div onPointerDown={startDrag('resize')} className="absolute right-0 bottom-0 w-4 h-4 cursor-nwse-resize" />
-          <div onPointerDown={startDrag('resize')} className="absolute right-0 top-10 bottom-4 w-1.5 cursor-ew-resize" />
-          <div onPointerDown={startDrag('resize')} className="absolute left-0 right-4 bottom-0 h-1.5 cursor-ns-resize" />
+          {/* corner + edge resize handles. The frame has a large border-radius,
+              which clips its own corners — the corner grab must be big enough
+              that the rounded clip still leaves a usable hit target. */}
+          <div onPointerDown={startDrag('resize')} className="absolute right-0 bottom-0 w-6 h-6 cursor-nwse-resize" />
+          <div onPointerDown={startDrag('resize')} className="absolute right-0 top-10 bottom-4 w-2 cursor-ew-resize" />
+          <div onPointerDown={startDrag('resize')} className="absolute left-0 right-4 bottom-0 h-2 cursor-ns-resize" />
         </>
       )}
       {/* keep icon imports used for potential future toolbar */}

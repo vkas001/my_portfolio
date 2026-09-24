@@ -9,7 +9,7 @@ import {
   type ReactNode,
 } from 'react';
 import { useTheme } from '@/context/ThemeContext';
-import { fitRectInBounds, getWorkspaceBounds } from '@/lib/osLayout';
+import { fitRectInBounds, getWindowBounds } from '@/lib/osLayout';
 import type { AppDef, AppId, WindowData, WindowState } from '@/types';
 import { sound } from '@/lib/sound';
 import { APP_REGISTRY } from '@/apps/registry';
@@ -71,7 +71,7 @@ export function WindowsProvider({ children }: { children: ReactNode }) {
   const [windows, setWindows] = useState<WindowState[]>([]);
   const [focusedId, setFocusedId] = useState<string | null>(null);
   const startedRef = useRef(false);
-  const lastBoundsRef = useRef(getWorkspaceBounds());
+  const lastBoundsRef = useRef(getWindowBounds());
   const themeRef = useRef(theme);
   themeRef.current = theme;
 
@@ -111,7 +111,7 @@ export function WindowsProvider({ children }: { children: ReactNode }) {
         return;
       }
 
-      const bounds = getWorkspaceBounds(themeRef.current);
+      const bounds = getWindowBounds(themeRef.current);
       const minW = app.minSize?.w ?? 360;
       const minH = app.minSize?.h ?? 240;
       const w = opts?.rect?.w ?? Math.min(app.defaultSize.w, bounds.width - 24);
@@ -158,7 +158,24 @@ export function WindowsProvider({ children }: { children: ReactNode }) {
   );
 
   const closeWindow = useCallback((id: string) => {
-    setWindows((ws) => ws.filter((w) => w.id !== id));
+    setWindows((ws) => {
+      const closing = ws.find((w) => w.id === id);
+      // Closing a docked editor restores the content window it was tiled
+      // alongside back to its original size/position.
+      const dock = closing?.appId === 'editor' ? closing.data?.dock : undefined;
+      const next = dock
+        ? ws.map((w) => {
+            if (w.id !== dock.contentId || w.maximized || w.isFullScreen) return w;
+            const app = APP_REGISTRY.find((a) => a.id === w.appId);
+            const fit = fitRectInBounds(dock.rect, lastBoundsRef.current, {
+              w: app?.minSize?.w ?? 0,
+              h: app?.minSize?.h ?? 0,
+            });
+            return { ...w, ...fit };
+          })
+        : ws;
+      return next.filter((w) => w.id !== id);
+    });
     setFocusedId((f) => (f === id ? null : f));
     sound.close();
   }, []);
@@ -197,10 +214,10 @@ export function WindowsProvider({ children }: { children: ReactNode }) {
     [focusWindow],
   );
 
-  // ibiz_v2 toggleFullScreen parity: the tab covers the entire viewport
-  // (above topbar and taskbar) while the taskbar auto-hides. prevRect is
-  // shared with maximize: maximized windows keep their restore geometry in
-  // x/y/w/h, so entering fullscreen from maximized preserves it.
+  // Green-dot fullscreen: the tab covers the entire viewport (above topbar
+  // and taskbar) while the taskbar hides. prevRect is shared with maximize:
+  // maximized windows keep their restore geometry in x/y/w/h, so entering
+  // fullscreen from maximized preserves it.
   const toggleFullScreen = useCallback(
     (id: string) => {
       setWindows((ws) =>
@@ -252,12 +269,12 @@ export function WindowsProvider({ children }: { children: ReactNode }) {
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, []);
 
-  // Keep every window fully on-screen when the viewport shrinks or the bars
-  // change (topbar toggle, taskbar mode/style). Oversized rects shrink to fit
-  // instead of hanging cut off past an edge.
+  // Keep every window fully on-screen when the viewport shrinks or the top
+  // bar toggles. Oversized rects shrink to fit instead of hanging cut off
+  // past an edge.
   useEffect(() => {
     const reflow = () => {
-      const b = getWorkspaceBounds(themeRef.current);
+      const b = getWindowBounds(themeRef.current);
       lastBoundsRef.current = b;
       setWindows((ws) =>
         ws.map((w) => {
@@ -271,8 +288,6 @@ export function WindowsProvider({ children }: { children: ReactNode }) {
       );
     };
     reflow();
-    // The taskbar is DOM-measured: re-run after paint so a style/mode
-    // switch measures the new bar, not the previous one.
     const raf = requestAnimationFrame(reflow);
     const settled = window.setTimeout(reflow, 300);
     let t: number | undefined;
@@ -288,7 +303,7 @@ export function WindowsProvider({ children }: { children: ReactNode }) {
       cancelAnimationFrame(raf);
     };
     // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, [theme.showTopBar, theme.taskbarMode, theme.taskbarStyle]);
+  }, [theme.showTopBar]);
 
   const value = useMemo<WindowsContextValue>(
     () => ({

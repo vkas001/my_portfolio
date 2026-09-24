@@ -61,7 +61,7 @@ export default function StartMenu() {
   // bottom-left over a Windows bar, centered over the macOS dock.
   const macos = theme.taskbarStyle === 'macos';
 
-  // Above the fullscreen tab when one is open (matches the floating bar).
+  // Above a full screen tab when one is open (matches the floating bar).
   const menuLayer = windows.some((w) => w.isFullScreen && !w.minimized) ? 'z-[100]' : 'z-[80]';
 
   return (

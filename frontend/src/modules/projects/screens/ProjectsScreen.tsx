@@ -32,11 +32,11 @@ export default function Projects() {
           return (
             <article
               key={p.id}
-              className="col-span-12 @md:col-span-6 rounded-xl p-4 flex flex-col gap-2 cursor-pointer transition-transform hover:-translate-y-0.5"
+              className="col-span-12 min-w-0 @md:col-span-6 rounded-xl p-4 flex flex-col gap-2 cursor-pointer transition-transform hover:-translate-y-0.5"
               style={{ background: 'var(--accent-soft)', border: '1px solid var(--border)' }}
               onClick={() => setExpanded(open ? null : p.id)}
             >
-              <div className="flex items-start justify-between gap-2">
+              <div className="flex flex-wrap items-start justify-between gap-2">
                 <h3 className="text-sm font-semibold leading-tight">{p.title}</h3>
                 {p.featured && (
                   <span className="chip !py-0.5 !px-2 text-[10px] shrink-0">
