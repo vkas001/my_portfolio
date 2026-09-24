@@ -1,5 +1,7 @@
-import { inputCls } from '@/modules/editor/components/Field/Field';
+import Select from '@/components/ui/Select/Select';
 
+/** Editor-friendly adapter over the shared ui/Select dropdown: keeps the
+ *  old `{value, options, onChange, labels}` contract (string-only values). */
 export default function SelectInput<T extends string>({
   value,
   options,
@@ -12,10 +14,12 @@ export default function SelectInput<T extends string>({
   labels?: Record<T, string>;
 }) {
   return (
-    <select className={inputCls} value={value} onChange={(e) => onChange(e.target.value as T)}>
-      {options.map((o) => (
-        <option key={o} value={o}>{labels?.[o] ?? o}</option>
-      ))}
-    </select>
+    <Select
+      value={value}
+      options={options.map((o) => ({ value: o, label: labels?.[o] ?? o }))}
+      onChange={(v) => {
+        if (v !== null) onChange(v as T);
+      }}
+    />
   );
 }

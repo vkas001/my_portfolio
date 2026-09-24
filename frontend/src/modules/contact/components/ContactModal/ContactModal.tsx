@@ -1,6 +1,9 @@
 import { useState } from 'react';
 import { sendContact } from '@/lib/api';
 import { useShellUI } from '@/context/ShellUIContext';
+import Input from '@/components/ui/Input/Input';
+import TextArea from '@/components/ui/TextArea/TextArea';
+import toast from 'react-hot-toast';
 import { X, Send, LoaderCircle, Check } from 'lucide-react';
 
 interface Props {
@@ -25,16 +28,16 @@ export default function ContactModal({ open, onClose }: Props) {
     try {
       const res = await sendContact(form);
       setStatus('sent');
+      toast.success('Message sent');
       pushNotification({ title: 'Message sent', body: res.message });
       setTimeout(handleClose, 1600);
     } catch (err) {
+      const msg = err instanceof Error ? err.message : 'Failed to send';
       setStatus('error');
-      setError(err instanceof Error ? err.message : 'Failed to send');
+      setError(msg);
+      toast.error(msg);
     }
   };
-
-  const field =
-    'w-full text-sm';
 
   return (
     <div className="fixed inset-0 z-[90] flex items-center justify-center p-4 fade-in" style={{ background: 'rgba(0,0,0,.45)' }}>
@@ -57,11 +60,11 @@ export default function ContactModal({ open, onClose }: Props) {
         ) : (
           <form onSubmit={submit} className="flex flex-col gap-3">
             <div className="grid grid-cols-12 gap-3">
-              <input required placeholder="Your name" value={form.name} onChange={(e) => setForm({ ...form, name: e.target.value })} className={`${field} col-span-12 @md:col-span-6`} />
-              <input required type="email" placeholder="Email" value={form.email} onChange={(e) => setForm({ ...form, email: e.target.value })} className={`${field} col-span-12 @md:col-span-6`} />
+              <Input required placeholder="Your name" value={form.name} onChange={(e) => setForm({ ...form, name: e.target.value })} className="col-span-12 @md:col-span-6" />
+              <Input required type="email" placeholder="Email" value={form.email} onChange={(e) => setForm({ ...form, email: e.target.value })} className="col-span-12 @md:col-span-6" />
             </div>
-            <input required placeholder="Subject" value={form.subject} onChange={(e) => setForm({ ...form, subject: e.target.value })} className={field} />
-            <textarea required rows={5} placeholder="Message…" value={form.message} onChange={(e) => setForm({ ...form, message: e.target.value })} className={`${field} resize-none`} />
+            <Input required placeholder="Subject" value={form.subject} onChange={(e) => setForm({ ...form, subject: e.target.value })} />
+            <TextArea required rows={5} placeholder="Message…" value={form.message} onChange={(e) => setForm({ ...form, message: e.target.value })} textareaClassName="resize-none" />
             {status === 'error' && (
               <p className="text-xs" style={{ color: '#f87171' }}>{error}</p>
             )}

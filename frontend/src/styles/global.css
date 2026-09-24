@@ -679,3 +679,16 @@ input:focus, textarea:focus, select:focus {
   font-size: 12px;
   padding: 0 20px 48px;
 }
+
+/* Web view is the public, document-level site (no OS window), so viewport
+ * media are fair here — tight phone gutters so section content keeps room.
+ */
+@media (max-width: 640px) {
+  .web-main { padding: 20px 14px 72px; gap: 40px; }
+  .web-section { padding: 18px 14px; }
+  .web-nav { padding: 8px 10px; gap: 2px; }
+}
+@media (max-width: 380px) {
+  .web-main { padding: 16px 10px 64px; }
+  .web-section { padding: 16px 12px; }
+}

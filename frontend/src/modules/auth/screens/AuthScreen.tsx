@@ -4,6 +4,8 @@ import { useAuth } from '@/context/AuthContext';
 import { useWindows } from '@/context/WindowsContext';
 import { useShellUI } from '@/context/ShellUIContext';
 import SectionCard from '@/components/ui/SectionCard/SectionCard';
+import Input from '@/components/ui/Input/Input';
+import toast from 'react-hot-toast';
 import { HttpError } from '@/lib/api/httpClient';
 
 /**
@@ -37,7 +39,9 @@ export default function Auth() {
       });
       closeSelf();
     } catch (err) {
-      setError(err instanceof HttpError ? err.message : 'Sign in failed. Try again.');
+      const msg = err instanceof HttpError ? err.message : 'Sign in failed. Try again.';
+      setError(msg);
+      toast.error(msg);
     } finally {
       setBusy(false);
     }
@@ -81,28 +85,8 @@ export default function Auth() {
         ) : (
           <SectionCard title="Admin sign in" icon={<KeyRound size={13} />}>
             <form onSubmit={onSubmit} className="grid grid-cols-12 gap-3">
-              <label className="col-span-12 flex flex-col gap-1.5">
-                <span className="text-[11px] font-bold" style={{ color: 'var(--text-mid)' }}>Email</span>
-                <input
-                  type="text"
-                  autoComplete="username"
-                  value={email}
-                  onChange={(e) => setEmail(e.target.value)}
-                  placeholder="admin"
-                  className="w-full rounded-[var(--radius-sm)] px-3 py-2 text-[13px]"
-                />
-              </label>
-              <label className="col-span-12 flex flex-col gap-1.5">
-                <span className="text-[11px] font-bold" style={{ color: 'var(--text-mid)' }}>Password</span>
-                <input
-                  type="password"
-                  autoComplete="current-password"
-                  value={password}
-                  onChange={(e) => setPassword(e.target.value)}
-                  placeholder="••••••••"
-                  className="w-full rounded-[var(--radius-sm)] px-3 py-2 text-[13px]"
-                />
-              </label>
+              <Input className="col-span-12" label="Email" type="text" autoComplete="username" value={email} onChange={(e) => setEmail(e.target.value)} placeholder="admin" />
+              <Input className="col-span-12" label="Password" type="password" autoComplete="current-password" value={password} onChange={(e) => setPassword(e.target.value)} placeholder="••••••••" />
               {error && (
                 <p className="col-span-12 text-[12px] font-semibold" style={{ color: 'var(--error)' }}>
                   {error}

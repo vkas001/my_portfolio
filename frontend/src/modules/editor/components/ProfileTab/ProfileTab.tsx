@@ -2,8 +2,12 @@ import { useEffect, useRef, useState } from 'react';
 import { Check, LoaderCircle, Plus, Trash2, Upload, X } from 'lucide-react';
 import { useContent } from '@/context/ContentContext';
 import type { Profile, ProfileInput } from '@shared/types';
+import { SECTION_ICONS, SECTION_ICON_LABELS, type SectionIcon } from '@/modules/about';
 import Field, { inputCls, labelCls } from '@/modules/editor/components/Field/Field';
+import Input from '@/components/ui/Input/Input';
+import TextArea from '@/components/ui/TextArea/TextArea';
 import SelectInput from '@/modules/editor/components/SelectInput/SelectInput';
+import StringListInput from '@/modules/editor/components/StringListInput/StringListInput';
 import { SOCIAL_ICONS, type SaveBridge } from '@/modules/editor/lib/scaffolding';
 
 export default function ProfileTab({ commitRef, reportSave }: SaveBridge) {
@@ -42,6 +46,13 @@ export default function ProfileTab({ commitRef, reportSave }: SaveBridge) {
       title: p.title,
       shortBio: p.shortBio ?? '',
       bio: p.bio ?? '',
+      strengths: p.strengths ?? [],
+      personalNote: p.personalNote ?? '',
+      openToWork: p.openToWork ?? '',
+      strengthsTitle: p.strengthsTitle ?? '',
+      strengthsIcon: p.strengthsIcon || 'star',
+      personalNoteTitle: p.personalNoteTitle ?? '',
+      personalNoteIcon: p.personalNoteIcon || 'sparkles',
       avatarUrl: p.avatarUrl,
       resumeUrl: p.resumeUrl,
       email: p.email,
@@ -130,39 +141,75 @@ export default function ProfileTab({ commitRef, reportSave }: SaveBridge) {
           </div>
         </div>
         <div className="col-span-12">
-          <Field label="…or link an image URL (external host)">
-            <input className={inputCls} value={form.avatarUrl ?? ''} onChange={(e) => patch({ avatarUrl: e.target.value || null })} />
+          <Input label="…or link an image URL (external host)" value={form.avatarUrl ?? ''} onChange={(e) => patch({ avatarUrl: e.target.value || null })} />
+        </div>
+        <div className="col-span-12 @md:col-span-6">
+          <Input label="Name" value={form.name} onChange={(e) => patch({ name: e.target.value })} />
+        </div>
+        <div className="col-span-12 @md:col-span-6">
+          <Input label="Title" value={form.title} onChange={(e) => patch({ title: e.target.value })} />
+        </div>
+        <div className="col-span-12 @md:col-span-6">
+          <Input label="Email" type="email" value={form.email} onChange={(e) => patch({ email: e.target.value })} />
+        </div>
+        <div className="col-span-12 @md:col-span-6">
+          <Input label="Location" value={form.location} onChange={(e) => patch({ location: e.target.value })} />
+        </div>
+        <div className="col-span-12 @md:col-span-6">
+          <Input label="Years experience" type="number" min={0} max={60} value={form.yearsExperience} onChange={(e) => patch({ yearsExperience: Number(e.target.value) })} />
+        </div>
+        <div className="col-span-12 rounded-xl p-3 space-y-2.5" style={{ background: 'var(--bg-elev)', border: '1px solid var(--border)' }}>
+          <h3 className={labelCls} style={{ color: 'var(--accent)' }}>Opening</h3>
+          <Input label="Open-to-work badge" hint="Shown next to your location — leave empty to hide it" value={form.openToWork} onChange={(e) => patch({ openToWork: e.target.value })} />
+          <TextArea label="Description" hint="Who you are, what you build, and what you want to be hired or contacted for — recruiters stop reading here" rows={2} value={form.shortBio} onChange={(e) => patch({ shortBio: e.target.value })} />
+        </div>
+        <div className="col-span-12 rounded-xl p-3 space-y-2.5" style={{ background: 'var(--bg-elev)', border: '1px solid var(--border)' }}>
+          <h3 className={labelCls} style={{ color: 'var(--accent)' }}>What I'm good at</h3>
+          <div className="flex items-stretch gap-2">
+            <div className="flex-1">
+              <Input label="Section title" placeholder="What I'm good at" value={form.strengthsTitle} onChange={(e) => patch({ strengthsTitle: e.target.value })} />
+            </div>
+            <div className="w-36 shrink-0">
+              <Field label="Icon">
+                <SelectInput
+                  value={form.strengthsIcon as SectionIcon}
+                  options={[...SECTION_ICONS]}
+                  labels={SECTION_ICON_LABELS}
+                  onChange={(strengthsIcon) => patch({ strengthsIcon })}
+                />
+              </Field>
+            </div>
+          </div>
+          <Field label="Description" hint="One strength per line">
+            <StringListInput
+              value={form.strengths ?? []}
+              onChange={(strengths) => patch({ strengths })}
+              placeholder="One strength per line"
+              rows={4}
+            />
           </Field>
         </div>
-        <div className="col-span-12 @md:col-span-6">
-          <Field label="Name"><input className={inputCls} value={form.name} onChange={(e) => patch({ name: e.target.value })} /></Field>
-        </div>
-        <div className="col-span-12 @md:col-span-6">
-          <Field label="Title"><input className={inputCls} value={form.title} onChange={(e) => patch({ title: e.target.value })} /></Field>
-        </div>
-        <div className="col-span-12 @md:col-span-6">
-          <Field label="Email"><input type="email" className={inputCls} value={form.email} onChange={(e) => patch({ email: e.target.value })} /></Field>
-        </div>
-        <div className="col-span-12 @md:col-span-6">
-          <Field label="Location"><input className={inputCls} value={form.location} onChange={(e) => patch({ location: e.target.value })} /></Field>
-        </div>
-        <div className="col-span-12 @md:col-span-6">
-          <Field label="Years experience">
-            <input type="number" min={0} max={60} className={inputCls} value={form.yearsExperience} onChange={(e) => patch({ yearsExperience: Number(e.target.value) })} />
-          </Field>
+        <div className="col-span-12 rounded-xl p-3 space-y-2.5" style={{ background: 'var(--bg-elev)', border: '1px solid var(--border)' }}>
+          <h3 className={labelCls} style={{ color: 'var(--accent)' }}>A bit about me</h3>
+          <div className="flex items-stretch gap-2">
+            <div className="flex-1">
+              <Input label="Section title" placeholder="A bit about me" value={form.personalNoteTitle} onChange={(e) => patch({ personalNoteTitle: e.target.value })} />
+            </div>
+            <div className="w-36 shrink-0">
+              <Field label="Icon">
+                <SelectInput
+                  value={form.personalNoteIcon as SectionIcon}
+                  options={[...SECTION_ICONS]}
+                  labels={SECTION_ICON_LABELS}
+                  onChange={(personalNoteIcon) => patch({ personalNoteIcon })}
+                />
+              </Field>
+            </div>
+          </div>
+          <TextArea label="Description" hint="Location, interests, what you're exploring now" rows={3} value={form.personalNote} onChange={(e) => patch({ personalNote: e.target.value })} />
         </div>
         <div className="col-span-12">
-          <Field label="Résumé URL"><input className={inputCls} value={form.resumeUrl ?? ''} onChange={(e) => patch({ resumeUrl: e.target.value || null })} /></Field>
-        </div>
-        <div className="col-span-12">
-          <Field label="Short bio">
-            <textarea className={`${inputCls} resize-y`} rows={2} value={form.shortBio} onChange={(e) => patch({ shortBio: e.target.value })} />
-          </Field>
-        </div>
-        <div className="col-span-12">
-          <Field label="Bio">
-            <textarea className={`${inputCls} resize-y`} rows={4} value={form.bio} onChange={(e) => patch({ bio: e.target.value })} />
-          </Field>
+          <TextArea label="Bio — the longer story" rows={4} value={form.bio} onChange={(e) => patch({ bio: e.target.value })} />
         </div>
       </div>
 

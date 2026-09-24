@@ -1,4 +1,4 @@
-import { useProfile } from '@/lib/hooks';
+import { useProfile } from '@/modules/about';
 import { Mail, Github, Linkedin } from 'lucide-react';
 import { useWindows } from '@/context/WindowsContext';
 

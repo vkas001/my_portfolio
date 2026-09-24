@@ -214,6 +214,8 @@ class AdminContentTest extends TestCase
             'title' => 'Platform Engineer',
             'shortBio' => 'Short.',
             'bio' => 'Longer bio.',
+            'personalNote' => 'Remote · Kathmandu. Exploring TV apps.',
+            'strengths' => ['Ship complete products', 'Own deployment and servers'],
             'avatarUrl' => null,
             'resumeUrl' => null,
             'email' => 'me@example.com',
@@ -226,6 +228,8 @@ class AdminContentTest extends TestCase
             ->assertJsonPath('ok', true)
             ->assertJsonPath('data.name', 'Vikas')
             ->assertJsonPath('data.yearsExperience', 6)
+            ->assertJsonPath('data.personalNote', 'Remote · Kathmandu. Exploring TV apps.')
+            ->assertJsonCount(2, 'data.strengths')
             ->assertJsonPath('data.socials.0.url', 'https://github.com/vikas');
 
         // Second save replaces the list, old links gone.
@@ -245,6 +249,53 @@ class AdminContentTest extends TestCase
         $this->getJson('/api/profile')->assertOk()
             ->assertJsonPath('data.name', 'Vikas')
             ->assertJsonPath('data.socials.0.label', 'LinkedIn');
+    }
+
+    public function test_profile_personal_note_and_strengths_round_trip(): void
+    {
+        $this->putJson('/api/admin/profile', [
+            'name' => 'Vikas',
+            'title' => 'Platform Engineer',
+            'personalNote' => 'Remote · Kathmandu. Exploring TV apps.',
+            'strengths' => ['Ship complete products', 'Own deployment and servers'],
+            'openToWork' => 'Open to contracts',
+            'strengthsTitle' => 'Specialities',
+            'strengthsIcon' => 'rocket',
+            'personalNoteTitle' => 'Beyond the code',
+            'personalNoteIcon' => 'none',
+            'email' => 'me@example.com',
+            'location' => 'Kathmandu',
+            'yearsExperience' => 6,
+            'socials' => [],
+        ], $this->headers)->assertOk()
+            ->assertJsonPath('data.personalNote', 'Remote · Kathmandu. Exploring TV apps.')
+            ->assertJsonCount(2, 'data.strengths')
+            ->assertJsonPath('data.openToWork', 'Open to contracts')
+            ->assertJsonPath('data.strengthsTitle', 'Specialities')
+            ->assertJsonPath('data.strengthsIcon', 'rocket')
+            ->assertJsonPath('data.personalNoteTitle', 'Beyond the code')
+            ->assertJsonPath('data.personalNoteIcon', 'none');
+
+        $this->getJson('/api/profile')->assertOk()
+            ->assertJsonPath('data.personalNote', 'Remote · Kathmandu. Exploring TV apps.')
+            ->assertJsonPath('data.strengths.0', 'Ship complete products')
+            ->assertJsonPath('data.strengths.1', 'Own deployment and servers')
+            ->assertJsonPath('data.openToWork', 'Open to contracts')
+            ->assertJsonPath('data.strengthsIcon', 'rocket')
+            ->assertJsonPath('data.personalNoteIcon', 'none');
+    }
+
+    public function test_profile_display_fields_reject_unknown_icon(): void
+    {
+        $this->putJson('/api/admin/profile', [
+            'name' => 'V',
+            'title' => 'T',
+            'email' => 'a@b.c',
+            'location' => 'L',
+            'yearsExperience' => 1,
+            'strengthsIcon' => 'mystery-icon',
+            'socials' => [],
+        ], $this->headers)->assertStatus(422)->assertJsonPath('ok', false);
     }
 
     public function test_profile_validation_rejects_invalid_social_icon(): void

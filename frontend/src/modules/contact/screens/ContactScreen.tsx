@@ -1,7 +1,10 @@
 import { useState } from 'react';
 import { sendContact } from '@/lib/api';
-import { useProfile } from '@/lib/hooks';
+import { useProfile } from '@/modules/about';
 import { useShellUI } from '@/context/ShellUIContext';
+import Input from '@/components/ui/Input/Input';
+import TextArea from '@/components/ui/TextArea/TextArea';
+import toast from 'react-hot-toast';
 import { Send, LoaderCircle, Check, Copy, Mail } from 'lucide-react';
 
 export default function Contact() {
@@ -19,11 +22,14 @@ export default function Contact() {
     try {
       const res = await sendContact(form);
       setStatus('sent');
+      toast.success('Message sent');
       pushNotification({ title: 'Message sent', body: res.message });
       setForm({ name: '', email: '', subject: '', message: '' });
     } catch (err) {
+      const msg = err instanceof Error ? err.message : 'Failed to send';
       setStatus('error');
-      setError(err instanceof Error ? err.message : 'Failed to send');
+      setError(msg);
+      toast.error(msg);
     }
   };
 
@@ -67,11 +73,11 @@ export default function Contact() {
       ) : (
         <form onSubmit={submit} className="space-y-3">
           <div className="grid grid-cols-12 gap-3">
-            <input required placeholder="Your name" value={form.name} onChange={(e) => setForm({ ...form, name: e.target.value })} className="col-span-12 @md:col-span-6 w-full text-sm" />
-            <input required type="email" placeholder="Email" value={form.email} onChange={(e) => setForm({ ...form, email: e.target.value })} className="col-span-12 @md:col-span-6 w-full text-sm" />
+            <Input required placeholder="Your name" value={form.name} onChange={(e) => setForm({ ...form, name: e.target.value })} className="col-span-12 @md:col-span-6" />
+            <Input required type="email" placeholder="Email" value={form.email} onChange={(e) => setForm({ ...form, email: e.target.value })} className="col-span-12 @md:col-span-6" />
           </div>
-          <input required placeholder="Subject" value={form.subject} onChange={(e) => setForm({ ...form, subject: e.target.value })} className="w-full text-sm" />
-          <textarea required rows={5} placeholder="Tell me about your project…" value={form.message} onChange={(e) => setForm({ ...form, message: e.target.value })} className="w-full text-sm resize-none" />
+          <Input required placeholder="Subject" value={form.subject} onChange={(e) => setForm({ ...form, subject: e.target.value })} />
+          <TextArea required rows={5} placeholder="Tell me about your project…" value={form.message} onChange={(e) => setForm({ ...form, message: e.target.value })} textareaClassName="resize-none" />
           {status === 'error' && <p className="text-xs" style={{ color: 'var(--error)' }}>{error}</p>}
           <button type="submit" disabled={status === 'sending'} className="btn-accent text-xs disabled:opacity-60">
             {status === 'sending' ? <LoaderCircle size={13} className="animate-spin" /> : <Send size={13} />}

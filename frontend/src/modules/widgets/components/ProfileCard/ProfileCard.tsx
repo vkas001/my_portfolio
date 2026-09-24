@@ -1,4 +1,4 @@
-import { useProfile } from '@/lib/hooks';
+import { useProfile } from '@/modules/about';
 import UserAvatar from '@/components/ui/UserAvatar/UserAvatar';
 
 export default function ProfileCard() {

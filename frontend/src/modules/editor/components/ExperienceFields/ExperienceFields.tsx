@@ -1,6 +1,7 @@
 import { useEffect } from 'react';
 import type { Experience } from '@shared/types';
-import Field, { inputCls } from '@/modules/editor/components/Field/Field';
+import Field from '@/modules/editor/components/Field/Field';
+import Input from '@/components/ui/Input/Input';
 import SelectInput from '@/modules/editor/components/SelectInput/SelectInput';
 import StringListInput from '@/modules/editor/components/StringListInput/StringListInput';
 
@@ -28,15 +29,15 @@ export default function ExperienceFields({
     <>
       <div className="grid grid-cols-12 gap-3">
         <div className="col-span-6">
-          <Field label="Role"><input className={inputCls} value={d.role} onChange={(e) => set({ role: e.target.value })} /></Field>
+          <Input label="Role" value={d.role} onChange={(e) => set({ role: e.target.value })} />
         </div>
         <div className="col-span-6">
-          <Field label="Company"><input className={inputCls} value={d.company} onChange={(e) => set({ company: e.target.value })} /></Field>
+          <Input label="Company" value={d.company} onChange={(e) => set({ company: e.target.value })} />
         </div>
       </div>
       <div className="grid grid-cols-12 gap-3">
         <div className="col-span-6">
-          <Field label="Location"><input className={inputCls} value={d.location} onChange={(e) => set({ location: e.target.value })} /></Field>
+          <Input label="Location" value={d.location} onChange={(e) => set({ location: e.target.value })} />
         </div>
         <div className="col-span-6">
           <Field label="Employment type">
@@ -50,12 +51,10 @@ export default function ExperienceFields({
       </div>
       <div className="grid grid-cols-12 gap-3 items-end">
         <div className="col-span-5">
-          <Field label="Start date"><input type="date" className={inputCls} value={d.startDate} onChange={(e) => set({ startDate: e.target.value })} /></Field>
+          <Input label="Start date" type="date" value={d.startDate} onChange={(e) => set({ startDate: e.target.value })} />
         </div>
         <div className="col-span-5">
-          <Field label="End date">
-            <input type="date" className={inputCls} disabled={present} value={d.endDate ?? ''} onChange={(e) => set({ endDate: e.target.value || null })} />
-          </Field>
+          <Input label="End date" type="date" disabled={present} value={d.endDate ?? ''} onChange={(e) => set({ endDate: e.target.value || null })} />
         </div>
         <div className="col-span-2 flex items-center justify-end pb-2">
           <label className="flex items-center gap-1.5 text-xs cursor-pointer" style={{ color: 'var(--text-mid)' }}>

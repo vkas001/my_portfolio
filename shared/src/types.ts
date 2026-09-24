@@ -5,6 +5,20 @@ export interface Profile {
   title: string;
   bio: string;
   shortBio: string;
+  /** Scannable "what I'm good at" bullets (full-ownership/focus highlights). */
+  strengths: string[];
+  /** Short personal note — location, interests, what you're exploring now. */
+  personalNote: string;
+  /** Availability badge text shown next to location (empty = hidden). */
+  openToWork: string;
+  /** Editable section heading for the strengths block. */
+  strengthsTitle: string;
+  /** Lucide icon name rendered before the strengths heading. */
+  strengthsIcon: string;
+  /** Editable heading for the personal-note block. */
+  personalNoteTitle: string;
+  /** Lucide icon name rendered before the personal-note heading. */
+  personalNoteIcon: string;
   avatarUrl: string | null;
   resumeUrl: string | null;
   email: string;
@@ -123,6 +137,13 @@ export interface ProfileInput {
   title: string;
   shortBio: string;
   bio: string;
+  strengths?: string[];
+  personalNote?: string;
+  openToWork?: string;
+  strengthsTitle?: string;
+  strengthsIcon?: string;
+  personalNoteTitle?: string;
+  personalNoteIcon?: string;
   avatarUrl?: string | null;
   resumeUrl?: string | null;
   email: string;

@@ -1,5 +1,7 @@
 import type { Project } from '@shared/types';
-import Field, { inputCls } from '@/modules/editor/components/Field/Field';
+import Field from '@/modules/editor/components/Field/Field';
+import Input from '@/components/ui/Input/Input';
+import TextArea from '@/components/ui/TextArea/TextArea';
 import StringListInput from '@/modules/editor/components/StringListInput/StringListInput';
 
 export default function ProjectFields({
@@ -13,21 +15,15 @@ export default function ProjectFields({
     <>
       <div className="grid grid-cols-12 gap-3">
         <div className="col-span-7">
-          <Field label="Title">
-            <input className={inputCls} value={d.title} onChange={(e) => set({ title: e.target.value })} />
-          </Field>
+          <Input label="Title" value={d.title} onChange={(e) => set({ title: e.target.value })} />
         </div>
         <div className="col-span-5">
-          <Field label="Category">
-            <input className={inputCls} value={d.category} onChange={(e) => set({ category: e.target.value })} />
-          </Field>
+          <Input label="Category" value={d.category} onChange={(e) => set({ category: e.target.value })} />
         </div>
       </div>
       <div className="grid grid-cols-12 gap-3">
         <div className="col-span-6">
-          <Field label="Year">
-            <input type="number" min={1990} max={2100} className={inputCls} value={d.year} onChange={(e) => set({ year: Number(e.target.value) })} />
-          </Field>
+          <Input label="Year" type="number" min={1990} max={2100} value={d.year} onChange={(e) => set({ year: Number(e.target.value) })} />
         </div>
         <div className="col-span-6 flex items-end pb-1">
           <label className="flex items-center gap-2 text-xs cursor-pointer" style={{ color: 'var(--text-mid)' }}>
@@ -35,21 +31,17 @@ export default function ProjectFields({
           </label>
         </div>
       </div>
-      <Field label="Short description">
-        <textarea className={`${inputCls} resize-y`} rows={2} value={d.description} onChange={(e) => set({ description: e.target.value })} />
-      </Field>
-      <Field label="Long description">
-        <textarea className={`${inputCls} resize-y`} rows={3} value={d.longDescription ?? ''} onChange={(e) => set({ longDescription: e.target.value })} />
-      </Field>
+      <TextArea label="Short description" rows={2} value={d.description} onChange={(e) => set({ description: e.target.value })} />
+      <TextArea label="Long description" rows={3} value={d.longDescription ?? ''} onChange={(e) => set({ longDescription: e.target.value })} />
       <Field label="Tech stack">
         <StringListInput value={d.techStack} onChange={(v) => set({ techStack: v })} />
       </Field>
       <div className="grid grid-cols-12 gap-3">
         <div className="col-span-6">
-          <Field label="Live URL"><input className={inputCls} value={d.liveUrl ?? ''} onChange={(e) => set({ liveUrl: e.target.value || null })} /></Field>
+          <Input label="Live URL" value={d.liveUrl ?? ''} onChange={(e) => set({ liveUrl: e.target.value || null })} />
         </div>
         <div className="col-span-6">
-          <Field label="Source URL"><input className={inputCls} value={d.githubUrl ?? ''} onChange={(e) => set({ githubUrl: e.target.value || null })} /></Field>
+          <Input label="Source URL" value={d.githubUrl ?? ''} onChange={(e) => set({ githubUrl: e.target.value || null })} />
         </div>
       </div>
     </>

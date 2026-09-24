@@ -3,17 +3,15 @@ import type {
   ContactResponse,
   Experience,
   GitHubStats,
-  Profile,
   Project,
   Skill,
 } from '@shared/types';
 import { http } from './httpClient';
-import { localProfile, localProjects, localSkills } from '@/data/portfolio';
+import { localProjects, localSkills } from '@/data/portfolio';
 
-/** Fetch profile, falling back to local seed data when offline. */
-export async function fetchProfile(): Promise<Profile> {
-  try { return await http.get<Profile>('/profile'); } catch { return localProfile; }
-}
+/** Profile fetching lives in the About module (its own store + offline seed).
+ *  Re-exported here to keep ContentContext's data layer import stable. */
+export { fetchProfile } from '@/modules/about/lib/services';
 
 export async function fetchSkills(): Promise<Skill[]> {
   try { return await http.get<Skill[]>('/skills'); } catch { return localSkills; }

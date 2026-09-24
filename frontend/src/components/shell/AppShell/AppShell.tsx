@@ -3,6 +3,7 @@ import { useWindows } from '@/context/WindowsContext';
 import { useShellUI } from '@/context/ShellUIContext';
 import Desktop from '@/components/shell/Desktop/Desktop';
 import Spotlight from '@/components/shell/Spotlight/Spotlight';
+import Toaster from '@/components/shell/Toaster/Toaster';
 import WebView from '@/components/shell/WebView/WebView';
 import { ContactModal } from '@/modules/contact';
 import { matchShortcut } from '@/lib/shortcuts';
@@ -48,6 +49,7 @@ export default function AppShell() {
 
   return (
     <>
+      <Toaster />
       <Spotlight />
       <ContactModal />
       {viewMode === 'web' ? <WebView /> : <Desktop />}

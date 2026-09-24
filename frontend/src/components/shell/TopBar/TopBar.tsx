@@ -2,7 +2,7 @@ import { useEffect, useRef, useState } from 'react';
 import { useTheme } from '@/context/ThemeContext';
 import { useWidgets } from '@/context/WidgetsContext';
 import { useShellUI } from '@/context/ShellUIContext';
-import { useProfile } from '@/lib/hooks';
+import { useProfile } from '@/modules/about';
 import UserAvatar from '@/components/ui/UserAvatar/UserAvatar';
 import { WIDGET_DEFS } from '@/modules/widgets';
 import { Bell, BellOff, Eye, EyeOff, Plus, X } from 'lucide-react';

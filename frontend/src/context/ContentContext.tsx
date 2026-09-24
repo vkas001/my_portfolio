@@ -20,6 +20,7 @@ import type {
 import { fetchExperience, fetchProfile, fetchProjects, fetchSkills } from '@/lib/api';
 import { adminService } from '@/lib/api/adminService';
 import { useShellUI } from '@/context/ShellUIContext';
+import toast from 'react-hot-toast';
 import type { EditorSection } from '@/types';
 
 export type { EditorSection };
@@ -132,7 +133,10 @@ function useItems<T extends AnyItem>(loader: () => Promise<T[]>): {
 export function ContentProvider({ children }: { children: ReactNode }) {
   const { pushNotification } = useShellUI();
   const note = useCallback(
-    (msg: string) => pushNotification({ title: 'Editor sync failed', body: msg }),
+    (msg: string) => {
+      toast.error(msg);
+      pushNotification({ title: 'Editor sync failed', body: msg });
+    },
     [pushNotification],
   );
 
@@ -175,6 +179,13 @@ export function ContentProvider({ children }: { children: ReactNode }) {
         title: input.title,
         shortBio: input.shortBio,
         bio: input.bio,
+        strengths: input.strengths ?? [],
+        personalNote: input.personalNote ?? '',
+        openToWork: input.openToWork ?? '',
+        strengthsTitle: input.strengthsTitle ?? '',
+        strengthsIcon: input.strengthsIcon ?? '',
+        personalNoteTitle: input.personalNoteTitle ?? '',
+        personalNoteIcon: input.personalNoteIcon ?? '',
         avatarUrl: input.avatarUrl ?? null,
         resumeUrl: input.resumeUrl ?? null,
         email: input.email,

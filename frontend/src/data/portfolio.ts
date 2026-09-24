@@ -1,24 +1,6 @@
-import type { ContactFormPayload, Profile, Project, Skill } from '@shared/types';
+import type { ContactFormPayload, Project, Skill } from '@shared/types';
 
 // ─── Local fallback data (also seeded in the Laravel MySQL database) ────────
-
-export const localProfile: Profile = {
-  id: 'me',
-  name: 'Vkas',
-  title: 'Full-Stack Developer',
-  shortBio: 'I build fast, delightful web experiences — from pixel-perfect UIs to resilient APIs.',
-  bio: 'Full-stack developer focused on React, TypeScript and Node.js. I care about performance, accessibility, and building products that feel effortless. Currently exploring OS-style web interfaces, real-time systems and AI-assisted workflows.',
-  avatarUrl: null,
-  resumeUrl: null,
-  email: 'hello@example.com',
-  location: 'Remote',
-  yearsExperience: 5,
-  socials: [
-    { id: 's1', label: 'GitHub', url: 'https://github.com/yourhandle', icon: 'github' },
-    { id: 's2', label: 'LinkedIn', url: 'https://linkedin.com/in/yourhandle', icon: 'linkedin' },
-    { id: 's3', label: 'X / Twitter', url: 'https://x.com/yourhandle', icon: 'twitter' },
-  ],
-};
 
 export const localSkills: Skill[] = [
   { id: 'sk1',  name: 'TypeScript',      category: 'languages', proficiency: 95, yearsUsed: 5, icon: null },

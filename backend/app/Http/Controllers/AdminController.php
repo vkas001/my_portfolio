@@ -26,6 +26,11 @@ class AdminController extends Controller
 
     private const SOCIAL_ICONS = ['github', 'linkedin', 'twitter', 'website', 'email'];
 
+    /** Lucide icon names the About headings may use (matches frontend SECTION_ICONS). */
+    private const SECTION_ICONS = [
+        'none', 'star', 'sparkles', 'zap', 'rocket', 'award', 'target', 'shield', 'gem', 'lightbulb', 'layers',
+    ];
+
     // ─── Profile ─────────────────────────────────────────────────────────────
 
     public function updateProfile(Request $request): JsonResponse
@@ -35,6 +40,14 @@ class AdminController extends Controller
             'title' => ['required', 'string', 'max:255'],
             'shortBio' => ['nullable', 'string'],
             'bio' => ['nullable', 'string'],
+            'personalNote' => ['nullable', 'string'],
+            'strengths' => ['nullable', 'array', 'max:20'],
+            'strengths.*' => ['string', 'max:500'],
+            'openToWork' => ['nullable', 'string', 'max:100'],
+            'strengthsTitle' => ['nullable', 'string', 'max:100'],
+            'strengthsIcon' => ['nullable', Rule::in(self::SECTION_ICONS)],
+            'personalNoteTitle' => ['nullable', 'string', 'max:100'],
+            'personalNoteIcon' => ['nullable', Rule::in(self::SECTION_ICONS)],
             'avatarUrl' => ['nullable', 'string', 'max:511'],
             'resumeUrl' => ['nullable', 'string', 'max:511'],
             'email' => ['required', 'email', 'max:255'],
@@ -54,6 +67,13 @@ class AdminController extends Controller
                 'title' => $data['title'],
                 'short_bio' => $data['shortBio'] ?? null,
                 'bio' => $data['bio'] ?? null,
+                'personal_note' => $data['personalNote'] ?? null,
+                'strengths' => $data['strengths'] ?? [],
+                'open_to_work' => $data['openToWork'] ?? null,
+                'strengths_title' => $data['strengthsTitle'] ?? null,
+                'strengths_icon' => $data['strengthsIcon'] ?? null,
+                'personal_note_title' => $data['personalNoteTitle'] ?? null,
+                'personal_note_icon' => $data['personalNoteIcon'] ?? null,
                 'avatar_url' => $data['avatarUrl'] ?? null,
                 'resume_url' => $data['resumeUrl'] ?? null,
                 'email' => $data['email'],
