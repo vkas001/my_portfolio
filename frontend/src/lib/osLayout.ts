@@ -1,4 +1,4 @@
-import type { ThemeState } from '@/theme';
+import type { ThemeState } from '@/styles/theme';
 
 // ─── Workspace geometry — single source of truth ────────────────────────────
 // Adapted from ibiz_v2 lib/osLayout (workspaceInsets/taskbarBottomInset),
@@ -65,6 +65,15 @@ export function getWorkspaceBoundsFor(
     top,
     bottom,
   };
+}
+
+/** Current workspace bounds (fallback defaults before a theme exists). */
+export function getWorkspaceBounds(
+  theme?: Pick<ThemeState, 'showTopBar' | 'taskbarMode' | 'taskbarStyle'> | null,
+): ViewportBounds {
+  return getWorkspaceBoundsFor(
+    theme ?? { showTopBar: true, taskbarMode: 'always', taskbarStyle: 'windows' },
+  );
 }
 
 export interface Rect {

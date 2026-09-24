@@ -1,4 +1,4 @@
-import { WALLPAPERS, getWallpaper, type ThemeMode } from '@/theme';
+import { WALLPAPERS, getWallpaper, type ThemeMode } from '@/styles/theme';
 
 export function listWallpapers(mode?: ThemeMode) {
   if (!mode || mode === 'dark') return WALLPAPERS;

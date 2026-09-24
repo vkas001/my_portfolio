@@ -1,7 +1,7 @@
 import type { ApiError } from '@shared/types';
 import { getAuthToken } from './tokenStore';
 
-const BASE = import.meta.env.VITE_API_URL ?? '/api';
+export const API_BASE = import.meta.env.VITE_API_URL ?? '/api';
 
 /** Fail fast so local fallbacks kick in when the backend is unreachable
  *  (down, wrong LAN IP, blackholed) instead of hanging on skeletons. */
@@ -21,7 +21,7 @@ async function request<T>(path: string, init?: RequestInit): Promise<T> {
   let res: Response;
   const token = getAuthToken();
   try {
-    res = await fetch(`${BASE}${path}`, {
+    res = await fetch(`${API_BASE}${path}`, {
       headers: {
         'Content-Type': 'application/json',
         ...(token ? { Authorization: `Bearer ${token}` } : {}),

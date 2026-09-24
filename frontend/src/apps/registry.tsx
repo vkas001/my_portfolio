@@ -2,14 +2,14 @@ import { lazy } from 'react';
 import { Briefcase, Code2, Folder, LogIn, Mail, PencilLine, Settings as SettingsIcon, User } from 'lucide-react';
 import type { AppDef } from '@/types';
 
-const About = lazy(() => import('./About'));
-const Skills = lazy(() => import('./Skills'));
-const Projects = lazy(() => import('./Projects'));
-const Experience = lazy(() => import('./Experience'));
-const Contact = lazy(() => import('./Contact'));
-const Settings = lazy(() => import('./Settings'));
-const Auth = lazy(() => import('./Auth'));
-const Editor = lazy(() => import('./Editor'));
+const About = lazy(() => import('@/modules/about').then((m) => ({ default: m.AboutScreen })));
+const Skills = lazy(() => import('@/modules/skills').then((m) => ({ default: m.SkillsScreen })));
+const Projects = lazy(() => import('@/modules/projects').then((m) => ({ default: m.ProjectsScreen })));
+const Experience = lazy(() => import('@/modules/experience').then((m) => ({ default: m.ExperienceScreen })));
+const Contact = lazy(() => import('@/modules/contact').then((m) => ({ default: m.ContactScreen })));
+const Settings = lazy(() => import('@/modules/settings').then((m) => ({ default: m.SettingsScreen })));
+const Auth = lazy(() => import('@/modules/auth').then((m) => ({ default: m.AuthScreen })));
+const Editor = lazy(() => import('@/modules/editor').then((m) => ({ default: m.EditorScreen })));
 
 export const APP_REGISTRY: AppDef[] = [
   {

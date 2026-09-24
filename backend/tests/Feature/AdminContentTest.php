@@ -8,6 +8,8 @@ use App\Models\Project;
 use App\Models\Skill;
 use Database\Seeders\AdminSeeder;
 use Illuminate\Foundation\Testing\RefreshDatabase;
+use Illuminate\Http\UploadedFile;
+use Illuminate\Support\Facades\Storage;
 use Tests\TestCase;
 
 class AdminContentTest extends TestCase
@@ -33,6 +35,7 @@ class AdminContentTest extends TestCase
     public function test_guests_cannot_write_portfolio_content(): void
     {
         $this->putJson('/api/admin/profile', ['name' => 'X'])->assertStatus(401)->assertJsonPath('ok', false);
+        $this->post('/api/admin/avatar', [])->assertStatus(401)->assertJsonPath('ok', false);
         $this->postJson('/api/admin/skills', ['id' => 'x1', 'name' => 'X', 'category' => 'tools', 'proficiency' => 50])
             ->assertStatus(401)->assertJsonPath('ok', false);
         $this->postJson('/api/admin/projects', ['title' => 'X'])->assertStatus(401)->assertJsonPath('ok', false);
@@ -256,5 +259,49 @@ class AdminContentTest extends TestCase
                 ['label' => 'X', 'url' => 'https://x.com', 'icon' => 'myspace'],
             ],
         ], $this->headers)->assertStatus(422)->assertJsonPath('ok', false);
+    }
+
+    public function test_admin_can_upload_avatar_and_replaces_previous(): void
+    {
+        Storage::fake('public');
+        Profile::query()->create([
+            'id' => 'me',
+            'name' => 'Vikas',
+            'title' => 'Engineer',
+            'email' => 'me@example.com',
+            'location' => 'Kathmandu',
+        ]);
+
+        $this->post('/api/admin/avatar', [
+            'image' => UploadedFile::fake()->image('first.png', 200, 200),
+        ], $this->headers)->assertOk()->assertJsonPath('ok', true);
+
+        $first = Profile::query()->where('id', 'me')->first()->avatar_url;
+        $this->assertStringContainsString('/storage/avatars/', $first);
+        $firstName = substr($first, strpos($first, '/storage/') + strlen('/storage/'));
+        Storage::disk('public')->assertExists($firstName);
+
+        // A second upload replaces the file and URL, and the old file is removed.
+        $this->post('/api/admin/avatar', [
+            'image' => UploadedFile::fake()->image('second.png', 200, 200),
+        ], $this->headers)->assertOk()->assertJsonPath('ok', true);
+
+        $second = Profile::query()->where('id', 'me')->first()->avatar_url;
+        $this->assertNotSame($first, $second);
+        Storage::disk('public')->assertMissing($firstName);
+
+        $this->getJson('/api/profile')->assertOk()
+            ->assertJsonPath('data.avatarUrl', Profile::query()->where('id', 'me')->first()->avatar_url);
+    }
+
+    public function test_admin_avatar_upload_rejects_non_image(): void
+    {
+        Storage::fake('public');
+
+        $this->post('/api/admin/avatar', [
+            'image' => UploadedFile::fake()->create('evil.php', 10),
+        ], $this->headers)->assertStatus(422)->assertJsonPath('ok', false);
+
+        Storage::disk('public')->assertDirectoryEmpty('avatars');
     }
 }

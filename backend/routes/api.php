@@ -51,6 +51,7 @@ Route::middleware('auth.token')->group(function () {
 // hang off: only a signed-in admin can write the live site.
 Route::middleware('auth.token')->group(function () {
     Route::put('/admin/profile', [AdminController::class, 'updateProfile']);
+    Route::post('/admin/avatar', [AdminController::class, 'uploadAvatar']);
 
     Route::post('/admin/skills', [AdminController::class, 'storeSkill']);
     Route::put('/admin/skills/{skill}', [AdminController::class, 'updateSkill']);

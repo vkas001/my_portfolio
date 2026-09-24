@@ -19,7 +19,7 @@ import type {
 } from '@shared/types';
 import { fetchExperience, fetchProfile, fetchProjects, fetchSkills } from '@/lib/api';
 import { adminService } from '@/lib/api/adminService';
-import { useOS } from '@/context/OSContext';
+import { useShellUI } from '@/context/ShellUIContext';
 import type { EditorSection } from '@/types';
 
 export type { EditorSection };
@@ -38,6 +38,9 @@ export interface ContentContextValue {
   refresh: () => Promise<void>;
 
   saveProfile: (input: ProfileInput) => Promise<boolean>;
+  /** Upload a new profile picture; persists via POST /admin/avatar and
+   *  updates the shared profile so every window reflects it immediately. */
+  uploadAvatar: (file: File) => Promise<boolean>;
   saveSkill: (value: Skill, isNew: boolean) => Promise<boolean>;
   deleteSkill: (id: string) => Promise<boolean>;
   saveProject: (value: Project, isNew: boolean) => Promise<boolean>;
@@ -127,7 +130,7 @@ function useItems<T extends AnyItem>(loader: () => Promise<T[]>): {
 // ─── Provider ─────────────────────────────────────────────────────────────────
 
 export function ContentProvider({ children }: { children: ReactNode }) {
-  const { pushNotification } = useOS();
+  const { pushNotification } = useShellUI();
   const note = useCallback(
     (msg: string) => pushNotification({ title: 'Editor sync failed', body: msg }),
     [pushNotification],
@@ -196,6 +199,16 @@ export function ContentProvider({ children }: { children: ReactNode }) {
       }
     },
     [profile, note],
+  );
+
+  // ─── Avatar upload ────────────────────────────────────────────────────────
+  // Rejects on failure so the caller can surface the server's message.
+  const uploadAvatar = useCallback(
+    async (file: File): Promise<boolean> => {
+      setProfile(await adminService.uploadAvatar(file));
+      return true;
+    },
+    [],
   );
 
   // ─── Generic save/delete for item sections ─────────────────────────────────
@@ -386,6 +399,7 @@ export function ContentProvider({ children }: { children: ReactNode }) {
       experience: experience.items,
       refresh,
       saveProfile,
+      uploadAvatar,
       saveSkill,
       deleteSkill,
       saveProject,
@@ -402,6 +416,7 @@ export function ContentProvider({ children }: { children: ReactNode }) {
       experience.items,
       refresh,
       saveProfile,
+      uploadAvatar,
       saveSkill,
       deleteSkill,
       saveProject,

@@ -1,6 +1,6 @@
 import type { ComponentType, LazyExoticComponent } from 'react';
 import type { LucideIcon } from 'lucide-react';
-import type { WidgetPlacement } from '@/theme';
+import type { WidgetPlacement } from '@/styles/theme';
 
 export type { WidgetPlacement };
 

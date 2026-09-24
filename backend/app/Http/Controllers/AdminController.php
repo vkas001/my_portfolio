@@ -9,6 +9,7 @@ use App\Models\Skill;
 use App\Models\SocialLink;
 use Illuminate\Http\JsonResponse;
 use Illuminate\Http\Request;
+use Illuminate\Support\Facades\Storage;
 use Illuminate\Validation\Rule;
 
 /**
@@ -74,6 +75,41 @@ class AdminController extends Controller
             ]);
             $order++;
         }
+
+        return response()->json(['ok' => true, 'data' => $profile->refresh()->load('socials')]);
+    }
+
+    public function uploadAvatar(Request $request): JsonResponse
+    {
+        $data = $request->validate([
+            'image' => ['required', 'image'],
+        ]);
+
+        $profile = Profile::query()->where('id', 'me')->first();
+
+        // Fresh DB (never seeded) — create the profile row so the avatar has
+        // a home instead of 500ing on the NOT NULL columns.
+        if (! $profile) {
+            $profile = Profile::query()->create([
+                'id' => 'me',
+                'name' => 'Portfolio',
+                'title' => '',
+                'email' => '',
+                'location' => '',
+            ]);
+        }
+
+        // Replacing an uploaded avatar — clear the previous stored file so
+        // old images don't pile up on disk (only ours, under /storage/avatars).
+        $marker = '/storage/';
+        $pos = is_string($profile->avatar_url) ? strpos($profile->avatar_url, $marker) : false;
+        if ($pos !== false) {
+            Storage::disk('public')->delete(substr($profile->avatar_url, $pos + strlen($marker)));
+        }
+
+        $path = $data['image']->store('avatars', 'public');
+
+        $profile->forceFill(['avatar_url' => '/storage/'.$path])->save();
 
         return response()->json(['ok' => true, 'data' => $profile->refresh()->load('socials')]);
     }
