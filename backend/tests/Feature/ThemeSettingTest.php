@@ -79,4 +79,18 @@ class ThemeSettingTest extends AdminApiTestCase
         $this->putJson('/api/theme', ['volume' => 150], $this->adminHeaders())->assertStatus(422);
         $this->putJson('/api/theme', ['volume' => -5], $this->adminHeaders())->assertStatus(422);
     }
+
+    public function test_skills_display_round_trips(): void
+    {
+        $this->putJson('/api/theme', ['skillsDisplay' => 'cards'], $this->adminHeaders())->assertOk()
+            ->assertJsonPath('data.theme.skillsDisplay', 'cards');
+
+        $this->getJson('/api/theme')->assertOk()
+            ->assertJsonPath('data.theme.skillsDisplay', 'cards');
+    }
+
+    public function test_invalid_skills_display_is_rejected(): void
+    {
+        $this->putJson('/api/theme', ['skillsDisplay' => 'mosaic'], $this->adminHeaders())->assertStatus(422);
+    }
 }

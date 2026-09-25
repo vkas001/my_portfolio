@@ -35,14 +35,10 @@ export interface SocialLink {
 }
 
 // ─── Skills ─────────────────────────────────────────────────────────────────
-export type SkillCategory =
-  | 'languages'
-  | 'frontend'
-  | 'backend'
-  | 'database'
-  | 'devops'
-  | 'design'
-  | 'tools';
+// Categories are free-form (the backend column is a plain string). The curated
+// built-in set (languages, frontend, backend, database, devops, design, tools)
+// ships as frontend constants; any string is a valid custom category.
+export type SkillCategory = string;
 
 export interface Skill {
   id: string;

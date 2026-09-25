@@ -20,7 +20,9 @@ class SkillFactory extends Factory
         return [
             'id' => fake()->unique()->slug(3),
             'name' => fake()->unique()->words(2, true),
-            'category' => fake()->randomElement(Skill::CATEGORIES),
+            'category' => fake()->randomElement([
+                'languages', 'frontend', 'backend', 'database', 'devops', 'design', 'tools',
+            ]),
             'proficiency' => fake()->numberBetween(40, 100),
             'years_used' => fake()->randomFloat(1, 0, 15),
             'icon' => fake()->randomElement(['code', 'server', 'database', 'figma', 'terminal']),

@@ -3,8 +3,8 @@ import { APP_REGISTRY } from '@/apps/registry';
 import type { AppId, WindowData } from '@/types';
 
 /** Hosts a lazy-loaded app module with loading + error fallbacks. Passes the
- *  window's launch data (editor section, focus target) into the module. */
-export default function ModuleHost({ appId, data }: { appId: AppId; data?: WindowData }) {
+ *  window's launch data (editor section, focus target) and id into the module. */
+export default function ModuleHost({ appId, data, windowId }: { appId: AppId; data?: WindowData; windowId?: string }) {
   const [error, setError] = useState<Error | null>(null);
   const app = APP_REGISTRY.find((a) => a.id === appId);
 
@@ -14,7 +14,7 @@ export default function ModuleHost({ appId, data }: { appId: AppId; data?: Windo
     return <p className="text-sm" style={{ color: 'var(--text-mid)' }}>Unknown app: {appId}</p>;
   }
 
-  const Comp = app.component as ComponentType<{ data?: WindowData }>;
+  const Comp = app.component as ComponentType<{ data?: WindowData; windowId?: string }>;
 
   if (error) {
     return (
@@ -39,7 +39,7 @@ export default function ModuleHost({ appId, data }: { appId: AppId; data?: Windo
       }
     >
       <ErrorBoundary onError={setError}>
-        <Comp data={data} />
+        <Comp data={data} windowId={windowId} />
       </ErrorBoundary>
     </Suspense>
   );

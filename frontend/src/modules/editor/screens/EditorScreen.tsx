@@ -11,7 +11,7 @@ import ProfileTab from '@/modules/editor/components/ProfileTab/ProfileTab';
 import FloatingSaveButton from '@/modules/editor/components/FloatingSaveButton/FloatingSaveButton';
 import type { SaveBridge } from '@/modules/editor/lib/scaffolding';
 
-export default function EditorScreen({ data }: { data?: WindowData }) {
+export default function EditorScreen({ data, windowId }: { data?: WindowData; windowId?: string }) {
   const { theme } = useTheme();
   const { windows, focusedId, launchApp, focusWindow, updateWindowRect, updateWindowData } = useWindows();
   const [section, setSection] = useState<EditorSection>(data?.section ?? 'profile');
@@ -27,10 +27,12 @@ export default function EditorScreen({ data }: { data?: WindowData }) {
   }, []);
   const bridge: SaveBridge = { commitRef, reportSave };
 
-  // The editor window driving this screen: the focused one (clicks inside a
-  // window focus it before any handler runs), falling back to the editor that
-  // owns this section when the focus write hasn't landed yet.
+  // The editor window driving this screen. Prefer the window that actually
+  // mounts this instance (windowId), then the focused editor — focus is
+  // written on pointerdown and React-batched, so a chip click fires before
+  // focusedId updates and !windowId could target a *different* editor.
   const my =
+    (windowId && windows.find((w) => w.id === windowId && w.appId === 'editor')) ??
     windows.find((w) => w.id === focusedId && w.appId === 'editor') ??
     windows.find((w) => w.appId === 'editor' && w.data?.section === section);
 

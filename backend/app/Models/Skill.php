@@ -6,11 +6,6 @@ use Illuminate\Database\Eloquent\Model;
 
 class Skill extends Model
 {
-    /** Accepted values for `category`, mirrored by the shared SkillCategory type. */
-    public const CATEGORIES = [
-        'languages', 'frontend', 'backend', 'database', 'devops', 'design', 'tools',
-    ];
-
     protected $table = 'skills';
 
     protected $hidden = ['created_at', 'updated_at', 'years_used'];

@@ -65,15 +65,35 @@ class AdminContentTest extends AdminApiTestCase
         $this->assertDatabaseMissing('skills', ['id' => 'upd']);
     }
 
-    public function test_skill_rejects_bad_category(): void
+    public function test_skill_accepts_custom_category(): void
     {
         $this->postJson('/api/admin/skills', [
-            'id' => 'bad',
+            'id' => 'custom-cat',
+            'name' => 'Dummy',
+            'category' => 'AI',
+            'proficiency' => 50,
+        ], $this->adminHeaders())->assertOk()->assertJsonPath('ok', true)
+            ->assertJsonPath('data.category', 'AI');
+
+        $this->getJson('/api/skills')->assertOk()->assertJsonFragment(['id' => 'custom-cat', 'category' => 'AI']);
+    }
+
+    public function test_skill_rejects_missing_or_overlong_category(): void
+    {
+        $this->postJson('/api/admin/skills', [
+            'id' => 'nocat',
             'name' => 'X',
-            'category' => 'nope',
+            'category' => '',
+            'proficiency' => 50,
+        ], $this->adminHeaders())->assertStatus(422)->assertJsonPath('ok', false);
+
+        $this->postJson('/api/admin/skills', [
+            'id' => 'longcat',
+            'name' => 'X',
+            'category' => str_repeat('x', 41),
             'proficiency' => 50,
         ], $this->adminHeaders())->assertStatus(422)->assertJsonPath('ok', false)
-            ->assertJsonPath('error', 'category: The selected category is invalid.');
+            ->assertJsonPath('error', 'category: The category field must not be greater than 40 characters.');
     }
 
     // ─── Projects ────────────────────────────────────────────────────────────

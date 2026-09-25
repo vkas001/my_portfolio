@@ -163,6 +163,7 @@ export type TaskbarMode = 'always' | 'auto-hide';
 export type TaskbarStyle = 'macos' | 'windows';
 export type ClockFormat = '12h' | '24h';
 export type DateFormat = 'short' | 'long';
+export type SkillDisplayMode = 'bars' | 'cards'; // how the Skills window renders
 
 export interface ThemeState {
   mode: ThemeMode;
@@ -189,6 +190,7 @@ export interface ThemeState {
   soundsEnabled: boolean;
   volume: number;        // 0-100 — in-OS UI audio gain (drives the WebAudio blips)
   airplaneMode: boolean; // connectivity override: fails all API reads → local seeds
+  skillsDisplay: SkillDisplayMode;
   widgets: WidgetPlacement[];
   startupWindows: string[];
   clockFormat: ClockFormat;
@@ -227,6 +229,7 @@ export const DEFAULT_THEME: ThemeState = {
   soundsEnabled: false,
   volume: 85,
   airplaneMode: false,
+  skillsDisplay: 'bars',
   widgets: [],
   startupWindows: [],
   clockFormat: '12h',
@@ -464,6 +467,7 @@ export function loadTheme(key: string = GUEST_THEME_KEY): ThemeState {
     if (typeof merged.volume !== 'number' || Number.isNaN(merged.volume)) merged.volume = DEFAULT_THEME.volume;
     else merged.volume = Math.min(100, Math.max(0, merged.volume));
     if (typeof merged.airplaneMode !== 'boolean') merged.airplaneMode = false;
+    if (merged.skillsDisplay !== 'bars' && merged.skillsDisplay !== 'cards') merged.skillsDisplay = 'bars';
     if (!Array.isArray(merged.taskbarApps)) merged.taskbarApps = [...DEFAULT_THEME.taskbarApps];
     // One-time stale clear: the old default auto-opened About+Skills. An
     // explicit user pick (anything else, including []) is preserved.

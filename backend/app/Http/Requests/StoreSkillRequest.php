@@ -2,7 +2,6 @@
 
 namespace App\Http\Requests;
 
-use App\Models\Skill;
 use Illuminate\Foundation\Http\FormRequest;
 use Illuminate\Validation\Rule;
 
@@ -18,7 +17,7 @@ class StoreSkillRequest extends FormRequest
         return [
             'id' => ['required', 'string', 'max:64', 'alpha_dash', Rule::unique('skills', 'id')],
             'name' => ['required', 'string', 'max:255'],
-            'category' => ['required', Rule::in(Skill::CATEGORIES)],
+            'category' => ['required', 'string', 'max:40'],
             'proficiency' => ['required', 'integer', 'min:0', 'max:100'],
             'yearsUsed' => ['nullable', 'numeric', 'min:0', 'max:100'],
             'icon' => ['nullable', 'string', 'max:64'],

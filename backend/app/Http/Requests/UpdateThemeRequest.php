@@ -37,6 +37,7 @@ class UpdateThemeRequest extends FormRequest
             'soundsEnabled' => ['sometimes', 'boolean'],
             'volume' => ['sometimes', 'numeric', 'min:0', 'max:100'],
             'airplaneMode' => ['sometimes', 'boolean'],
+            'skillsDisplay' => ['sometimes', 'string', 'in:bars,cards'],
             'widgets' => ['sometimes', 'array'],
             'startupWindows' => ['sometimes', 'array'],
             'clockFormat' => ['sometimes', 'string', 'in:12h,24h'],
