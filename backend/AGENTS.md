@@ -71,6 +71,7 @@ RBAC, and Scramble sections were dropped — they don't exist here).
 | `experience` | `Experience` | string PK, `order`, JSON highlights |
 | `contact_messages` | `ContactMessage` | auto-increment id, throttled + logged |
 | `theme_settings` | `ThemeSetting` | **one global row** (`settings` JSON cast) |
+| `users` + `auth_tokens` | `User`, `AuthToken` | single admin (`is_admin`, seeded `admin` / `password`); hand-rolled sha256 bearer tokens, no Sanctum |
 
 Rules:
 
@@ -79,6 +80,9 @@ Rules:
 - `theme_settings` is single-row by design (`updateOrCreate(['id' => 1])`).
   Never scope it per-user. Stale legacy values are normalized in
   `ThemeController` — keep that behavior when adding fields.
+- Theme **writes** (`PUT /theme`, `DELETE /theme/reset`) sit behind the
+  `auth.token` middleware; reads stay public. New admin-only endpoints go
+  behind the same guard (future portfolio-edit CRUD hangs off it).
 - `contact_messages` intake is throttled (`throttle:contact`) and only logged
   outside production — keep both.
 

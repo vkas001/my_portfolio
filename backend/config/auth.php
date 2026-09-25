@@ -16,7 +16,7 @@ return [
     */
 
     'defaults' => [
-        'guard' => env('AUTH_GUARD', 'web'),
+        'guard' => env('AUTH_GUARD', 'api'),
         'passwords' => env('AUTH_PASSWORD_BROKER', 'users'),
     ],
 
@@ -40,6 +40,13 @@ return [
     'guards' => [
         'web' => [
             'driver' => 'session',
+            'provider' => 'users',
+        ],
+
+        // Hand-rolled bearer tokens (TokenGuard driver registered in
+        // AuthServiceProvider) — the default guard for this single-admin API.
+        'api' => [
+            'driver' => 'tokens',
             'provider' => 'users',
         ],
     ],

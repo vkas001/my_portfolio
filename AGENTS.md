@@ -90,8 +90,11 @@ ask before pulling in more.
 - **Respect per-project conventions:** backend follows its own AGENTS.md (Pint,
   PHPUnit, `artisan make:*`); frontend follows its own (`@/` imports, theme
   tokens, app registry — never a standalone page for OS features).
-- **Single-user scope:** there is no tenancy, no auth, no roles. Do not
-  introduce multi-user scoping (e.g. per-user theme rows) — theme settings are
-  one global row (`theme_settings`), contact is throttled and logged.
+- **Single-user scope:** there is no tenancy and no roles beyond one admin
+  flag (`users.is_admin`). Do not introduce multi-user scoping (e.g.
+  per-user theme rows) — theme settings are one global row
+  (`theme_settings`) that only the signed-in admin can write; guests keep a
+  local-only theme. Contact is throttled and logged. Auth is hand-rolled
+  bearer tokens (`auth_tokens`, `auth.token` middleware) — no Sanctum.
 - **Docs are not code:** only create documentation files when explicitly asked.
 - **Be concise** in explanations — focus on what matters.

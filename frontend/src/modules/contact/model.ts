@@ -1,0 +1,1 @@
+export type { ContactFormPayload, ContactResponse } from '@shared/types';

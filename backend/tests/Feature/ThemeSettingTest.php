@@ -2,13 +2,9 @@
 
 namespace Tests\Feature;
 
-use Illuminate\Foundation\Testing\RefreshDatabase;
-use Tests\TestCase;
-
-class ThemeSettingTest extends TestCase
+class ThemeSettingTest extends AdminApiTestCase
 {
-    use RefreshDatabase;
-
+    /** Theme writes are admin-gated; authenticate every write in this file. */
     public function test_theme_round_trips_verbatim(): void
     {
         $payload = [
@@ -20,7 +16,7 @@ class ThemeSettingTest extends TestCase
             'showTopBar' => false,
         ];
 
-        $this->putJson('/api/theme', $payload)->assertOk()
+        $this->putJson('/api/theme', $payload, $this->adminHeaders())->assertOk()
             ->assertJsonPath('ok', true)
             ->assertJsonPath('data.exists', true)
             ->assertJsonPath('data.theme.accent', 'violet')
@@ -34,8 +30,8 @@ class ThemeSettingTest extends TestCase
 
     public function test_update_merges_into_existing_theme(): void
     {
-        $this->putJson('/api/theme', ['mode' => 'light', 'accent' => 'blue'])->assertOk();
-        $this->putJson('/api/theme', ['density' => 'compact'])->assertOk();
+        $this->putJson('/api/theme', ['mode' => 'light', 'accent' => 'blue'], $this->adminHeaders())->assertOk();
+        $this->putJson('/api/theme', ['density' => 'compact'], $this->adminHeaders())->assertOk();
 
         $this->getJson('/api/theme')->assertOk()
             ->assertJsonPath('data.theme.mode', 'light')
@@ -44,8 +40,8 @@ class ThemeSettingTest extends TestCase
 
     public function test_reset_clears_saved_theme(): void
     {
-        $this->putJson('/api/theme', ['mode' => 'dark'])->assertOk();
-        $this->deleteJson('/api/theme/reset')->assertOk()
+        $this->putJson('/api/theme', ['mode' => 'dark'], $this->adminHeaders())->assertOk();
+        $this->deleteJson('/api/theme/reset', [], $this->adminHeaders())->assertOk()
             ->assertJsonPath('data.exists', false);
 
         $this->getJson('/api/theme')->assertOk()
@@ -54,7 +50,7 @@ class ThemeSettingTest extends TestCase
 
     public function test_legacy_startup_windows_are_force_cleared(): void
     {
-        $this->putJson('/api/theme', ['startupWindows' => ['about', 'skills']])->assertOk()
+        $this->putJson('/api/theme', ['startupWindows' => ['about', 'skills']], $this->adminHeaders())->assertOk()
             ->assertJsonPath('data.theme.startupWindows', []);
 
         $this->getJson('/api/theme')->assertOk()
@@ -63,7 +59,7 @@ class ThemeSettingTest extends TestCase
 
     public function test_intentional_startup_windows_are_preserved(): void
     {
-        $this->putJson('/api/theme', ['startupWindows' => ['contact']])->assertOk()
+        $this->putJson('/api/theme', ['startupWindows' => ['contact']], $this->adminHeaders())->assertOk()
             ->assertJsonPath('data.theme.startupWindows', ['contact']);
     }
 }

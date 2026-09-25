@@ -1,0 +1,1 @@
+export type { GitHubStats } from '@shared/types';

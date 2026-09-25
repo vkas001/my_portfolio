@@ -1,4 +1,4 @@
-import type { ThemeState } from '@/theme';
+import type { ThemeState } from '@/styles/theme';
 import { http } from './httpClient';
 
 interface ThemePayload {

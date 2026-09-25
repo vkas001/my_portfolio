@@ -6,38 +6,86 @@ use Illuminate\Database\Eloquent\Model;
 
 class Profile extends Model
 {
+    /** Lucide icon names the About headings may use (matches frontend SECTION_ICONS). */
+    public const SECTION_ICONS = [
+        'none', 'star', 'sparkles', 'zap', 'rocket', 'award', 'target', 'shield', 'gem', 'lightbulb', 'layers',
+    ];
+
+    /** Accepted social-link icons, mirrored by the shared SocialLink type. */
+    public const SOCIAL_ICONS = ['github', 'linkedin', 'twitter', 'website', 'email'];
+
     protected $table = 'profiles';
 
     protected $fillable = [
-        'id', 'name', 'title', 'short_bio', 'bio', 'avatar_url', 'resume_url',
-        'email', 'location', 'years_experience',
+        'id', 'name', 'title', 'short_bio', 'bio', 'personal_note', 'strengths',
+        'open_to_work', 'strengths_title', 'strengths_icon',
+        'personal_note_title', 'personal_note_icon',
+        'avatar_url', 'resume_url', 'email', 'location', 'years_experience',
     ];
 
     /**
      * API attribute names (camelCase), matching the previous Express API and
      * the frontend's shared Profile type.
      */
-    protected $appends = ['shortBio', 'avatarUrl', 'resumeUrl', 'yearsExperience'];
+    protected $appends = [
+        'shortBio', 'personalNote', 'openToWork', 'strengthsTitle', 'strengthsIcon',
+        'personalNoteTitle', 'personalNoteIcon', 'avatarUrl', 'resumeUrl', 'yearsExperience',
+    ];
 
     protected $hidden = [
-        'short_bio', 'avatar_url', 'resume_url', 'years_experience',
+        'short_bio', 'personal_note', 'open_to_work', 'strengths_title', 'strengths_icon',
+        'personal_note_title', 'personal_note_icon',
+        'avatar_url', 'resume_url', 'years_experience',
         'created_at', 'updated_at',
     ];
 
     public $incrementing = false;
+
     protected $keyType = 'string';
+
     protected $primaryKey = 'id';
 
     protected function casts(): array
     {
         return [
             'years_experience' => 'integer',
+            'strengths' => 'array',
         ];
     }
 
     public function getShortBioAttribute(): string
     {
         return (string) $this->attributes['short_bio'];
+    }
+
+    public function getPersonalNoteAttribute(): string
+    {
+        return (string) $this->attributes['personal_note'];
+    }
+
+    public function getOpenToWorkAttribute(): string
+    {
+        return (string) ($this->attributes['open_to_work'] ?? '');
+    }
+
+    public function getStrengthsTitleAttribute(): string
+    {
+        return (string) ($this->attributes['strengths_title'] ?? '');
+    }
+
+    public function getStrengthsIconAttribute(): string
+    {
+        return (string) ($this->attributes['strengths_icon'] ?? '');
+    }
+
+    public function getPersonalNoteTitleAttribute(): string
+    {
+        return (string) ($this->attributes['personal_note_title'] ?? '');
+    }
+
+    public function getPersonalNoteIconAttribute(): string
+    {
+        return (string) ($this->attributes['personal_note_icon'] ?? '');
     }
 
     public function getAvatarUrlAttribute(): ?string

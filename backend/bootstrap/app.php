@@ -1,10 +1,13 @@
 <?php
 
 use App\Http\Middleware\ApiResponseEnvelope;
+use App\Http\Middleware\RequirePermission;
+use Illuminate\Auth\Middleware\Authenticate;
 use Illuminate\Foundation\Application;
 use Illuminate\Foundation\Configuration\Exceptions;
 use Illuminate\Foundation\Configuration\Middleware;
 use Illuminate\Http\Request;
+use Illuminate\Routing\Middleware\SubstituteBindings;
 
 return Application::configure(basePath: dirname(__DIR__))
     ->withRouting(
@@ -18,10 +21,21 @@ return Application::configure(basePath: dirname(__DIR__))
         // the frontend expects (mirrors the old Express API).
         $middleware->append(ApiResponseEnvelope::class);
 
+        // Bearer-token auth uses the real `api` guard (TokenGuard). Guests
+        // hit null; `permission:` asserts the single-admin's is_admin flag.
+        $middleware->alias([
+            'auth' => Authenticate::class,
+            'permission' => RequirePermission::class,
+        ]);
+
+        // Pure API — no web login route exists, so never redirect guests
+        // (the framework default `route('login')` 500s); return null → 401 JSON.
+        $middleware->redirectGuestsTo(fn () => null);
+
         // 120 requests/minute across /api (limiter defined in AppServiceProvider).
         $middleware->group('api', [
             'throttle:api',
-            \Illuminate\Routing\Middleware\SubstituteBindings::class,
+            SubstituteBindings::class,
         ]);
     })
     ->withExceptions(function (Exceptions $exceptions): void {

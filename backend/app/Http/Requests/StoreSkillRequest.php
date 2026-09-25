@@ -1,0 +1,27 @@
+<?php
+
+namespace App\Http\Requests;
+
+use App\Models\Skill;
+use Illuminate\Foundation\Http\FormRequest;
+use Illuminate\Validation\Rule;
+
+class StoreSkillRequest extends FormRequest
+{
+    public function authorize(): bool
+    {
+        return true;
+    }
+
+    public function rules(): array
+    {
+        return [
+            'id' => ['required', 'string', 'max:64', 'alpha_dash', Rule::unique('skills', 'id')],
+            'name' => ['required', 'string', 'max:255'],
+            'category' => ['required', Rule::in(Skill::CATEGORIES)],
+            'proficiency' => ['required', 'integer', 'min:0', 'max:100'],
+            'yearsUsed' => ['nullable', 'numeric', 'min:0', 'max:100'],
+            'icon' => ['nullable', 'string', 'max:64'],
+        ];
+    }
+}

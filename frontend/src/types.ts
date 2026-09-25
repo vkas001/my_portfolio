@@ -1,15 +1,29 @@
 import type { ComponentType, LazyExoticComponent } from 'react';
-import type { WidgetPlacement } from '@/theme';
+import type { LucideIcon } from 'lucide-react';
+import type { WidgetPlacement } from '@/styles/theme';
 
 export type { WidgetPlacement };
 
 export type AppId =
-  | 'about' | 'skills' | 'projects' | 'experience' | 'contact' | 'settings';
+  | 'about' | 'skills' | 'projects' | 'experience' | 'contact' | 'settings' | 'auth' | 'editor';
+
+/** Which portfolio section an admin editor window manages. */
+export type EditorSection = 'profile' | 'skills' | 'projects' | 'experience';
+
+/** Per-window payload passed through launchApp into the app module. */
+export interface WindowData {
+  section?: EditorSection;
+  itemId?: string;
+  /** Editor windows only: the content window docked beside them via the "+"
+   *  action, plus that window's pre-tile rect so closing the editor can
+   *  restore it to its original size/position. */
+  dock?: { contentId: string; rect: { x: number; y: number; w: number; h: number } };
+}
 
 export interface AppDef {
   id: AppId;
   name: string;
-  icon: string;                 // emoji fallback; real icons via registry
+  icon: LucideIcon;             // lucide icon component for tiles, menus, lists
   color: string;                // accent tint for icon tile
   component: LazyExoticComponent<ComponentType> | ComponentType;
   defaultSize: { w: number; h: number };
@@ -17,6 +31,9 @@ export interface AppDef {
   singleInstance?: boolean;
   resizable?: boolean;
   description?: string;
+  /** System apps launch from shell chrome (e.g. StartMenu rows) and stay
+   *  out of the app grid. */
+  system?: boolean;
 }
 
 export interface WindowState {
@@ -27,8 +44,9 @@ export interface WindowState {
   z: number;
   minimized: boolean;
   maximized: boolean;
-  isFullScreen: boolean;        // ibiz_v2 parity: covers viewport, hides taskbar
+  isFullScreen: boolean;        // full screen: covers viewport, hides taskbar
   prevRect?: { x: number; y: number; w: number; h: number };
+  data?: WindowData;
 }
 
 export type WidgetVariant = 'small' | 'medium' | 'large' | 'wide' | 'tall';
