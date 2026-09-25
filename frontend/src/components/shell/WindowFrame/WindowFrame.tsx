@@ -1,8 +1,9 @@
 import { useCallback, useRef, type ReactNode } from 'react';
 import { useTheme } from '@/context/ThemeContext';
 import { useWindows } from '@/context/WindowsContext';
-import { getWindowBounds } from '@/lib/osLayout';
+import { getWindowBounds, getWindowSpawnBounds } from '@/lib/osLayout';
 import { useAuth } from '@/context/AuthContext';
+import { useShellUI } from '@/context/ShellUIContext';
 import { APP_REGISTRY } from '@/apps/registry';
 import type { AppId, EditorSection, WindowState } from '@/types';
 import { Minus, Plus, Square, X } from 'lucide-react';
@@ -24,6 +25,7 @@ export default function WindowFrame({ win, children }: Props) {
   const { theme } = useTheme();
   const { focusedId, focusWindow, closeWindow, minimizeWindow, toggleMaximize, toggleFullScreen, updateWindowRect, launchApp } = useWindows();
   const { isAdmin } = useAuth();
+  const { setActiveWidget } = useShellUI();
   const app = APP_REGISTRY.find((a) => a.id === win.appId);
   const focused = focusedId === win.id;
   const section = CONTENT_SECTION[win.appId];
@@ -126,7 +128,9 @@ export default function WindowFrame({ win, children }: Props) {
   const editContent = useCallback(() => {
     if (!section) return;
     if (win.maximized) toggleMaximize(win.id); // unmaximize before tiling
-    const b = getWindowBounds(theme);
+    // Tile inside the space above the taskbar so the docked editor + content
+    // window never collide with the bar (drag can still go behind it).
+    const b = getWindowSpawnBounds(theme);
     const gap = 12;
     const editorMin = APP_REGISTRY.find((a) => a.id === 'editor')?.minSize ?? { w: 420, h: 460 };
     const w = Math.max(editorMin.w, Math.floor((b.width - gap * 3) / 2));
@@ -175,7 +179,7 @@ export default function WindowFrame({ win, children }: Props) {
       ref={frameRef}
       className={`window-frame window-open ${win.maximized ? 'maximized' : ''} ${focused ? '' : 'opacity-95'}`}
       style={style}
-      onPointerDown={() => focusWindow(win.id)}
+      onPointerDown={() => { setActiveWidget(null); focusWindow(win.id); }}
       role="dialog"
       aria-label={app?.name}
     >

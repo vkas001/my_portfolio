@@ -236,7 +236,6 @@ button { font-family: inherit; }
 
 .widget-card.dragging {
   opacity: .9;
-  z-index: 40 !important;
   transition: none !important;
 }
 

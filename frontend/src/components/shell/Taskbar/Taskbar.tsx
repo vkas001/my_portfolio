@@ -3,33 +3,35 @@
 // for the 6 portfolio apps (no auth/workspace gating — every app is visible),
 // clock without locale/BS calendar, no central-apps section. Auto-hide uses
 // the same slide/reveal mechanics with portfolio's context visibility state.
-import { memo, useEffect, useRef, useState } from 'react';
+import { memo, useCallback, useEffect, useRef, useState } from 'react';
 import {
-  LayoutGrid,
-  User,
-  Sparkles,
-  Folder,
   Briefcase,
+  ChevronUp,
+  Code2,
+  Folder,
+  LayoutGrid,
   Mail,
-  Settings,
   Search,
-  Wifi,
+  Settings,
+  Sparkles,
+  User,
   Volume2,
   VolumeX,
+  Wifi,
   Zap,
   ZapOff,
-  ChevronUp,
 } from 'lucide-react';
 import { useTheme } from '@/context/ThemeContext';
 import { useWindows } from '@/context/WindowsContext';
 import { useShellUI } from '@/context/ShellUIContext';
+import { http } from '@/lib/api/httpClient';
 import { APP_REGISTRY } from '@/apps/registry';
 import type { AppId } from '@/types';
 import SystemTrayModal from '@/components/shell/SystemTrayModal/SystemTrayModal';
 
 const OS_ICON_MAP: Record<string, React.ReactNode> = {
   about: <User className="w-6 h-6" />,
-  skills: <Sparkles className="w-6 h-6" />,
+  skills: <Code2 className="w-6 h-6" />,
   projects: <Folder className="w-6 h-6" />,
   experience: <Briefcase className="w-6 h-6" />,
   contact: <Mail className="w-6 h-6" />,
@@ -88,7 +90,7 @@ const ConnectionDot: React.FC<{ online: boolean }> = ({ online }) => {
       {online ? (
         <Zap size={14} className="text-emerald-500" />
       ) : (
-        <ZapOff size={14} className="text-amber-500" />
+        <ZapOff size={14} className="text-red-500" />
       )}
       {showTooltip && (
         <div className="absolute bottom-full left-1/2 -translate-x-1/2 mb-2 px-2 py-1 bg-(--surface-80) border border-(--border-60) rounded-lg text-[11px] text-(--text-primary) whitespace-nowrap shadow-lg z-[100]">
@@ -107,18 +109,38 @@ const Taskbar = memo(function Taskbar() {
   const [currentTime, setCurrentTime] = useState<string>('');
   const [currentDate, setCurrentDate] = useState<string>('');
   const [currentWeekday, setCurrentWeekday] = useState<string>('');
-  const [online, setOnline] = useState(() => (typeof navigator === 'undefined' ? true : navigator.onLine));
+  const [online, setOnline] = useState(false);
+
+  // Backend connectivity: poll the API health endpoint (green/Online when the
+  // backend answers, red/Offline otherwise). Re-probes immediately when the
+  // browser network flaps, then settles into a 15s cadence.
+  const checkBackend = useCallback(async () => {
+    try {
+      await http.get<{ status: string }>('/health');
+      setOnline(true);
+    } catch {
+      setOnline(false);
+    }
+  }, []);
 
   useEffect(() => {
-    const on = () => setOnline(true);
-    const off = () => setOnline(false);
-    window.addEventListener('online', on);
-    window.addEventListener('offline', off);
-    return () => {
-      window.removeEventListener('online', on);
-      window.removeEventListener('offline', off);
+    let cancelled = false;
+    const tick = async () => {
+      if (cancelled) return;
+      await checkBackend();
     };
-  }, []);
+    void tick();
+    const interval = setInterval(tick, 15000);
+    const onNet = () => void checkBackend();
+    window.addEventListener('online', onNet);
+    window.addEventListener('offline', onNet);
+    return () => {
+      cancelled = true;
+      clearInterval(interval);
+      window.removeEventListener('online', onNet);
+      window.removeEventListener('offline', onNet);
+    };
+  }, [checkBackend]);
 
   useEffect(() => {
     const updateDateTime = () => {

@@ -1,5 +1,6 @@
 import { useTheme } from '@/context/ThemeContext';
 import { useWindows } from '@/context/WindowsContext';
+import { useShellUI } from '@/context/ShellUIContext';
 import { APP_REGISTRY } from '@/apps/registry';
 import WindowFrame from '@/components/shell/WindowFrame/WindowFrame';
 import ModuleHost from '@/components/shell/ModuleHost/ModuleHost';
@@ -7,18 +8,29 @@ import TopBar from '@/components/shell/TopBar/TopBar';
 import Taskbar from '@/components/shell/Taskbar/Taskbar';
 import StartMenu from '@/components/shell/StartMenu/StartMenu';
 import { WidgetsPanel } from '@/modules/widgets';
-import { useIsMobile } from '@/lib/hooks';
+import { useIsMobile, useLocalStorage } from '@/lib/hooks';
 import MobileNotice from '@/components/shell/MobileNotice/MobileNotice';
+
+const FORCE_OS_ON_MOBILE_KEY = 'portfolio.forceOsOnMobile';
 
 export default function Desktop() {
   const { theme } = useTheme();
+  const { setViewMode } = useShellUI();
   const { windows, launchApp } = useWindows();
   const isMobile = useIsMobile();
+  const [forceOsOnMobile, setForceOsOnMobile] = useLocalStorage(FORCE_OS_ON_MOBILE_KEY, false);
 
   // Global shortcuts + shared overlays (Spotlight, ContactModal) live in
   // AppShell so they keep working in Web view too.
 
-  if (isMobile) return <MobileNotice />;
+  if (isMobile && !forceOsOnMobile) {
+    return (
+      <MobileNotice
+        onUseWeb={() => setViewMode('web')}
+        onEnterOs={() => setForceOsOnMobile(true)}
+      />
+    );
+  }
 
   return (
     <div className="desktop-root">

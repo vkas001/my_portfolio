@@ -9,7 +9,7 @@ import {
   type ReactNode,
 } from 'react';
 import { useTheme } from '@/context/ThemeContext';
-import { fitRectInBounds, getWindowBounds } from '@/lib/osLayout';
+import { fitRectInBounds, getWindowBounds, getWindowSpawnBounds, Z_WINDOW_BASE, Z_WINDOW_TOP } from '@/lib/osLayout';
 import type { AppDef, AppId, WindowData, WindowState } from '@/types';
 import { sound } from '@/lib/sound';
 import { APP_REGISTRY } from '@/apps/registry';
@@ -45,19 +45,15 @@ export function useWindows(): WindowsContextValue {
 
 let instanceCounter = 0;
 
-// Window stacking (ibiz_v2 displayZ parity): tabs stack above widgets (30)
-// and below the taskbar/overlays (80).
-const Z_BASE = 41;
-const Z_MAX = 79;
-
-/** Return windows with `id` on top (`unminimize`). Order is compacted oldest-first
- *  on every call, so z stays in [Z_BASE, Z_MAX] forever and can never creep
- *  over the taskbar layer no matter how often windows are focused/launched. */
+// Window stacking: tabs stack above widgets (30) and below the taskbar/
+// overlays (80). Tabs cap at Z_WINDOW_TOP (78) — the slot just under 79 is
+// reserved for the active widget, so a clicked widget always surfaces above
+// every tab until a window is focused again.
 function assignTopZ(ws: WindowState[], id: string, unminimize: boolean): WindowState[] {
   const others = [...ws].sort((a, b) => a.z - b.z).filter((w) => w.id !== id);
   const mapped = new Map<string, number>();
-  others.forEach((w, i) => mapped.set(w.id, Z_BASE + Math.min(i, Z_MAX - Z_BASE - 1)));
-  const top = Z_BASE + Math.min(others.length, Z_MAX - Z_BASE);
+  others.forEach((w, i) => mapped.set(w.id, Z_WINDOW_BASE + Math.min(i, Z_WINDOW_TOP - Z_WINDOW_BASE - 1)));
+  const top = Z_WINDOW_BASE + Math.min(others.length, Z_WINDOW_TOP - Z_WINDOW_BASE);
   return ws.map((w) =>
     w.id === id
       ? { ...w, z: top, ...(unminimize ? { minimized: false } : {}) }
@@ -111,7 +107,9 @@ export function WindowsProvider({ children }: { children: ReactNode }) {
         return;
       }
 
-      const bounds = getWindowBounds(themeRef.current);
+      // First launch fits above the taskbar (getWindowSpawnBounds); dragging
+      // can still push a tab behind the bar afterwards (getWindowBounds).
+      const bounds = getWindowSpawnBounds(themeRef.current);
       const minW = app.minSize?.w ?? 360;
       const minH = app.minSize?.h ?? 240;
       const w = opts?.rect?.w ?? Math.min(app.defaultSize.w, bounds.width - 24);
@@ -140,7 +138,7 @@ export function WindowsProvider({ children }: { children: ReactNode }) {
               id,
               appId,
               ...fitted,
-              z: Z_BASE,
+              z: Z_WINDOW_BASE,
               minimized: false,
               maximized: false,
               isFullScreen: false,

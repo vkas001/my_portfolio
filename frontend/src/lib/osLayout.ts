@@ -15,6 +15,16 @@ export const MACOS_DOCK_PAD = 20;
 /** Fallback dock height before it has painted (footer padding + content). */
 export const MACOS_DOCK_FALLBACK_H = 64;
 
+// ─── OS z-layers (single source of truth) ───────────────────────────────────
+// Tabs live in [41, 78]; the taskbar floats at 80 (fullscreen above that).
+// Widgets sit behind tabs at 30 by default; the last-clicked widget jumps to
+// 79 — the single slot above every tab — so clicking a widget surfaces it over
+// the stack, and any later window focus drops it back behind the tabs.
+export const Z_WINDOW_BASE = 41;
+export const Z_WINDOW_TOP = 78;
+export const Z_WIDGET_BASE = 30;
+export const Z_WIDGET_ACTIVE = 79;
+
 export interface WorkspaceInsets {
   top: number;
   bottom: number;
@@ -90,6 +100,26 @@ export function getWindowBounds(
   return {
     width: window.innerWidth,
     height: Math.max(0, window.innerHeight - top),
+    top,
+    bottom: 0,
+  };
+}
+
+/**
+ * First-launch / auto-fit bounds for windows: a freshly opened window is sized
+ * and centered in the space *above* the taskbar, so opening an app never
+ * collides with the bar. Maximized tabs and user drags/resizes still use
+ * `getWindowBounds` (full height, behind the bar) — the difference is intent:
+ * the bar only ever gets covered by explicit user action.
+ */
+export function getWindowSpawnBounds(
+  theme?: Pick<ThemeState, 'showTopBar' | 'taskbarMode' | 'taskbarStyle'> | null,
+): ViewportBounds {
+  const t = theme ?? { showTopBar: true, taskbarMode: 'always', taskbarStyle: 'windows' };
+  const { top, bottom } = workspaceInsets(t);
+  return {
+    width: window.innerWidth,
+    height: Math.max(0, window.innerHeight - top - bottom),
     top,
     bottom: 0,
   };

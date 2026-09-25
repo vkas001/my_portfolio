@@ -8,6 +8,7 @@ import {
   type ReactNode,
 } from 'react';
 import { useTheme } from '@/context/ThemeContext';
+import { useWindows } from '@/context/WindowsContext';
 import type { NotificationItem } from '@/types';
 
 export type ViewMode = 'web' | 'os';
@@ -43,6 +44,11 @@ interface ShellUIContextValue {
   pushNotification: (n: Omit<NotificationItem, 'id' | 'time' | 'read'>) => void;
   dismissNotification: (id: string) => void;
   markNotificationsRead: () => void;
+  // Last-clicked widget (in-memory only): it floats above every tab until a
+  // window is focused again. Owned here (not WidgetsContext) so window focus
+  // paths can drop it without depending on the widgets provider.
+  activeWidget: string | null;
+  setActiveWidget: (instance: string | null) => void;
 }
 
 const ShellUIContext = createContext<ShellUIContextValue | null>(null);
@@ -64,6 +70,14 @@ export function ShellUIProvider({ children }: { children: ReactNode }) {
   const [taskbarVisible, setTaskbarVisible] = useState(true);
   const [contactModalOpen, setContactModalOpen] = useState(false);
   const [notifications, setNotifications] = useState<NotificationItem[]>([]);
+  const [activeWidget, setActiveWidget] = useState<string | null>(null);
+  const { focusedId } = useWindows();
+
+  // Window focus takes precedence over the clicked widget: any focus change
+  // drops the active widget back behind the tabs.
+  useEffect(() => {
+    setActiveWidget(null);
+  }, [focusedId]);
 
   // 'always' mode implies a visible bar; auto-hide starts hidden.
   useEffect(() => {
@@ -118,11 +132,14 @@ export function ShellUIProvider({ children }: { children: ReactNode }) {
       pushNotification,
       dismissNotification,
       markNotificationsRead,
+      activeWidget,
+      setActiveWidget,
     }),
     [
       viewMode, setViewMode, widgetsOpen, setWidgetsOpen, spotlightOpen, setSpotlightOpen,
       startMenuOpen, setStartMenuOpen, taskbarVisible, setTaskbarVisible, contactModalOpen,
       setContactModalOpen, notifications, pushNotification, dismissNotification, markNotificationsRead,
+      activeWidget, setActiveWidget,
     ],
   );
 

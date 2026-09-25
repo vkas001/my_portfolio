@@ -1,7 +1,8 @@
 import { useEffect, useRef, useState, type ReactNode } from 'react';
 import { useTheme } from '@/context/ThemeContext';
 import { useWidgets } from '@/context/WidgetsContext';
-import { getWorkspaceBounds } from '@/lib/osLayout';
+import { useShellUI } from '@/context/ShellUIContext';
+import { getWorkspaceBounds, Z_WIDGET_ACTIVE, Z_WIDGET_BASE } from '@/lib/osLayout';
 import type { WidgetPlacement, WidgetVariant } from '@/types';
 import { snapToGrid } from '@/lib/gridUtils';
 import { fitWidgetRect } from '@/lib/osLayout';
@@ -16,6 +17,7 @@ const VARIANT_ORDER: WidgetVariant[] = ['small', 'medium', 'large', 'wide', 'tal
 
 export default function WidgetCard({ placement, children }: Props) {
   const { removeWidget, updateWidgetPlacement, moveWidgetVariant, widgetMeta } = useWidgets();
+  const { activeWidget, setActiveWidget } = useShellUI();
   const { theme } = useTheme();
   const meta = widgetMeta[placement.id];
   const grid = theme.gridSize ?? 24;
@@ -164,10 +166,14 @@ export default function WidgetCard({ placement, children }: Props) {
         top: placement.y,
         width: placement.w,
         height: placement.h,
-        zIndex: 30,
+        // Clicked card floats above every tab (79); the rest sit behind tabs (30).
+        zIndex: activeWidget === placement.instance ? Z_WIDGET_ACTIVE : Z_WIDGET_BASE,
         touchAction: 'none',
       }}
-      onPointerDown={startDrag}
+      onPointerDown={(e) => {
+        setActiveWidget(placement.instance);
+        startDrag(e);
+      }}
     >
       {/* header — title + variant/remove controls (double-click cycles variant) */}
       <div

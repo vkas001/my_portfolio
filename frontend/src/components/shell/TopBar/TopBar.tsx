@@ -55,7 +55,7 @@ export default function TopBar() {
           aria-label={widgetsOpen ? 'Hide widgets' : 'Show widgets'}
           title={widgetsOpen ? 'Hide widgets' : 'Show widgets'}
         >
-          {widgetsOpen ? <EyeOff size={14} /> : <Eye size={14} />}
+          {widgetsOpen ? <Eye size={14} /> : <EyeOff size={14} />}
         </button>
 
         <div className="relative" ref={pickerRef}>
