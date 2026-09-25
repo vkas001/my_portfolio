@@ -204,7 +204,7 @@ export interface WidgetPlacement {
 }
 
 export const DEFAULT_THEME: ThemeState = {
-  mode: 'dark',
+  mode: 'light',
   accent: 'orange',
   customAccent: null,
   glass: 'normal',

@@ -2,7 +2,7 @@
 // Content adapted: Wi-Fi mock, sounds bound to theme, live backend probe,
 // windows-open and theme rows in place of ibiz's domain-specific metrics.
 import { useEffect, useState } from 'react';
-import { Wifi, Plane, Volume2, VolumeX, Monitor, Moon, Sun, AppWindow, Server, RadioTower } from 'lucide-react';
+import { Wifi, Plane, Volume2, VolumeX, Monitor, Moon, Sun, AppWindow, Server, RadioTower, RotateCcw } from 'lucide-react';
 import { useTheme } from '@/context/ThemeContext';
 import { useWindows } from '@/context/WindowsContext';
 import { readNetworkInfo, type NetworkInfo } from '@/lib/network';
@@ -12,12 +12,30 @@ interface SystemTrayModalProps {
 }
 
 export const SystemTrayModal: React.FC<SystemTrayModalProps> = ({ onClose }) => {
-  const { theme, setTheme } = useTheme();
+  const { theme, setTheme, resetTheme } = useTheme();
   const { windows } = useWindows();
   const [online, setOnline] = useState(() => (typeof navigator === 'undefined' ? true : navigator.onLine));
   const [backend, setBackend] = useState<'checking' | 'up' | 'down'>('checking');
   const [showBackendTip, setShowBackendTip] = useState(false);
   const [networkInfo, setNetworkInfo] = useState<NetworkInfo | null>(readNetworkInfo);
+  // Two-step reset: first click arms it, the second executes (clears theme +
+  // widgets). Auto-disarms after 3s so a stray arm can't be triggered later.
+  const [resetArmed, setResetArmed] = useState(false);
+
+  const handleReset = () => {
+    if (!resetArmed) {
+      setResetArmed(true);
+      return;
+    }
+    resetTheme();
+    onClose();
+  };
+
+  useEffect(() => {
+    if (!resetArmed) return;
+    const t = window.setTimeout(() => setResetArmed(false), 3000);
+    return () => window.clearTimeout(t);
+  }, [resetArmed]);
 
   const airplane = theme.airplaneMode;
   const soundEnabled = theme.soundsEnabled;
@@ -222,8 +240,18 @@ export const SystemTrayModal: React.FC<SystemTrayModalProps> = ({ onClose }) => 
         </div>
       </div>
 
-      {/* Footer close */}
-      <div className="mt-4 pt-3 border-t border-(--text-primary)/10 flex justify-end">
+      {/* Footer actions */}
+      <div className="mt-4 pt-3 border-t border-(--text-primary)/10 flex items-center justify-between">
+        <button
+          onClick={handleReset}
+          className={`flex items-center gap-1.5 text-[12px] font-bold transition-all cursor-pointer ${
+            resetArmed ? 'text-(--error)' : 'text-(--text-secondary) hover:text-(--error)'
+          } ${resetArmed ? 'px-0' : 'px-2 py-1 -ml-2 rounded-lg hover:bg-(--surface-50)'}`}
+          title="Restore theme and widgets to default settings"
+        >
+          <RotateCcw size={13} />
+          {resetArmed ? 'Confirm reset?' : 'Reset settings'}
+        </button>
         <button
           onClick={onClose}
           className="text-[12px] font-bold text-(--accent-strong) hover:underline cursor-pointer"

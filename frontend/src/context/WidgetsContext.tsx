@@ -40,6 +40,11 @@ export function WidgetsProvider({ children }: { children: ReactNode }) {
   // Previous workspace bounds for the resize-follow; null until the first
   // reflow captures them (no meaningful "old" position on boot).
   const lastBoundsRef = useRef<ViewportBounds | null>(null);
+  // Per-instance, per-variant last-known rect: variant growth clamps the
+  // widget's origin (fitWidgetRect shifts it up/left to stay on-screen), so
+  // cycling back must restore the exact pre-change spot instead of the
+  // clamped one. Session-scoped, like WindowFrame's prevRect.
+  const variantRectsRef = useRef(new Map<string, Record<string, { x: number; y: number; w: number; h: number }>>());
   const themeRef = useRef(theme);
   themeRef.current = theme;
   const widgetPlacements = theme.widgets ?? [];
@@ -78,6 +83,7 @@ export function WidgetsProvider({ children }: { children: ReactNode }) {
 
   const removeWidget = useCallback(
     (instance: string) => {
+      variantRectsRef.current.delete(instance);
       setTheme((prev) => ({ widgets: prev.widgets.filter((p) => p.instance !== instance) }));
       sound.close();
     },
@@ -87,11 +93,23 @@ export function WidgetsProvider({ children }: { children: ReactNode }) {
   const updateWidgetPlacement = useCallback(
     (instance: string, patch: Partial<WidgetPlacement>) => {
       // Safety net: placements can never leave the workspace (nor enter the header).
+      const fitted = fitWidgetRect(
+        { ...(themeRef.current.widgets?.find((w) => w.instance === instance) ?? { x: 0, y: 0, w: 0, h: 0 }), ...patch },
+        lastBoundsRef.current ?? getWorkspaceBounds(themeRef.current),
+      );
       setTheme((prev) => ({
         widgets: prev.widgets.map((p) =>
           p.instance === instance ? { ...p, ...fitWidgetRect({ ...p, ...patch }, lastBoundsRef.current ?? getWorkspaceBounds(themeRef.current)) } : p,
         ),
       }));
+      // A drag/resize re-homes the widget: drop the old spot so a variant
+      // round-trip restores where it actually now sits.
+      const current = themeRef.current.widgets?.find((w) => w.instance === instance);
+      if (current) {
+        const byVariant = variantRectsRef.current.get(current.instance) ?? {};
+        byVariant[current.variant] = { x: fitted.x, y: fitted.y, w: fitted.w, h: fitted.h };
+        variantRectsRef.current.set(current.instance, byVariant);
+      }
     },
     [setTheme],
   );
@@ -102,10 +120,22 @@ export function WidgetsProvider({ children }: { children: ReactNode }) {
         widgets: prev.widgets.map((p) => {
           if (p.instance !== instance) return p;
           const meta = widgetMetaMap[p.id];
-          const size = meta?.variants[variant] ?? { w: p.w, h: p.h };
-          // Variant growth is top-left anchored: clamp so it can't spill
-          // under the taskbar (or inside the header on tiny viewports).
-          const fitted = fitWidgetRect({ ...p, w: size.w, h: size.h }, lastBoundsRef.current ?? getWorkspaceBounds(themeRef.current));
+          const targetSize = meta?.variants[variant] ?? { w: p.w, h: p.h };
+          const currentSize = meta?.variants[p.variant as WidgetVariant] ?? { w: p.w, h: p.h };
+          const bounds = lastBoundsRef.current ?? getWorkspaceBounds(themeRef.current);
+          const byVariant = variantRectsRef.current.get(instance) ?? {};
+          // Remember the exact spot we're leaving so a later shrink can
+          // return to it rather than the clamped origin.
+          byVariant[p.variant] = { x: p.x, y: p.y, w: p.w, h: p.h };
+          // Shrinking restores where that smaller variant last was; growing
+          // anchors at the widget's CURRENT spot (which may follow a drag),
+          // never a stale position cached from an earlier full-size cycle.
+          const shrinking = targetSize.w * targetSize.h < currentSize.w * currentSize.h;
+          const prior = shrinking ? byVariant[variant] : undefined;
+          const base = prior ? { ...p, ...prior } : p;
+          const fitted = fitWidgetRect({ ...base, w: targetSize.w, h: targetSize.h }, bounds);
+          byVariant[variant] = { x: fitted.x, y: fitted.y, w: fitted.w, h: fitted.h };
+          variantRectsRef.current.set(instance, byVariant);
           return { ...p, variant, w: fitted.w, h: fitted.h, x: fitted.x, y: fitted.y };
         }),
       }));
