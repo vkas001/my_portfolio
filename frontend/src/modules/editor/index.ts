@@ -12,3 +12,4 @@ export { default as ExperienceTab } from './components/ExperienceTab/ExperienceT
 
 export { emptyProject, emptyExperience, newId, SOCIAL_ICONS } from './lib/scaffolding';
 export type { SaveBridge, SectionScaffold, BaseItem } from './lib/scaffolding';
+export * from './model';

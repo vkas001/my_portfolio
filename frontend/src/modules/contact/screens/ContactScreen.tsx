@@ -1,37 +1,14 @@
 import { useState } from 'react';
-import { sendContact } from '@/lib/api';
+import { useContactForm } from '@/modules/contact';
 import { useProfile } from '@/modules/about';
-import { useShellUI } from '@/context/ShellUIContext';
 import Input from '@/components/ui/Input/Input';
 import TextArea from '@/components/ui/TextArea/TextArea';
-import toast from 'react-hot-toast';
 import { Send, LoaderCircle, Check, Copy, Mail } from 'lucide-react';
 
-export default function Contact() {
-  const { pushNotification } = useShellUI();
+export default function ContactScreen() {
   const profile = useProfile();
-  const [form, setForm] = useState({ name: '', email: '', subject: '', message: '' });
-  const [status, setStatus] = useState<'idle' | 'sending' | 'sent' | 'error'>('idle');
-  const [error, setError] = useState('');
+  const { form, setField, status, error, submit, reset } = useContactForm();
   const [copied, setCopied] = useState(false);
-
-  const submit = async (e: React.FormEvent) => {
-    e.preventDefault();
-    setStatus('sending');
-    setError('');
-    try {
-      const res = await sendContact(form);
-      setStatus('sent');
-      toast.success('Message sent');
-      pushNotification({ title: 'Message sent', body: res.message });
-      setForm({ name: '', email: '', subject: '', message: '' });
-    } catch (err) {
-      const msg = err instanceof Error ? err.message : 'Failed to send';
-      setStatus('error');
-      setError(msg);
-      toast.error(msg);
-    }
-  };
 
   const copyEmail = async () => {
     if (!profile) return;
@@ -68,16 +45,16 @@ export default function Contact() {
             <Check size={22} />
           </span>
           <p className="text-sm font-medium">Thanks — your message is on its way!</p>
-          <button className="btn-ghost text-xs" onClick={() => setStatus('idle')}>Send another</button>
+          <button className="btn-ghost text-xs" onClick={reset}>Send another</button>
         </div>
       ) : (
         <form onSubmit={submit} className="space-y-3">
           <div className="grid grid-cols-12 gap-x-2 gap-y-4 @md:gap-x-4">
-            <Input required placeholder="Your name" value={form.name} onChange={(e) => setForm({ ...form, name: e.target.value })} className="col-span-12 @md:col-span-6" />
-            <Input required type="email" placeholder="Email" value={form.email} onChange={(e) => setForm({ ...form, email: e.target.value })} className="col-span-12 @md:col-span-6" />
+            <Input required placeholder="Your name" value={form.name} onChange={(e) => setField('name')(e.target.value)} className="col-span-12 @md:col-span-6" />
+            <Input required type="email" placeholder="Email" value={form.email} onChange={(e) => setField('email')(e.target.value)} className="col-span-12 @md:col-span-6" />
           </div>
-          <Input required placeholder="Subject" value={form.subject} onChange={(e) => setForm({ ...form, subject: e.target.value })} />
-          <TextArea required rows={5} placeholder="Tell me about your project…" value={form.message} onChange={(e) => setForm({ ...form, message: e.target.value })} textareaClassName="resize-none" />
+          <Input required placeholder="Subject" value={form.subject} onChange={(e) => setField('subject')(e.target.value)} />
+          <TextArea required rows={5} placeholder="Tell me about your project…" value={form.message} onChange={(e) => setField('message')(e.target.value)} textareaClassName="resize-none" />
           {status === 'error' && <p className="text-xs" style={{ color: 'var(--error)' }}>{error}</p>}
           <button type="submit" disabled={status === 'sending'} className="btn-accent text-xs disabled:opacity-60">
             {status === 'sending' ? <LoaderCircle size={13} className="animate-spin" /> : <Send size={13} />}

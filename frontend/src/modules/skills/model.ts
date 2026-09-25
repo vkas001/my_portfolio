@@ -1,0 +1,1 @@
+export type { Skill, SkillCategory, SkillInput } from '@shared/types';

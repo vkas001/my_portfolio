@@ -1,7 +1,7 @@
-import { useContent } from '@/context/ContentContext';
+import { useSkills } from '@/modules/skills';
 
 export default function SkillCloud() {
-  const { skills } = useContent();
+  const skills = useSkills();
 
   const top = [...skills].sort((a, b) => b.proficiency - a.proficiency).slice(0, 6);
 

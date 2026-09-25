@@ -1,10 +1,9 @@
 import { useMemo, useState } from 'react';
-import { useContent } from '@/context/ContentContext';
+import { CATEGORY_COLORS, CATEGORY_LABELS, useSkills } from '@/modules/skills';
 import type { SkillCategory } from '@shared/types';
-import { CATEGORY_COLORS, CATEGORY_LABELS } from '@/modules/skills/lib/categories';
 
-export default function Skills() {
-  const { skills } = useContent();
+export default function SkillsScreen() {
+  const skills = useSkills();
   const [active, setActive] = useState<SkillCategory | 'all'>('all');
 
   const categories = useMemo(

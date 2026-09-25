@@ -13,7 +13,7 @@ import { HttpError } from '@/lib/api/httpClient';
  * Guests browse the portfolio freely; signing in as admin unlocks
  * server-synced site settings and future content editing.
  */
-export default function Auth() {
+export default function AuthScreen() {
   const { user, isAdmin, signIn, signOut } = useAuth();
   const { windows, closeWindow } = useWindows();
   const { pushNotification } = useShellUI();

@@ -1,9 +1,9 @@
 import { useEffect, useState } from 'react';
-import { useContent } from '@/context/ContentContext';
+import { useProjects } from '@/modules/projects';
 import { ExternalLink, Github } from 'lucide-react';
 
 export default function ProjectShowcase() {
-  const { projects } = useContent();
+  const projects = useProjects();
   const featured = projects.filter((p) => p.featured);
   const [idx, setIdx] = useState(0);
 

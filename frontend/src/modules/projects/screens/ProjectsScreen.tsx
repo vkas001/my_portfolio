@@ -1,9 +1,9 @@
 import { useMemo, useState } from 'react';
-import { useContent } from '@/context/ContentContext';
+import { useProjects } from '@/modules/projects';
 import { ExternalLink, Github, Star } from 'lucide-react';
 
-export default function Projects() {
-  const { projects } = useContent();
+export default function ProjectsScreen() {
+  const projects = useProjects();
   const [category, setCategory] = useState<string>('all');
   const [expanded, setExpanded] = useState<string | null>(null);
 

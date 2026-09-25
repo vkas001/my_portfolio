@@ -1,30 +1,15 @@
 import { useEffect, useState } from 'react';
-import { fetchGitHubStats } from '@/lib/api';
+import { fetchGitHubStats } from '@/modules/widgets/lib/services';
+import { fallbackStats } from '@/modules/widgets/lib/seeds';
 import type { GitHubStats } from '@shared/types';
 import { Star, GitFork, Users, BookOpen } from 'lucide-react';
-
-const FALLBACK: GitHubStats = {
-  username: 'yourhandle',
-  publicRepos: 24,
-  followers: 180,
-  starsEarned: 320,
-  contributionsLastYear: 1240,
-  languages: [
-    { name: 'TypeScript', percent: 58 },
-    { name: 'JavaScript', percent: 22 },
-    { name: 'Python', percent: 12 },
-    { name: 'CSS', percent: 8 },
-  ],
-  contributions: [],
-  fetchedAt: new Date().toISOString(),
-};
 
 export default function GitHubStatsWidget() {
   const [stats, setStats] = useState<GitHubStats | null>(null);
 
   useEffect(() => {
     let alive = true;
-    fetchGitHubStats().then((s) => { if (alive) setStats(s ?? FALLBACK); });
+    fetchGitHubStats().then((s) => { if (alive) setStats(s ?? fallbackStats); });
     return () => { alive = false; };
   }, []);
 

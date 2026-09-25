@@ -3,6 +3,17 @@ import {
   type BlurLevel, type ClockFormat, type DateFormat, type Density, type GlassLevel,
   type RadiusLevel, type TaskbarMode, type TaskbarStyle, type ThemeMode,
 } from '@/styles/theme';
+import {
+  Blocks,
+  Clock,
+  FileJson,
+  Keyboard,
+  Monitor,
+  Palette,
+  RotateCcw,
+  SlidersHorizontal,
+  type LucideIcon,
+} from 'lucide-react';
 
 export const MODE_OPTIONS: { value: ThemeMode; label: string }[] = [
   { value: 'light', label: 'Light' },
@@ -48,3 +59,27 @@ export const DENSITY_OPTIONS = (Object.keys(DENSITY_SPACING) as Density[]).map((
 export const WALLPAPER_DIM_OPTIONS = [0, 10, 20, 30, 40, 50, 60].map((v) => ({ value: v, label: `${v}%` }));
 export const WALLPAPER_BLUR_OPTIONS = [0, 5, 10, 15, 20, 25].map((v) => ({ value: v, label: `${v}px` }));
 export const GRID_SIZE_OPTIONS = [16, 24, 32].map((v) => ({ value: v, label: String(v) }));
+
+export const SETTINGS_TABS = [
+  { id: 'personalization', label: 'Personalization', icon: Palette },
+  { id: 'interface', label: 'Interface', icon: SlidersHorizontal },
+  { id: 'taskbar', label: 'Taskbar', icon: Monitor },
+  { id: 'time', label: 'Time', icon: Clock },
+  { id: 'widgets', label: 'Widgets', icon: Blocks },
+  { id: 'shortcuts', label: 'Shortcuts', icon: Keyboard },
+  { id: 'data', label: 'Data', icon: FileJson },
+  { id: 'reset', label: 'Reset', icon: RotateCcw },
+] as const satisfies ReadonlyArray<{ id: string; label: string; icon: LucideIcon }>;
+
+export type SettingsTabId = (typeof SETTINGS_TABS)[number]['id'];
+
+export const TAB_DESCRIPTIONS: Record<SettingsTabId, string> = {
+  personalization: 'Accent color, mode, glass, wallpaper',
+  interface: 'Font, effects and behavior',
+  taskbar: 'Mode, style, pinned and startup apps',
+  time: 'Clock and date formatting',
+  widgets: 'Manage widgets on the desktop',
+  shortcuts: 'Keyboard shortcuts at a glance',
+  data: 'Export or import your full theme',
+  reset: 'Restore default theme and widgets',
+};

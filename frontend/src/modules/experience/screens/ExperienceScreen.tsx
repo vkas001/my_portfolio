@@ -1,13 +1,13 @@
 import { useMemo } from 'react';
-import { useContent } from '@/context/ContentContext';
+import { useExperience } from '@/modules/experience';
 import { Building2 } from 'lucide-react';
 
 function fmt(iso: string) {
   return new Date(iso).toLocaleDateString([], { month: 'short', year: 'numeric' });
 }
 
-export default function Experience() {
-  const { experience } = useContent();
+export default function ExperienceScreen() {
+  const experience = useExperience();
   const items = useMemo(() => [...experience].sort((a, b) => a.order - b.order), [experience]);
 
   if (!items.length) {

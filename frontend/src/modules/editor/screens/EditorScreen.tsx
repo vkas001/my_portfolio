@@ -14,7 +14,7 @@ const SECTION_TABS: { id: EditorSection; label: string }[] = [
   { id: 'experience', label: 'Experience' },
 ];
 
-export default function Editor({ data }: { data?: WindowData }) {
+export default function EditorScreen({ data }: { data?: WindowData }) {
   const [section, setSection] = useState<EditorSection>(data?.section ?? 'profile');
   const commitRef = useRef<(() => void) | null>(null);
   const [saveState, setSaveState] = useState({ canSave: false, saving: false });
