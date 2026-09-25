@@ -7,6 +7,26 @@ export const API_BASE = import.meta.env.VITE_API_URL ?? '/api';
  *  (down, wrong LAN IP, blackholed) instead of hanging on skeletons. */
 const REQUEST_TIMEOUT_MS = 8000;
 
+// ─── GET memoization ─────────────────────────────────────────────────────────
+// Boot fans out to many consumers (ContentContext + widgets). Each GET path is
+// cached thread-wide for a short TTL so duplicate/parallel loads collapse into
+// one actual request and remounts reuse the fresh result. Mutations bypass.
+const GET_CACHE_TTL_MS = 30000;
+const getCache = new Map<string, { at: number; data: unknown }>();
+const inflight = new Map<string, Promise<unknown>>();
+
+/** Drop cached GETs — optionally just those under a path prefix — so the next
+ *  call re-fetches (used by ContentContext.refresh and after mutations). */
+export function invalidate(pathPrefix?: string): void {
+  if (!pathPrefix) {
+    getCache.clear();
+    return;
+  }
+  for (const key of [...getCache.keys()]) {
+    if (key.startsWith(pathPrefix)) getCache.delete(key);
+  }
+}
+
 export class HttpError extends Error {
   constructor(
     public status: number,
@@ -43,7 +63,26 @@ async function request<T>(path: string, init?: RequestInit): Promise<T> {
 }
 
 export const http = {
-  get: <T>(path: string) => request<T>(path),
+  get: <T>(path: string): Promise<T> => {
+    const hit = getCache.get(path);
+    if (hit && Date.now() - hit.at < GET_CACHE_TTL_MS) {
+      return Promise.resolve(hit.data as T);
+    }
+    const pending = inflight.get(path);
+    if (pending) return pending as Promise<T>;
+    const p = request<T>(path)
+      .then((data) => {
+        inflight.delete(path);
+        getCache.set(path, { at: Date.now(), data });
+        return data;
+      })
+      .catch((err) => {
+        inflight.delete(path);
+        throw err;
+      });
+    inflight.set(path, p);
+    return p;
+  },
   post: <T>(path: string, data?: unknown) =>
     request<T>(path, { method: 'POST', body: JSON.stringify(data ?? {}) }),
   put: <T>(path: string, data?: unknown) =>

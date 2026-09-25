@@ -18,6 +18,7 @@ import type {
   SkillInput,
 } from '@shared/types';
 import { fetchExperience, fetchProfile, fetchProjects, fetchSkills } from '@/lib/api';
+import { invalidate } from '@/lib/api/httpClient';
 import { adminService } from '@/lib/api/adminService';
 import { useShellUI } from '@/context/ShellUIContext';
 import toast from 'react-hot-toast';
@@ -147,6 +148,10 @@ export function ContentProvider({ children }: { children: ReactNode }) {
   const experience = useItems(fetchExperience);
 
   const refresh = useCallback(async () => {
+    invalidate('/profile');
+    invalidate('/skills');
+    invalidate('/projects');
+    invalidate('/experience');
     try {
       setProfile(await fetchProfile());
     } catch {

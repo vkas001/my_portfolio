@@ -6,6 +6,14 @@ use Illuminate\Database\Eloquent\Model;
 
 class Profile extends Model
 {
+    /** Lucide icon names the About headings may use (matches frontend SECTION_ICONS). */
+    public const SECTION_ICONS = [
+        'none', 'star', 'sparkles', 'zap', 'rocket', 'award', 'target', 'shield', 'gem', 'lightbulb', 'layers',
+    ];
+
+    /** Accepted social-link icons, mirrored by the shared SocialLink type. */
+    public const SOCIAL_ICONS = ['github', 'linkedin', 'twitter', 'website', 'email'];
+
     protected $table = 'profiles';
 
     protected $fillable = [

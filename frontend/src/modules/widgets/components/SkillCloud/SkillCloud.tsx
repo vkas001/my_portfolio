@@ -1,15 +1,7 @@
-import { useEffect, useState } from 'react';
-import { fetchSkills } from '@/lib/api';
-import type { Skill } from '@shared/types';
+import { useContent } from '@/context/ContentContext';
 
 export default function SkillCloud() {
-  const [skills, setSkills] = useState<Skill[]>([]);
-
-  useEffect(() => {
-    let alive = true;
-    fetchSkills().then((s) => { if (alive) setSkills(s); });
-    return () => { alive = false; };
-  }, []);
+  const { skills } = useContent();
 
   const top = [...skills].sort((a, b) => b.proficiency - a.proficiency).slice(0, 6);
 

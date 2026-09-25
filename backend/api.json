@@ -1,0 +1,1986 @@
+{
+    "openapi": "3.1.0",
+    "info": {
+        "title": "Laravel",
+        "version": "0.0.1",
+        "description": "Personal portfolio OS API \u2014 single-admin Laravel backend. Public reads under `/api`, admin writes under `/api/admin` (bearer token + is_admin)."
+    },
+    "servers": [
+        {
+            "url": "http://10.20.30.25:8000/api"
+        }
+    ],
+    "security": [
+        {
+            "http": []
+        }
+    ],
+    "paths": {
+        "/health": {
+            "get": {
+                "responses": {
+                    "200": {
+                        "description": "",
+                        "content": {
+                            "application/json": {
+                                "schema": {
+                                    "type": "object",
+                                    "properties": {
+                                        "status": {
+                                            "type": "string",
+                                            "const": "up"
+                                        },
+                                        "uptime": {
+                                            "type": "number"
+                                        }
+                                    },
+                                    "required": [
+                                        "status",
+                                        "uptime"
+                                    ]
+                                }
+                            }
+                        }
+                    }
+                },
+                "security": []
+            }
+        },
+        "/auth/login": {
+            "post": {
+                "operationId": "auth.login",
+                "tags": [
+                    "Auth"
+                ],
+                "requestBody": {
+                    "required": true,
+                    "content": {
+                        "application/json": {
+                            "schema": {
+                                "$ref": "#/components/schemas/LoginRequest"
+                            }
+                        }
+                    }
+                },
+                "responses": {
+                    "200": {
+                        "description": "",
+                        "content": {
+                            "application/json": {
+                                "schema": {
+                                    "type": [
+                                        "object",
+                                        "null"
+                                    ],
+                                    "properties": {
+                                        "token": {
+                                            "type": "string"
+                                        },
+                                        "user": {
+                                            "type": "object",
+                                            "properties": {
+                                                "id": {
+                                                    "type": "integer"
+                                                },
+                                                "name": {
+                                                    "type": "string"
+                                                },
+                                                "email": {
+                                                    "type": "string"
+                                                },
+                                                "isAdmin": {
+                                                    "type": "boolean"
+                                                }
+                                            },
+                                            "required": [
+                                                "id",
+                                                "name",
+                                                "email",
+                                                "isAdmin"
+                                            ]
+                                        }
+                                    },
+                                    "required": [
+                                        "token",
+                                        "user"
+                                    ]
+                                }
+                            }
+                        }
+                    },
+                    "401": {
+                        "description": "",
+                        "content": {
+                            "application/json": {
+                                "schema": {
+                                    "type": "object",
+                                    "properties": {
+                                        "error": {
+                                            "type": "string",
+                                            "const": "Invalid credentials."
+                                        }
+                                    },
+                                    "required": [
+                                        "error"
+                                    ]
+                                }
+                            }
+                        }
+                    },
+                    "422": {
+                        "$ref": "#/components/responses/ValidationException"
+                    }
+                },
+                "security": []
+            }
+        },
+        "/auth/me": {
+            "get": {
+                "operationId": "auth.me",
+                "tags": [
+                    "Auth"
+                ],
+                "responses": {
+                    "200": {
+                        "description": "",
+                        "content": {
+                            "application/json": {
+                                "schema": {
+                                    "type": "object",
+                                    "properties": {
+                                        "user": {
+                                            "type": "object",
+                                            "properties": {
+                                                "id": {
+                                                    "type": "integer"
+                                                },
+                                                "name": {
+                                                    "type": "string"
+                                                },
+                                                "email": {
+                                                    "type": "string"
+                                                },
+                                                "isAdmin": {
+                                                    "type": "boolean"
+                                                }
+                                            },
+                                            "required": [
+                                                "id",
+                                                "name",
+                                                "email",
+                                                "isAdmin"
+                                            ]
+                                        }
+                                    },
+                                    "required": [
+                                        "user"
+                                    ]
+                                }
+                            }
+                        }
+                    },
+                    "401": {
+                        "$ref": "#/components/responses/AuthenticationException"
+                    }
+                }
+            }
+        },
+        "/auth/logout": {
+            "post": {
+                "operationId": "auth.logout",
+                "tags": [
+                    "Auth"
+                ],
+                "responses": {
+                    "200": {
+                        "description": "",
+                        "content": {
+                            "application/json": {
+                                "schema": {
+                                    "type": "object",
+                                    "properties": {
+                                        "signed_out": {
+                                            "type": "boolean"
+                                        }
+                                    },
+                                    "required": [
+                                        "signed_out"
+                                    ]
+                                }
+                            }
+                        }
+                    },
+                    "401": {
+                        "$ref": "#/components/responses/AuthenticationException"
+                    }
+                }
+            }
+        },
+        "/contact": {
+            "post": {
+                "operationId": "contact.store",
+                "summary": "Returns the plain payload; ApiResponseEnvelope wraps it, so the wire\nshape is `{ ok: true, data: { message } }` \u2014 matching shared\nContactResponse. (Previously this double-wrapped ok/data.)",
+                "tags": [
+                    "Contact"
+                ],
+                "requestBody": {
+                    "required": true,
+                    "content": {
+                        "application/json": {
+                            "schema": {
+                                "$ref": "#/components/schemas/StoreContactRequest"
+                            }
+                        }
+                    }
+                },
+                "responses": {
+                    "200": {
+                        "description": "",
+                        "content": {
+                            "application/json": {
+                                "schema": {
+                                    "type": "object",
+                                    "properties": {
+                                        "message": {
+                                            "type": "string",
+                                            "const": "Message received \u2014 I'll get back to you soon!"
+                                        }
+                                    },
+                                    "required": [
+                                        "message"
+                                    ]
+                                }
+                            }
+                        }
+                    },
+                    "422": {
+                        "$ref": "#/components/responses/ValidationException"
+                    }
+                },
+                "security": []
+            }
+        },
+        "/admin/experience": {
+            "post": {
+                "operationId": "experience.store",
+                "tags": [
+                    "Experience"
+                ],
+                "requestBody": {
+                    "required": true,
+                    "content": {
+                        "application/json": {
+                            "schema": {
+                                "$ref": "#/components/schemas/StoreExperienceRequest"
+                            }
+                        }
+                    }
+                },
+                "responses": {
+                    "200": {
+                        "description": "",
+                        "content": {
+                            "application/json": {
+                                "schema": {
+                                    "$ref": "#/components/schemas/Experience"
+                                }
+                            }
+                        }
+                    },
+                    "401": {
+                        "$ref": "#/components/responses/AuthenticationException"
+                    },
+                    "422": {
+                        "$ref": "#/components/responses/ValidationException"
+                    }
+                }
+            }
+        },
+        "/admin/experience/{id}": {
+            "put": {
+                "operationId": "experience.update",
+                "tags": [
+                    "Experience"
+                ],
+                "parameters": [
+                    {
+                        "name": "id",
+                        "in": "path",
+                        "required": true,
+                        "schema": {
+                            "type": "string"
+                        }
+                    }
+                ],
+                "requestBody": {
+                    "required": true,
+                    "content": {
+                        "application/json": {
+                            "schema": {
+                                "$ref": "#/components/schemas/UpdateExperienceRequest"
+                            }
+                        }
+                    }
+                },
+                "responses": {
+                    "200": {
+                        "description": "",
+                        "content": {
+                            "application/json": {
+                                "schema": {
+                                    "$ref": "#/components/schemas/Experience"
+                                }
+                            }
+                        }
+                    },
+                    "401": {
+                        "$ref": "#/components/responses/AuthenticationException"
+                    },
+                    "422": {
+                        "$ref": "#/components/responses/ValidationException"
+                    }
+                }
+            },
+            "delete": {
+                "operationId": "experience.destroy",
+                "tags": [
+                    "Experience"
+                ],
+                "parameters": [
+                    {
+                        "name": "id",
+                        "in": "path",
+                        "required": true,
+                        "schema": {
+                            "type": "string"
+                        }
+                    }
+                ],
+                "responses": {
+                    "200": {
+                        "description": "",
+                        "content": {
+                            "application/json": {
+                                "schema": {
+                                    "type": "object",
+                                    "properties": {
+                                        "id": {
+                                            "type": "string"
+                                        }
+                                    },
+                                    "required": [
+                                        "id"
+                                    ]
+                                }
+                            }
+                        }
+                    },
+                    "401": {
+                        "$ref": "#/components/responses/AuthenticationException"
+                    }
+                }
+            }
+        },
+        "/github/stats": {
+            "get": {
+                "operationId": "gitHub.stats",
+                "tags": [
+                    "GitHub"
+                ],
+                "responses": {
+                    "200": {
+                        "description": "",
+                        "content": {
+                            "application/json": {
+                                "schema": {
+                                    "anyOf": [
+                                        {
+                                            "type": "string"
+                                        },
+                                        {
+                                            "type": "object",
+                                            "additionalProperties": {}
+                                        }
+                                    ]
+                                }
+                            }
+                        }
+                    }
+                },
+                "security": []
+            }
+        },
+        "/profile": {
+            "get": {
+                "operationId": "portfolio.profile",
+                "tags": [
+                    "Portfolio"
+                ],
+                "responses": {
+                    "200": {
+                        "description": "",
+                        "content": {
+                            "application/json": {
+                                "schema": {
+                                    "anyOf": [
+                                        {
+                                            "$ref": "#/components/schemas/Profile"
+                                        },
+                                        {
+                                            "type": "null"
+                                        }
+                                    ]
+                                }
+                            }
+                        }
+                    },
+                    "404": {
+                        "description": "",
+                        "content": {
+                            "application/json": {
+                                "schema": {
+                                    "type": "object",
+                                    "properties": {
+                                        "error": {
+                                            "type": "string",
+                                            "const": "Profile not found"
+                                        }
+                                    },
+                                    "required": [
+                                        "error"
+                                    ]
+                                }
+                            }
+                        }
+                    }
+                },
+                "security": []
+            }
+        },
+        "/skills": {
+            "get": {
+                "operationId": "portfolio.skills",
+                "tags": [
+                    "Portfolio"
+                ],
+                "parameters": [
+                    {
+                        "name": "category",
+                        "in": "query",
+                        "schema": {
+                            "type": "string"
+                        }
+                    }
+                ],
+                "responses": {
+                    "200": {
+                        "description": "",
+                        "content": {
+                            "application/json": {
+                                "schema": {
+                                    "type": "array",
+                                    "items": {
+                                        "$ref": "#/components/schemas/Skill"
+                                    }
+                                }
+                            }
+                        }
+                    }
+                },
+                "security": []
+            }
+        },
+        "/projects": {
+            "get": {
+                "operationId": "portfolio.projects",
+                "tags": [
+                    "Portfolio"
+                ],
+                "parameters": [
+                    {
+                        "name": "category",
+                        "in": "query",
+                        "schema": {
+                            "type": "string"
+                        }
+                    }
+                ],
+                "responses": {
+                    "200": {
+                        "description": "",
+                        "content": {
+                            "application/json": {
+                                "schema": {
+                                    "type": "array",
+                                    "items": {
+                                        "$ref": "#/components/schemas/Project"
+                                    }
+                                }
+                            }
+                        }
+                    }
+                },
+                "security": []
+            }
+        },
+        "/experience": {
+            "get": {
+                "operationId": "portfolio.experience",
+                "tags": [
+                    "Portfolio"
+                ],
+                "responses": {
+                    "200": {
+                        "description": "",
+                        "content": {
+                            "application/json": {
+                                "schema": {
+                                    "type": "array",
+                                    "items": {
+                                        "$ref": "#/components/schemas/Experience"
+                                    }
+                                }
+                            }
+                        }
+                    }
+                },
+                "security": []
+            }
+        },
+        "/admin/profile": {
+            "put": {
+                "operationId": "profile.update",
+                "tags": [
+                    "Profile"
+                ],
+                "requestBody": {
+                    "required": true,
+                    "content": {
+                        "application/json": {
+                            "schema": {
+                                "$ref": "#/components/schemas/UpdateProfileRequest"
+                            }
+                        }
+                    }
+                },
+                "responses": {
+                    "200": {
+                        "description": "",
+                        "content": {
+                            "application/json": {
+                                "schema": {
+                                    "$ref": "#/components/schemas/Profile"
+                                }
+                            }
+                        }
+                    },
+                    "401": {
+                        "$ref": "#/components/responses/AuthenticationException"
+                    },
+                    "422": {
+                        "$ref": "#/components/responses/ValidationException"
+                    }
+                }
+            }
+        },
+        "/admin/avatar": {
+            "post": {
+                "operationId": "profile.uploadAvatar",
+                "tags": [
+                    "Profile"
+                ],
+                "requestBody": {
+                    "required": true,
+                    "content": {
+                        "multipart/form-data": {
+                            "schema": {
+                                "$ref": "#/components/schemas/UploadAvatarRequest"
+                            }
+                        }
+                    }
+                },
+                "responses": {
+                    "200": {
+                        "description": "",
+                        "content": {
+                            "application/json": {
+                                "schema": {
+                                    "$ref": "#/components/schemas/Profile"
+                                }
+                            }
+                        }
+                    },
+                    "401": {
+                        "$ref": "#/components/responses/AuthenticationException"
+                    },
+                    "422": {
+                        "$ref": "#/components/responses/ValidationException"
+                    }
+                }
+            }
+        },
+        "/admin/projects": {
+            "post": {
+                "operationId": "project.store",
+                "tags": [
+                    "Project"
+                ],
+                "requestBody": {
+                    "required": true,
+                    "content": {
+                        "application/json": {
+                            "schema": {
+                                "$ref": "#/components/schemas/StoreProjectRequest"
+                            }
+                        }
+                    }
+                },
+                "responses": {
+                    "200": {
+                        "description": "",
+                        "content": {
+                            "application/json": {
+                                "schema": {
+                                    "$ref": "#/components/schemas/Project"
+                                }
+                            }
+                        }
+                    },
+                    "401": {
+                        "$ref": "#/components/responses/AuthenticationException"
+                    },
+                    "422": {
+                        "$ref": "#/components/responses/ValidationException"
+                    }
+                }
+            }
+        },
+        "/admin/projects/{id}": {
+            "put": {
+                "operationId": "project.update",
+                "tags": [
+                    "Project"
+                ],
+                "parameters": [
+                    {
+                        "name": "id",
+                        "in": "path",
+                        "required": true,
+                        "schema": {
+                            "type": "string"
+                        }
+                    }
+                ],
+                "requestBody": {
+                    "required": true,
+                    "content": {
+                        "application/json": {
+                            "schema": {
+                                "$ref": "#/components/schemas/UpdateProjectRequest"
+                            }
+                        }
+                    }
+                },
+                "responses": {
+                    "200": {
+                        "description": "",
+                        "content": {
+                            "application/json": {
+                                "schema": {
+                                    "$ref": "#/components/schemas/Project"
+                                }
+                            }
+                        }
+                    },
+                    "401": {
+                        "$ref": "#/components/responses/AuthenticationException"
+                    },
+                    "422": {
+                        "$ref": "#/components/responses/ValidationException"
+                    }
+                }
+            },
+            "delete": {
+                "operationId": "project.destroy",
+                "tags": [
+                    "Project"
+                ],
+                "parameters": [
+                    {
+                        "name": "id",
+                        "in": "path",
+                        "required": true,
+                        "schema": {
+                            "type": "string"
+                        }
+                    }
+                ],
+                "responses": {
+                    "200": {
+                        "description": "",
+                        "content": {
+                            "application/json": {
+                                "schema": {
+                                    "type": "object",
+                                    "properties": {
+                                        "id": {
+                                            "type": "string"
+                                        }
+                                    },
+                                    "required": [
+                                        "id"
+                                    ]
+                                }
+                            }
+                        }
+                    },
+                    "401": {
+                        "$ref": "#/components/responses/AuthenticationException"
+                    }
+                }
+            }
+        },
+        "/admin/skills": {
+            "post": {
+                "operationId": "skill.store",
+                "tags": [
+                    "Skill"
+                ],
+                "requestBody": {
+                    "required": true,
+                    "content": {
+                        "application/json": {
+                            "schema": {
+                                "$ref": "#/components/schemas/StoreSkillRequest"
+                            }
+                        }
+                    }
+                },
+                "responses": {
+                    "200": {
+                        "description": "",
+                        "content": {
+                            "application/json": {
+                                "schema": {
+                                    "$ref": "#/components/schemas/Skill"
+                                }
+                            }
+                        }
+                    },
+                    "401": {
+                        "$ref": "#/components/responses/AuthenticationException"
+                    },
+                    "422": {
+                        "$ref": "#/components/responses/ValidationException"
+                    }
+                }
+            }
+        },
+        "/admin/skills/{id}": {
+            "put": {
+                "operationId": "skill.update",
+                "tags": [
+                    "Skill"
+                ],
+                "parameters": [
+                    {
+                        "name": "id",
+                        "in": "path",
+                        "required": true,
+                        "schema": {
+                            "type": "string"
+                        }
+                    }
+                ],
+                "requestBody": {
+                    "required": true,
+                    "content": {
+                        "application/json": {
+                            "schema": {
+                                "$ref": "#/components/schemas/UpdateSkillRequest"
+                            }
+                        }
+                    }
+                },
+                "responses": {
+                    "200": {
+                        "description": "",
+                        "content": {
+                            "application/json": {
+                                "schema": {
+                                    "$ref": "#/components/schemas/Skill"
+                                }
+                            }
+                        }
+                    },
+                    "401": {
+                        "$ref": "#/components/responses/AuthenticationException"
+                    },
+                    "422": {
+                        "$ref": "#/components/responses/ValidationException"
+                    }
+                }
+            },
+            "delete": {
+                "operationId": "skill.destroy",
+                "tags": [
+                    "Skill"
+                ],
+                "parameters": [
+                    {
+                        "name": "id",
+                        "in": "path",
+                        "required": true,
+                        "schema": {
+                            "type": "string"
+                        }
+                    }
+                ],
+                "responses": {
+                    "200": {
+                        "description": "",
+                        "content": {
+                            "application/json": {
+                                "schema": {
+                                    "type": "object",
+                                    "properties": {
+                                        "id": {
+                                            "type": "string"
+                                        }
+                                    },
+                                    "required": [
+                                        "id"
+                                    ]
+                                }
+                            }
+                        }
+                    },
+                    "401": {
+                        "$ref": "#/components/responses/AuthenticationException"
+                    }
+                }
+            }
+        },
+        "/theme": {
+            "get": {
+                "operationId": "theme.show",
+                "tags": [
+                    "Theme"
+                ],
+                "responses": {
+                    "200": {
+                        "description": "",
+                        "content": {
+                            "application/json": {
+                                "schema": {
+                                    "type": "object",
+                                    "properties": {
+                                        "theme": {
+                                            "type": "string"
+                                        },
+                                        "exists": {
+                                            "type": "boolean"
+                                        }
+                                    },
+                                    "required": [
+                                        "theme",
+                                        "exists"
+                                    ]
+                                }
+                            }
+                        }
+                    }
+                },
+                "security": []
+            },
+            "put": {
+                "operationId": "theme.update",
+                "tags": [
+                    "Theme"
+                ],
+                "requestBody": {
+                    "content": {
+                        "application/json": {
+                            "schema": {
+                                "$ref": "#/components/schemas/UpdateThemeRequest"
+                            }
+                        }
+                    }
+                },
+                "responses": {
+                    "200": {
+                        "description": "",
+                        "content": {
+                            "application/json": {
+                                "schema": {
+                                    "type": "object",
+                                    "properties": {
+                                        "theme": {
+                                            "type": "array",
+                                            "items": {}
+                                        },
+                                        "exists": {
+                                            "type": "boolean"
+                                        }
+                                    },
+                                    "required": [
+                                        "theme",
+                                        "exists"
+                                    ]
+                                }
+                            }
+                        }
+                    },
+                    "401": {
+                        "$ref": "#/components/responses/AuthenticationException"
+                    },
+                    "422": {
+                        "$ref": "#/components/responses/ValidationException"
+                    }
+                }
+            }
+        },
+        "/theme/reset": {
+            "delete": {
+                "operationId": "theme.reset",
+                "tags": [
+                    "Theme"
+                ],
+                "responses": {
+                    "200": {
+                        "description": "",
+                        "content": {
+                            "application/json": {
+                                "schema": {
+                                    "type": "object",
+                                    "properties": {
+                                        "theme": {
+                                            "type": "null"
+                                        },
+                                        "exists": {
+                                            "type": "boolean"
+                                        }
+                                    },
+                                    "required": [
+                                        "theme",
+                                        "exists"
+                                    ]
+                                }
+                            }
+                        }
+                    },
+                    "401": {
+                        "$ref": "#/components/responses/AuthenticationException"
+                    }
+                }
+            }
+        }
+    },
+    "components": {
+        "securitySchemes": {
+            "http": {
+                "type": "http",
+                "scheme": "bearer"
+            }
+        },
+        "schemas": {
+            "Experience": {
+                "type": "object",
+                "properties": {
+                    "id": {
+                        "type": "string"
+                    },
+                    "company": {
+                        "type": "string"
+                    },
+                    "role": {
+                        "type": "string"
+                    },
+                    "location": {
+                        "type": "string"
+                    },
+                    "highlights": {
+                        "type": "array",
+                        "items": {}
+                    },
+                    "order": {
+                        "type": "integer"
+                    }
+                },
+                "required": [
+                    "id",
+                    "company",
+                    "role",
+                    "location",
+                    "highlights",
+                    "order"
+                ],
+                "title": "Experience"
+            },
+            "LoginRequest": {
+                "type": "object",
+                "properties": {
+                    "email": {
+                        "type": "string",
+                        "maxLength": 255
+                    },
+                    "password": {
+                        "type": "string",
+                        "maxLength": 255
+                    }
+                },
+                "required": [
+                    "email",
+                    "password"
+                ],
+                "title": "LoginRequest"
+            },
+            "Profile": {
+                "type": "object",
+                "properties": {
+                    "id": {
+                        "type": "string"
+                    },
+                    "name": {
+                        "type": "string"
+                    },
+                    "title": {
+                        "type": "string"
+                    },
+                    "bio": {
+                        "type": [
+                            "string",
+                            "null"
+                        ]
+                    },
+                    "strengths": {
+                        "type": [
+                            "array",
+                            "null"
+                        ],
+                        "items": {}
+                    },
+                    "email": {
+                        "type": "string"
+                    },
+                    "location": {
+                        "type": "string"
+                    }
+                },
+                "required": [
+                    "id",
+                    "name",
+                    "title",
+                    "bio",
+                    "strengths",
+                    "email",
+                    "location"
+                ],
+                "title": "Profile"
+            },
+            "Project": {
+                "type": "object",
+                "properties": {
+                    "id": {
+                        "type": "string"
+                    },
+                    "title": {
+                        "type": "string"
+                    },
+                    "description": {
+                        "type": "string"
+                    },
+                    "category": {
+                        "type": "string"
+                    },
+                    "featured": {
+                        "type": "boolean"
+                    },
+                    "year": {
+                        "type": "integer"
+                    },
+                    "order": {
+                        "type": "integer"
+                    }
+                },
+                "required": [
+                    "id",
+                    "title",
+                    "description",
+                    "category",
+                    "featured",
+                    "year",
+                    "order"
+                ],
+                "title": "Project"
+            },
+            "Skill": {
+                "type": "object",
+                "properties": {
+                    "id": {
+                        "type": "string"
+                    },
+                    "name": {
+                        "type": "string"
+                    },
+                    "category": {
+                        "type": "string"
+                    },
+                    "proficiency": {
+                        "type": "integer"
+                    },
+                    "icon": {
+                        "type": [
+                            "string",
+                            "null"
+                        ]
+                    }
+                },
+                "required": [
+                    "id",
+                    "name",
+                    "category",
+                    "proficiency",
+                    "icon"
+                ],
+                "title": "Skill"
+            },
+            "StoreContactRequest": {
+                "type": "object",
+                "properties": {
+                    "name": {
+                        "type": "string",
+                        "minLength": 2,
+                        "maxLength": 100
+                    },
+                    "email": {
+                        "type": "string",
+                        "format": "email",
+                        "maxLength": 200
+                    },
+                    "subject": {
+                        "type": "string",
+                        "minLength": 2,
+                        "maxLength": 150
+                    },
+                    "message": {
+                        "type": "string",
+                        "minLength": 10,
+                        "maxLength": 5000
+                    },
+                    "honeypot": {
+                        "type": "string"
+                    }
+                },
+                "required": [
+                    "name",
+                    "email",
+                    "subject",
+                    "message"
+                ],
+                "title": "StoreContactRequest"
+            },
+            "StoreExperienceRequest": {
+                "type": "object",
+                "properties": {
+                    "id": {
+                        "type": "string",
+                        "maxLength": 64
+                    },
+                    "company": {
+                        "type": "string",
+                        "maxLength": 255
+                    },
+                    "role": {
+                        "type": "string",
+                        "maxLength": 255
+                    },
+                    "startDate": {
+                        "type": "string",
+                        "format": "date"
+                    },
+                    "endDate": {
+                        "type": [
+                            "string",
+                            "null"
+                        ],
+                        "format": "date"
+                    },
+                    "location": {
+                        "type": "string",
+                        "maxLength": 255
+                    },
+                    "employmentType": {
+                        "type": "string",
+                        "maxLength": 100
+                    },
+                    "highlights": {
+                        "type": [
+                            "array",
+                            "null"
+                        ],
+                        "items": {
+                            "type": "string",
+                            "maxLength": 2000
+                        }
+                    },
+                    "techStack": {
+                        "type": [
+                            "array",
+                            "null"
+                        ],
+                        "items": {
+                            "type": "string",
+                            "maxLength": 100
+                        }
+                    },
+                    "order": {
+                        "type": [
+                            "integer",
+                            "null"
+                        ],
+                        "minimum": 0
+                    }
+                },
+                "required": [
+                    "id",
+                    "company",
+                    "role",
+                    "startDate",
+                    "location",
+                    "employmentType"
+                ],
+                "title": "StoreExperienceRequest"
+            },
+            "StoreProjectRequest": {
+                "type": "object",
+                "properties": {
+                    "id": {
+                        "type": "string",
+                        "maxLength": 64
+                    },
+                    "title": {
+                        "type": "string",
+                        "maxLength": 255
+                    },
+                    "description": {
+                        "type": "string"
+                    },
+                    "longDescription": {
+                        "type": [
+                            "string",
+                            "null"
+                        ]
+                    },
+                    "techStack": {
+                        "type": [
+                            "array",
+                            "null"
+                        ],
+                        "items": {
+                            "type": "string",
+                            "maxLength": 100
+                        }
+                    },
+                    "category": {
+                        "type": "string",
+                        "maxLength": 100
+                    },
+                    "featured": {
+                        "type": [
+                            "boolean",
+                            "null"
+                        ]
+                    },
+                    "liveUrl": {
+                        "type": [
+                            "string",
+                            "null"
+                        ],
+                        "maxLength": 511
+                    },
+                    "githubUrl": {
+                        "type": [
+                            "string",
+                            "null"
+                        ],
+                        "maxLength": 511
+                    },
+                    "imageUrl": {
+                        "type": [
+                            "string",
+                            "null"
+                        ],
+                        "maxLength": 511
+                    },
+                    "year": {
+                        "type": "integer",
+                        "minimum": 1990,
+                        "maximum": 2100
+                    },
+                    "order": {
+                        "type": [
+                            "integer",
+                            "null"
+                        ],
+                        "minimum": 0
+                    }
+                },
+                "required": [
+                    "id",
+                    "title",
+                    "description",
+                    "category",
+                    "year"
+                ],
+                "title": "StoreProjectRequest"
+            },
+            "StoreSkillRequest": {
+                "type": "object",
+                "properties": {
+                    "id": {
+                        "type": "string",
+                        "maxLength": 64
+                    },
+                    "name": {
+                        "type": "string",
+                        "maxLength": 255
+                    },
+                    "category": {
+                        "type": "string",
+                        "enum": [
+                            "languages",
+                            "frontend",
+                            "backend",
+                            "database",
+                            "devops",
+                            "design",
+                            "tools"
+                        ]
+                    },
+                    "proficiency": {
+                        "type": "integer",
+                        "minimum": 0,
+                        "maximum": 100
+                    },
+                    "yearsUsed": {
+                        "type": [
+                            "number",
+                            "null"
+                        ],
+                        "minimum": 0,
+                        "maximum": 100
+                    },
+                    "icon": {
+                        "type": [
+                            "string",
+                            "null"
+                        ],
+                        "maxLength": 64
+                    }
+                },
+                "required": [
+                    "id",
+                    "name",
+                    "category",
+                    "proficiency"
+                ],
+                "title": "StoreSkillRequest"
+            },
+            "UpdateExperienceRequest": {
+                "type": "object",
+                "properties": {
+                    "id": {
+                        "type": "string",
+                        "maxLength": 64
+                    },
+                    "company": {
+                        "type": "string",
+                        "maxLength": 255
+                    },
+                    "role": {
+                        "type": "string",
+                        "maxLength": 255
+                    },
+                    "startDate": {
+                        "type": "string",
+                        "format": "date"
+                    },
+                    "endDate": {
+                        "type": [
+                            "string",
+                            "null"
+                        ],
+                        "format": "date"
+                    },
+                    "location": {
+                        "type": "string",
+                        "maxLength": 255
+                    },
+                    "employmentType": {
+                        "type": "string",
+                        "maxLength": 100
+                    },
+                    "highlights": {
+                        "type": [
+                            "array",
+                            "null"
+                        ],
+                        "items": {
+                            "type": "string",
+                            "maxLength": 2000
+                        }
+                    },
+                    "techStack": {
+                        "type": [
+                            "array",
+                            "null"
+                        ],
+                        "items": {
+                            "type": "string",
+                            "maxLength": 100
+                        }
+                    },
+                    "order": {
+                        "type": [
+                            "integer",
+                            "null"
+                        ],
+                        "minimum": 0
+                    }
+                },
+                "required": [
+                    "company",
+                    "role",
+                    "startDate",
+                    "location",
+                    "employmentType"
+                ],
+                "title": "UpdateExperienceRequest"
+            },
+            "UpdateProfileRequest": {
+                "type": "object",
+                "properties": {
+                    "name": {
+                        "type": "string",
+                        "maxLength": 255
+                    },
+                    "title": {
+                        "type": "string",
+                        "maxLength": 255
+                    },
+                    "shortBio": {
+                        "type": [
+                            "string",
+                            "null"
+                        ]
+                    },
+                    "bio": {
+                        "type": [
+                            "string",
+                            "null"
+                        ]
+                    },
+                    "personalNote": {
+                        "type": [
+                            "string",
+                            "null"
+                        ]
+                    },
+                    "strengths": {
+                        "type": [
+                            "array",
+                            "null"
+                        ],
+                        "items": {
+                            "type": "string",
+                            "maxLength": 500
+                        },
+                        "maxItems": 20
+                    },
+                    "openToWork": {
+                        "type": [
+                            "string",
+                            "null"
+                        ],
+                        "maxLength": 100
+                    },
+                    "strengthsTitle": {
+                        "type": [
+                            "string",
+                            "null"
+                        ],
+                        "maxLength": 100
+                    },
+                    "strengthsIcon": {
+                        "type": [
+                            "string",
+                            "null"
+                        ],
+                        "enum": [
+                            "none",
+                            "star",
+                            "sparkles",
+                            "zap",
+                            "rocket",
+                            "award",
+                            "target",
+                            "shield",
+                            "gem",
+                            "lightbulb",
+                            "layers",
+                            null
+                        ]
+                    },
+                    "personalNoteTitle": {
+                        "type": [
+                            "string",
+                            "null"
+                        ],
+                        "maxLength": 100
+                    },
+                    "personalNoteIcon": {
+                        "type": [
+                            "string",
+                            "null"
+                        ],
+                        "enum": [
+                            "none",
+                            "star",
+                            "sparkles",
+                            "zap",
+                            "rocket",
+                            "award",
+                            "target",
+                            "shield",
+                            "gem",
+                            "lightbulb",
+                            "layers",
+                            null
+                        ]
+                    },
+                    "avatarUrl": {
+                        "type": [
+                            "string",
+                            "null"
+                        ],
+                        "maxLength": 511
+                    },
+                    "resumeUrl": {
+                        "type": [
+                            "string",
+                            "null"
+                        ],
+                        "maxLength": 511
+                    },
+                    "email": {
+                        "type": "string",
+                        "format": "email",
+                        "maxLength": 255
+                    },
+                    "location": {
+                        "type": "string",
+                        "maxLength": 255
+                    },
+                    "yearsExperience": {
+                        "type": "integer",
+                        "minimum": 0,
+                        "maximum": 60
+                    },
+                    "socials": {
+                        "type": "array",
+                        "items": {
+                            "type": "object",
+                            "properties": {
+                                "id": {
+                                    "type": [
+                                        "string",
+                                        "null"
+                                    ],
+                                    "maxLength": 64
+                                },
+                                "label": {
+                                    "type": "string",
+                                    "maxLength": 100
+                                },
+                                "url": {
+                                    "type": "string",
+                                    "maxLength": 511
+                                },
+                                "icon": {
+                                    "type": "string",
+                                    "enum": [
+                                        "github",
+                                        "linkedin",
+                                        "twitter",
+                                        "website",
+                                        "email"
+                                    ]
+                                }
+                            },
+                            "required": [
+                                "label",
+                                "url",
+                                "icon"
+                            ]
+                        }
+                    }
+                },
+                "required": [
+                    "name",
+                    "title",
+                    "email",
+                    "location",
+                    "yearsExperience",
+                    "socials"
+                ],
+                "title": "UpdateProfileRequest"
+            },
+            "UpdateProjectRequest": {
+                "type": "object",
+                "properties": {
+                    "id": {
+                        "type": "string",
+                        "maxLength": 64
+                    },
+                    "title": {
+                        "type": "string",
+                        "maxLength": 255
+                    },
+                    "description": {
+                        "type": "string"
+                    },
+                    "longDescription": {
+                        "type": [
+                            "string",
+                            "null"
+                        ]
+                    },
+                    "techStack": {
+                        "type": [
+                            "array",
+                            "null"
+                        ],
+                        "items": {
+                            "type": "string",
+                            "maxLength": 100
+                        }
+                    },
+                    "category": {
+                        "type": "string",
+                        "maxLength": 100
+                    },
+                    "featured": {
+                        "type": [
+                            "boolean",
+                            "null"
+                        ]
+                    },
+                    "liveUrl": {
+                        "type": [
+                            "string",
+                            "null"
+                        ],
+                        "maxLength": 511
+                    },
+                    "githubUrl": {
+                        "type": [
+                            "string",
+                            "null"
+                        ],
+                        "maxLength": 511
+                    },
+                    "imageUrl": {
+                        "type": [
+                            "string",
+                            "null"
+                        ],
+                        "maxLength": 511
+                    },
+                    "year": {
+                        "type": "integer",
+                        "minimum": 1990,
+                        "maximum": 2100
+                    },
+                    "order": {
+                        "type": [
+                            "integer",
+                            "null"
+                        ],
+                        "minimum": 0
+                    }
+                },
+                "required": [
+                    "title",
+                    "description",
+                    "category",
+                    "year"
+                ],
+                "title": "UpdateProjectRequest"
+            },
+            "UpdateSkillRequest": {
+                "type": "object",
+                "properties": {
+                    "id": {
+                        "type": "string",
+                        "maxLength": 64
+                    },
+                    "name": {
+                        "type": "string",
+                        "maxLength": 255
+                    },
+                    "category": {
+                        "type": "string",
+                        "enum": [
+                            "languages",
+                            "frontend",
+                            "backend",
+                            "database",
+                            "devops",
+                            "design",
+                            "tools"
+                        ]
+                    },
+                    "proficiency": {
+                        "type": "integer",
+                        "minimum": 0,
+                        "maximum": 100
+                    },
+                    "yearsUsed": {
+                        "type": [
+                            "number",
+                            "null"
+                        ],
+                        "minimum": 0,
+                        "maximum": 100
+                    },
+                    "icon": {
+                        "type": [
+                            "string",
+                            "null"
+                        ],
+                        "maxLength": 64
+                    }
+                },
+                "required": [
+                    "name",
+                    "category",
+                    "proficiency"
+                ],
+                "title": "UpdateSkillRequest"
+            },
+            "UpdateThemeRequest": {
+                "type": "object",
+                "properties": {
+                    "mode": {
+                        "type": "string",
+                        "enum": [
+                            "light",
+                            "dark"
+                        ]
+                    },
+                    "accent": {
+                        "type": "string"
+                    },
+                    "customAccent": {
+                        "type": [
+                            "string",
+                            "null"
+                        ],
+                        "maxLength": 20
+                    },
+                    "glass": {
+                        "type": "string",
+                        "enum": [
+                            "subtle",
+                            "normal",
+                            "strong"
+                        ]
+                    },
+                    "blur": {
+                        "type": "string",
+                        "enum": [
+                            "normal",
+                            "high",
+                            "ultra"
+                        ]
+                    },
+                    "radius": {
+                        "type": "string",
+                        "enum": [
+                            "sharp",
+                            "rounded",
+                            "pill"
+                        ]
+                    },
+                    "font": {
+                        "type": "string",
+                        "maxLength": 40
+                    },
+                    "density": {
+                        "type": "string",
+                        "enum": [
+                            "compact",
+                            "normal",
+                            "comfortable"
+                        ]
+                    },
+                    "gridSize": {
+                        "type": "integer",
+                        "enum": [
+                            "16",
+                            "24",
+                            "32"
+                        ]
+                    },
+                    "windowOpacity": {
+                        "type": "number",
+                        "minimum": 0.5,
+                        "maximum": 1
+                    },
+                    "showTopBar": {
+                        "type": "boolean"
+                    },
+                    "wallpaper": {
+                        "type": "string",
+                        "maxLength": 60
+                    },
+                    "wallpaperDim": {
+                        "type": "number",
+                        "minimum": 0,
+                        "maximum": 60
+                    },
+                    "wallpaperBlur": {
+                        "type": "number",
+                        "minimum": 0,
+                        "maximum": 25
+                    },
+                    "taskbarMode": {
+                        "type": "string",
+                        "enum": [
+                            "always",
+                            "auto-hide"
+                        ]
+                    },
+                    "taskbarStyle": {
+                        "type": "string",
+                        "enum": [
+                            "macos",
+                            "windows"
+                        ]
+                    },
+                    "taskbarApps": {
+                        "type": "array",
+                        "items": {
+                            "type": "string"
+                        }
+                    },
+                    "showHomeIndicator": {
+                        "type": "boolean"
+                    },
+                    "showSeconds": {
+                        "type": "boolean"
+                    },
+                    "animationsEnabled": {
+                        "type": "boolean"
+                    },
+                    "soundsEnabled": {
+                        "type": "boolean"
+                    },
+                    "widgets": {
+                        "type": "array",
+                        "items": {
+                            "type": "string"
+                        }
+                    },
+                    "startupWindows": {
+                        "type": "array",
+                        "items": {
+                            "type": "string"
+                        }
+                    },
+                    "clockFormat": {
+                        "type": "string",
+                        "enum": [
+                            "12h",
+                            "24h"
+                        ]
+                    },
+                    "dateFormat": {
+                        "type": "string",
+                        "enum": [
+                            "short",
+                            "long"
+                        ]
+                    }
+                },
+                "title": "UpdateThemeRequest"
+            },
+            "UploadAvatarRequest": {
+                "type": "object",
+                "properties": {
+                    "image": {
+                        "type": "string",
+                        "format": "binary",
+                        "contentMediaType": "application/octet-stream"
+                    }
+                },
+                "required": [
+                    "image"
+                ],
+                "title": "UploadAvatarRequest"
+            }
+        },
+        "responses": {
+            "ValidationException": {
+                "description": "Validation error",
+                "content": {
+                    "application/json": {
+                        "schema": {
+                            "type": "object",
+                            "properties": {
+                                "message": {
+                                    "type": "string",
+                                    "description": "Errors overview."
+                                },
+                                "errors": {
+                                    "type": "object",
+                                    "description": "A detailed description of each field that failed validation.",
+                                    "additionalProperties": {
+                                        "type": "array",
+                                        "items": {
+                                            "type": "string"
+                                        }
+                                    }
+                                }
+                            },
+                            "required": [
+                                "message",
+                                "errors"
+                            ]
+                        }
+                    }
+                }
+            },
+            "AuthenticationException": {
+                "description": "Unauthenticated",
+                "content": {
+                    "application/json": {
+                        "schema": {
+                            "type": "object",
+                            "properties": {
+                                "message": {
+                                    "type": "string",
+                                    "description": "Error overview."
+                                }
+                            },
+                            "required": [
+                                "message"
+                            ]
+                        }
+                    }
+                }
+            }
+        }
+    }
+}

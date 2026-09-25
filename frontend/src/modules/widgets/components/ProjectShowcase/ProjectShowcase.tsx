@@ -1,25 +1,19 @@
 import { useEffect, useState } from 'react';
-import { fetchProjects } from '@/lib/api';
-import type { Project } from '@shared/types';
+import { useContent } from '@/context/ContentContext';
 import { ExternalLink, Github } from 'lucide-react';
 
 export default function ProjectShowcase() {
-  const [projects, setProjects] = useState<Project[]>([]);
+  const { projects } = useContent();
+  const featured = projects.filter((p) => p.featured);
   const [idx, setIdx] = useState(0);
 
   useEffect(() => {
-    let alive = true;
-    fetchProjects().then((ps) => { if (alive) setProjects(ps.filter((p) => p.featured)); });
-    return () => { alive = false; };
-  }, []);
-
-  useEffect(() => {
-    if (projects.length < 2) return;
-    const t = setInterval(() => setIdx((i) => (i + 1) % projects.length), 5000);
+    if (featured.length < 2) return;
+    const t = setInterval(() => setIdx((i) => (i + 1) % featured.length), 5000);
     return () => clearInterval(t);
-  }, [projects.length]);
+  }, [featured.length]);
 
-  const p = projects[idx];
+  const p = featured[idx];
 
   if (!p) return <p className="text-xs" style={{ color: 'var(--text-low)' }}>Loading projects…</p>;
 

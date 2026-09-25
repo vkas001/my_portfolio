@@ -1,7 +1,8 @@
 <?php
 
 use App\Http\Middleware\ApiResponseEnvelope;
-use App\Http\Middleware\AuthenticateToken;
+use App\Http\Middleware\RequirePermission;
+use Illuminate\Auth\Middleware\Authenticate;
 use Illuminate\Foundation\Application;
 use Illuminate\Foundation\Configuration\Exceptions;
 use Illuminate\Foundation\Configuration\Middleware;
@@ -20,9 +21,16 @@ return Application::configure(basePath: dirname(__DIR__))
         // the frontend expects (mirrors the old Express API).
         $middleware->append(ApiResponseEnvelope::class);
 
-        // Bearer-token auth (hand-rolled; resolves the user for /auth/me and
-        // guards admin-only writes like PUT /theme).
-        $middleware->alias(['auth.token' => AuthenticateToken::class]);
+        // Bearer-token auth uses the real `api` guard (TokenGuard). Guests
+        // hit null; `permission:` asserts the single-admin's is_admin flag.
+        $middleware->alias([
+            'auth' => Authenticate::class,
+            'permission' => RequirePermission::class,
+        ]);
+
+        // Pure API — no web login route exists, so never redirect guests
+        // (the framework default `route('login')` 500s); return null → 401 JSON.
+        $middleware->redirectGuestsTo(fn () => null);
 
         // 120 requests/minute across /api (limiter defined in AppServiceProvider).
         $middleware->group('api', [

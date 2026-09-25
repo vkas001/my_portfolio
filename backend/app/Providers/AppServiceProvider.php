@@ -3,6 +3,7 @@
 namespace App\Providers;
 
 use Illuminate\Cache\RateLimiting\Limit;
+use Illuminate\Database\Eloquent\Model;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\RateLimiter;
 use Illuminate\Support\ServiceProvider;
@@ -22,6 +23,10 @@ class AppServiceProvider extends ServiceProvider
      */
     public function boot(): void
     {
+        // N+1 guard while developing — controls like 'me', the admin panel
+        // and widgets would all catch lazy-loading bugs early.
+        Model::preventLazyLoading(! $this->app->isProduction());
+
         $this->configureRateLimiting();
     }
 

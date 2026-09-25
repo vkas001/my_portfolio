@@ -9,6 +9,10 @@ use App\Models\Skill;
 use Illuminate\Http\JsonResponse;
 use Illuminate\Http\Request;
 
+/**
+ * Public read endpoints — no auth. Returns plain payloads; the global
+ * ApiResponseEnvelope wraps them so the wire shape is `{ ok, data }`.
+ */
 class PortfolioController extends Controller
 {
     public function profile(): JsonResponse
@@ -19,10 +23,10 @@ class PortfolioController extends Controller
 
         // Mirror the Express API: 404 when not configured.
         if (! $profile) {
-            return response()->json(['ok' => false, 'error' => 'Profile not found'], 404);
+            return response()->json(['error' => 'Profile not found'], 404);
         }
 
-        return response()->json(['ok' => true, 'data' => $profile]);
+        return response()->json($profile);
     }
 
     public function skills(Request $request): JsonResponse
@@ -35,7 +39,7 @@ class PortfolioController extends Controller
             ->orderBy('id')
             ->get();
 
-        return response()->json(['ok' => true, 'data' => $skills]);
+        return response()->json($skills);
     }
 
     public function projects(Request $request): JsonResponse
@@ -52,7 +56,7 @@ class PortfolioController extends Controller
             ->orderBy('order')
             ->get();
 
-        return response()->json(['ok' => true, 'data' => $projects]);
+        return response()->json($projects);
     }
 
     public function experience(): JsonResponse
@@ -61,6 +65,6 @@ class PortfolioController extends Controller
             ->orderBy('order')
             ->get();
 
-        return response()->json(['ok' => true, 'data' => $experience]);
+        return response()->json($experience);
     }
 }

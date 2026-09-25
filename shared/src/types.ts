@@ -92,7 +92,6 @@ export interface ContactFormPayload {
 }
 
 export interface ContactResponse {
-  ok: boolean;
   message: string;
 }
 

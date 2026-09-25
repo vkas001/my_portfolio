@@ -16,11 +16,11 @@ export default defineConfig({
     host: '0.0.0.0',
     proxy: {
       '/api': {
-        target: 'http://localhost:4000',
+        target: 'http://10.20.30.25:8000',
         changeOrigin: true,
       },
       '/storage': {
-        target: 'http://localhost:4000',
+        target: 'http://10.20.30.25:8000',
       },
     },
   },

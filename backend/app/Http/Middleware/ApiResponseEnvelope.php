@@ -3,19 +3,25 @@
 namespace App\Http\Middleware;
 
 use Closure;
-use Illuminate\Http\Request;
 use Illuminate\Http\JsonResponse;
+use Illuminate\Http\Request;
 use Symfony\Component\HttpFoundation\Response;
 
 /**
  * Mirrors the Express backend's response envelope:
  *   success → { ok: true, data: ... }
  *   error   → { ok: false, error: "..." }
+ *
+ * Global for /api only — web responses (Scramble's /docs/*) pass through raw.
  */
 class ApiResponseEnvelope
 {
     public function handle(Request $request, Closure $next): Response
     {
+        if (! $request->is('api/*')) {
+            return $next($request);
+        }
+
         $response = $next($request);
 
         if (! $response instanceof JsonResponse) {
