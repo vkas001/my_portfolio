@@ -187,6 +187,8 @@ export interface ThemeState {
   showSeconds: boolean;        // taskbar/tray clock seconds (ibiz_v2 TimePanel)
   animationsEnabled: boolean;
   soundsEnabled: boolean;
+  volume: number;        // 0-100 — in-OS UI audio gain (drives the WebAudio blips)
+  airplaneMode: boolean; // connectivity override: fails all API reads → local seeds
   widgets: WidgetPlacement[];
   startupWindows: string[];
   clockFormat: ClockFormat;
@@ -223,6 +225,8 @@ export const DEFAULT_THEME: ThemeState = {
   showSeconds: false,
   animationsEnabled: true,
   soundsEnabled: false,
+  volume: 85,
+  airplaneMode: false,
   widgets: [],
   startupWindows: [],
   clockFormat: '12h',
@@ -457,6 +461,9 @@ export function loadTheme(key: string = GUEST_THEME_KEY): ThemeState {
     if (typeof merged.showTopBar !== 'boolean') merged.showTopBar = true;
     if (typeof merged.showSeconds !== 'boolean') merged.showSeconds = false;
     if (typeof merged.showHomeIndicator !== 'boolean') merged.showHomeIndicator = false;
+    if (typeof merged.volume !== 'number' || Number.isNaN(merged.volume)) merged.volume = DEFAULT_THEME.volume;
+    else merged.volume = Math.min(100, Math.max(0, merged.volume));
+    if (typeof merged.airplaneMode !== 'boolean') merged.airplaneMode = false;
     if (!Array.isArray(merged.taskbarApps)) merged.taskbarApps = [...DEFAULT_THEME.taskbarApps];
     // One-time stale clear: the old default auto-opened About+Skills. An
     // explicit user pick (anything else, including []) is preserved.

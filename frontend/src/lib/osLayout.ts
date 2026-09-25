@@ -197,6 +197,31 @@ export function fitWidgetRect(
   };
 }
 
+/**
+ * Re-anchor a rect to its original relative position when the workspace
+ * resizes: a widget keeps the margin to its nearest edges (per axis) from the
+ * *old* bounds instead of drifting as absolute px — so top-right widgets hug
+ * the right edge as the screen shrinks and glide back on grow. The caller
+ * still clamps the result on-screen. Pass the previous bounds so the margins
+ * are relative to where the widget actually was, not the current screen.
+ */
+export function followBoundsChange(
+  rect: Rect,
+  old: ViewportBounds,
+  next: ViewportBounds,
+): Rect {
+  const ml = rect.x;
+  const mr = old.width - (rect.x + rect.w);
+  const mt = rect.y - old.top;
+  const mb = old.top + old.height - (rect.y + rect.h);
+
+  const anchorLeft = ml <= mr;
+  const x = anchorLeft ? ml : next.width - rect.w - mr;
+  const anchorTop = mt <= mb;
+  const y = anchorTop ? next.top + mt : next.top + next.height - rect.h - mb;
+  return { x, y, w: rect.w, h: rect.h };
+}
+
 function rectsOverlap(a: Rect, b: Rect): boolean {
   return a.x < b.x + b.w && b.x < a.x + a.w && a.y < b.y + b.h && b.y < a.y + a.h;
 }

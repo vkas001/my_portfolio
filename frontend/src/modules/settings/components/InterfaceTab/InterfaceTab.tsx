@@ -53,7 +53,14 @@ export default function InterfaceTab({ theme, setTheme }: { theme: ThemeState; s
         </SettingRow>
       </div>
 
-      <div className="pt-2 mt-2" style={{ borderTop: '1px solid var(--border)' }}>
+      <div className="pt-2 mt-2 space-y-4" style={{ borderTop: '1px solid var(--border)' }}>
+        <RangeControl
+          label="Volume"
+          value={theme.volume}
+          min={0} max={100} step={1}
+          display={`${theme.volume}%`}
+          onChange={(v) => setTheme({ volume: v })}
+        />
         <RangeControl
           label="Window opacity"
           value={theme.windowOpacity}

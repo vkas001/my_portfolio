@@ -11,6 +11,7 @@ import {
   Folder,
   LayoutGrid,
   Mail,
+  Plane,
   Search,
   Settings,
   Sparkles,
@@ -25,6 +26,7 @@ import { useTheme } from '@/context/ThemeContext';
 import { useWindows } from '@/context/WindowsContext';
 import { useShellUI } from '@/context/ShellUIContext';
 import { http } from '@/lib/api/httpClient';
+import { subscribeForcedOffline } from '@/lib/network';
 import { APP_REGISTRY } from '@/apps/registry';
 import type { AppId } from '@/types';
 import SystemTrayModal from '@/components/shell/SystemTrayModal/SystemTrayModal';
@@ -142,6 +144,10 @@ const Taskbar = memo(function Taskbar() {
     };
   }, [checkBackend]);
 
+  // Flip the connectivity dot instantly when airplane mode toggles (the
+  // health probe fails fast under forced offline instead of waiting on a TTL).
+  useEffect(() => subscribeForcedOffline(() => void checkBackend()), [checkBackend]);
+
   useEffect(() => {
     const updateDateTime = () => {
       const now = new Date();
@@ -218,7 +224,13 @@ const [isTrayOpen, setIsTrayOpen] = useState(false);
   useEffect(() => {
     if (!isTrayOpen) return;
     const onDown = (e: MouseEvent) => {
-      if (!trayRef.current?.contains(e.target as Node)) setIsTrayOpen(false);
+      const el = e.target as Element | null;
+      // Close only when the click lands outside the tray entirely — the modal
+      // itself and the tray trigger are "inside". A bare containment check on
+      // the trigger ref closes the tray on the mousedown of any interaction
+      // inside the modal (quick toggles, volume slider), before click even runs.
+      if (el && el.closest('[data-tray], [data-trigger="tray"]')) return;
+      setIsTrayOpen(false);
     };
     window.addEventListener('mousedown', onDown);
     return () => window.removeEventListener('mousedown', onDown);
@@ -389,8 +401,8 @@ const [isTrayOpen, setIsTrayOpen] = useState(false);
               title="System Tray & Quick Controls"
             >
               <div className={`flex items-center gap-2.5 ${windowsStyle ? 'gap-1.5' : ''}`}>
-                <Wifi className="w-4 h-4" />
-                {theme.soundsEnabled ? <Volume2 className="w-4 h-4" /> : <VolumeX className="w-4 h-4" />}
+                {theme.airplaneMode ? <Plane className="w-4 h-4" /> : <Wifi className="w-4 h-4" />}
+                {theme.soundsEnabled && theme.volume > 0 ? <Volume2 className="w-4 h-4" /> : <VolumeX className="w-4 h-4" />}
               </div>
               <div className="flex flex-col items-end leading-none justify-center">
                 <span className="text-[12px] font-bold tracking-tight text-(--wp-accent-fg)">

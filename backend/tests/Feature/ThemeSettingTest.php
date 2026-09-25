@@ -62,4 +62,21 @@ class ThemeSettingTest extends AdminApiTestCase
         $this->putJson('/api/theme', ['startupWindows' => ['contact']], $this->adminHeaders())->assertOk()
             ->assertJsonPath('data.theme.startupWindows', ['contact']);
     }
+
+    public function test_volume_and_airplane_mode_round_trip(): void
+    {
+        $this->putJson('/api/theme', ['volume' => 30, 'airplaneMode' => true], $this->adminHeaders())->assertOk()
+            ->assertJsonPath('data.theme.volume', 30)
+            ->assertJsonPath('data.theme.airplaneMode', true);
+
+        $this->getJson('/api/theme')->assertOk()
+            ->assertJsonPath('data.theme.volume', 30)
+            ->assertJsonPath('data.theme.airplaneMode', true);
+    }
+
+    public function test_out_of_range_volume_is_rejected(): void
+    {
+        $this->putJson('/api/theme', ['volume' => 150], $this->adminHeaders())->assertStatus(422);
+        $this->putJson('/api/theme', ['volume' => -5], $this->adminHeaders())->assertStatus(422);
+    }
 }

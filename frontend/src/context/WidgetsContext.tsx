@@ -9,7 +9,7 @@ import {
   type ReactNode,
 } from 'react';
 import { useTheme } from '@/context/ThemeContext';
-import { fitWidgetRect, getWorkspaceBounds, nextWidgetSlot } from '@/lib/osLayout';
+import { fitWidgetRect, followBoundsChange, getWorkspaceBounds, nextWidgetSlot, type ViewportBounds } from '@/lib/osLayout';
 import type { WidgetMeta, WidgetPlacement, WidgetVariant } from '@/types';
 import { sound } from '@/lib/sound';
 
@@ -37,7 +37,9 @@ export function useWidgets(): WidgetsContextValue {
 export function WidgetsProvider({ children }: { children: ReactNode }) {
   const { theme, setTheme } = useTheme();
   const [widgetMetaMap, setWidgetMetaMap] = useState<Record<string, WidgetMeta>>({});
-  const lastBoundsRef = useRef(getWorkspaceBounds());
+  // Previous workspace bounds for the resize-follow; null until the first
+  // reflow captures them (no meaningful "old" position on boot).
+  const lastBoundsRef = useRef<ViewportBounds | null>(null);
   const themeRef = useRef(theme);
   themeRef.current = theme;
   const widgetPlacements = theme.widgets ?? [];
@@ -87,7 +89,7 @@ export function WidgetsProvider({ children }: { children: ReactNode }) {
       // Safety net: placements can never leave the workspace (nor enter the header).
       setTheme((prev) => ({
         widgets: prev.widgets.map((p) =>
-          p.instance === instance ? { ...p, ...fitWidgetRect({ ...p, ...patch }, lastBoundsRef.current) } : p,
+          p.instance === instance ? { ...p, ...fitWidgetRect({ ...p, ...patch }, lastBoundsRef.current ?? getWorkspaceBounds(themeRef.current)) } : p,
         ),
       }));
     },
@@ -103,7 +105,7 @@ export function WidgetsProvider({ children }: { children: ReactNode }) {
           const size = meta?.variants[variant] ?? { w: p.w, h: p.h };
           // Variant growth is top-left anchored: clamp so it can't spill
           // under the taskbar (or inside the header on tiny viewports).
-          const fitted = fitWidgetRect({ ...p, w: size.w, h: size.h }, lastBoundsRef.current);
+          const fitted = fitWidgetRect({ ...p, w: size.w, h: size.h }, lastBoundsRef.current ?? getWorkspaceBounds(themeRef.current));
           return { ...p, variant, w: fitted.w, h: fitted.h, x: fitted.x, y: fitted.y };
         }),
       }));
@@ -111,13 +113,24 @@ export function WidgetsProvider({ children }: { children: ReactNode }) {
     [widgetMetaMap, setTheme],
   );
 
-  // Keep placements fully on-screen when the viewport shrinks or the bars
-  // change (topbar toggle, taskbar mode/style).
+  // Let placements follow the screen edges when the viewport resizes (or the
+  // bars change): each widget keeps the margin to its nearest edges from the
+  // previous bounds, so it tracks the boundary dynamically instead of either
+  // staying as absolute px or being clamped and lost. Windows instead restore
+  // their pre-clamp geometry (see WindowsContext).
   useEffect(() => {
     const reflow = () => {
       const b = getWorkspaceBounds(themeRef.current);
+      const prev = lastBoundsRef.current;
+      const widgets = (themeRef.current.widgets ?? []).map((p) => {
+        const cur = { x: p.x, y: p.y, w: p.w, h: p.h };
+        // First run (or after a bar overhaul): just clamp into place; there
+        // is no meaningful "old" position to follow.
+        const next = prev ? followBoundsChange(cur, prev, b) : cur;
+        return { ...p, ...fitWidgetRect(next, b) };
+      });
       lastBoundsRef.current = b;
-      setTheme((prev) => ({ widgets: prev.widgets.map((p) => ({ ...p, ...fitWidgetRect(p, b) })) }));
+      setTheme((prevTheme) => ({ ...prevTheme, widgets }));
     };
     reflow();
     const raf = requestAnimationFrame(reflow);

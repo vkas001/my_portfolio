@@ -46,6 +46,9 @@ export interface WindowState {
   maximized: boolean;
   isFullScreen: boolean;        // full screen: covers viewport, hides taskbar
   prevRect?: { x: number; y: number; w: number; h: number };
+  /** Pre-clamp geometry remembered while the viewport was too small; restored
+   *  when it grows back. Cleared on any user move/resize. */
+  clampSource?: { x: number; y: number; w: number; h: number };
   data?: WindowData;
 }
 
