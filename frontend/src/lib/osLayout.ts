@@ -133,6 +133,28 @@ export interface Rect {
 }
 
 /**
+ * Equal side-by-side split for the docked editor + content-window pair (the
+ * admin ＋ edit button and switching apps inside the editor). Both halves sit
+ * inside the space above the taskbar so the pair never collides with the bar
+ * (drag can still push a tab behind it afterwards).
+ */
+export function getDockRects(
+  theme?: Pick<ThemeState, 'showTopBar' | 'taskbarMode' | 'taskbarStyle'> | null,
+  min: { w: number; h: number } = { w: 420, h: 460 },
+): { left: Rect; right: Rect; w: number; h: number } {
+  const b = getWindowSpawnBounds(theme);
+  const gap = 12;
+  const w = Math.max(min.w, Math.floor((b.width - gap * 3) / 2));
+  const h = Math.max(min.h, Math.floor(b.height - gap * 2));
+  return {
+    left: { x: gap, y: gap, w, h },
+    right: { x: Math.max(gap, b.width - gap - w), y: gap, w, h },
+    w,
+    h,
+  };
+}
+
+/**
  * Fit a rect fully inside bounds, shrinking it first when it cannot fit.
  * minW/minH yield to tiny viewports so the rect never overflows.
  */

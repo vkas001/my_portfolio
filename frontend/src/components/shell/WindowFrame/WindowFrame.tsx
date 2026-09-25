@@ -1,20 +1,12 @@
 import { useCallback, useRef, type ReactNode } from 'react';
 import { useTheme } from '@/context/ThemeContext';
 import { useWindows } from '@/context/WindowsContext';
-import { getWindowBounds, getWindowSpawnBounds } from '@/lib/osLayout';
+import { getDockRects, getWindowBounds, getWindowSpawnBounds } from '@/lib/osLayout';
 import { useAuth } from '@/context/AuthContext';
 import { useShellUI } from '@/context/ShellUIContext';
-import { APP_REGISTRY } from '@/apps/registry';
-import type { AppId, EditorSection, WindowState } from '@/types';
+import { APP_REGISTRY, EDITABLE_SECTIONS } from '@/apps/registry';
+import type { WindowState } from '@/types';
 import { Minus, Plus, Square, X } from 'lucide-react';
-
-/** Content windows map to the portfolio section their editor manages. */
-const CONTENT_SECTION: Partial<Record<AppId, EditorSection>> = {
-  about: 'profile',
-  skills: 'skills',
-  projects: 'projects',
-  experience: 'experience',
-};
 
 interface Props {
   win: WindowState;
@@ -28,7 +20,7 @@ export default function WindowFrame({ win, children }: Props) {
   const { setActiveWidget } = useShellUI();
   const app = APP_REGISTRY.find((a) => a.id === win.appId);
   const focused = focusedId === win.id;
-  const section = CONTENT_SECTION[win.appId];
+  const section = EDITABLE_SECTIONS.find((e) => e.appId === win.appId)?.section;
   const canEdit = isAdmin && !!section && !win.isFullScreen;
   const frameRef = useRef<HTMLDivElement>(null);
 
@@ -131,16 +123,14 @@ export default function WindowFrame({ win, children }: Props) {
     // Tile inside the space above the taskbar so the docked editor + content
     // window never collide with the bar (drag can still go behind it).
     const b = getWindowSpawnBounds(theme);
-    const gap = 12;
     const editorMin = APP_REGISTRY.find((a) => a.id === 'editor')?.minSize ?? { w: 420, h: 460 };
-    const w = Math.max(editorMin.w, Math.floor((b.width - gap * 3) / 2));
-    const h = Math.max(editorMin.h, Math.floor(b.height - gap * 2));
+    const { left, right } = getDockRects(theme, editorMin);
     const onLeft = win.x + win.w / 2 < b.width / 2;
-    const right = { x: Math.max(gap, b.width - gap - w), y: gap, w, h };
-    const left = { x: gap, y: gap, w, h };
-    updateWindowRect(win.id, onLeft ? left : right);
+    const contentRect = onLeft ? left : right;
+    const editorRect = onLeft ? right : left;
+    updateWindowRect(win.id, contentRect);
     launchApp('editor', {
-      rect: onLeft ? right : left,
+      rect: editorRect,
       data: {
         section,
         // Remember the content window's pre-tile geometry so closing the

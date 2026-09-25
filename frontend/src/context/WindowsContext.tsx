@@ -24,7 +24,9 @@ export interface LaunchOptions {
 interface WindowsContextValue {
   windows: WindowState[];
   focusedId: string | null;
-  launchApp: (appId: AppId, opts?: LaunchOptions) => void;
+  /** Launches (or focuses) an app and returns the window id of the
+   *  launched/focused window, so callers can record a dock or follow-up. */
+  launchApp: (appId: AppId, opts?: LaunchOptions) => string | undefined;
   closeWindow: (id: string) => void;
   closeAllWindows: () => void;
   focusWindow: (id: string) => void;
@@ -33,6 +35,9 @@ interface WindowsContextValue {
   toggleMaximize: (id: string) => void;
   toggleFullScreen: (id: string) => void;
   updateWindowRect: (id: string, rect: Partial<Pick<WindowState, 'x' | 'y' | 'w' | 'h'>>) => void;
+  /** Replace a window's per-app payload (e.g. the editor keeping its
+   *  section + dock in sync while switching apps). */
+  updateWindowData: (id: string, data: WindowData) => void;
 }
 
 const WindowsContext = createContext<WindowsContextValue | null>(null);
@@ -90,9 +95,9 @@ export function WindowsProvider({ children }: { children: ReactNode }) {
   );
 
   const launchApp = useCallback(
-    (appId: AppId, opts?: LaunchOptions) => {
+    (appId: AppId, opts?: LaunchOptions): string | undefined => {
       const app: AppDef | undefined = APP_REGISTRY.find((a) => a.id === appId);
-      if (!app) return;
+      if (!app) return undefined;
 
       // Single instance (or one editor per section): focus if already open
       const existing =
@@ -104,7 +109,7 @@ export function WindowsProvider({ children }: { children: ReactNode }) {
       if (existing) {
         if (existing.minimized) restoreWindow(existing.id);
         else focusWindow(existing.id);
-        return;
+        return existing.id;
       }
 
       // First launch fits above the taskbar (getWindowSpawnBounds); dragging
@@ -151,6 +156,7 @@ export function WindowsProvider({ children }: { children: ReactNode }) {
       );
       setFocusedId(id);
       sound.open();
+      return id;
     },
     [windows, focusWindow, restoreWindow],
   );
@@ -256,6 +262,10 @@ export function WindowsProvider({ children }: { children: ReactNode }) {
     [],
   );
 
+  const updateWindowData = useCallback((id: string, data: WindowData) => {
+    setWindows((ws) => ws.map((w) => (w.id === id ? { ...w, data } : w)));
+  }, []);
+
   // ─── Startup windows ──────────────────────────────────────────────────────
   useEffect(() => {
     if (startedRef.current) return;
@@ -316,10 +326,12 @@ export function WindowsProvider({ children }: { children: ReactNode }) {
       toggleMaximize,
       toggleFullScreen,
       updateWindowRect,
+      updateWindowData,
     }),
     [
       windows, focusedId, launchApp, closeWindow, closeAllWindows, focusWindow,
-      restoreWindow, minimizeWindow, toggleMaximize, toggleFullScreen, updateWindowRect,
+      restoreWindow, minimizeWindow, toggleMaximize, toggleFullScreen,
+      updateWindowRect, updateWindowData,
     ],
   );
 

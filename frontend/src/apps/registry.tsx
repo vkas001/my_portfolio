@@ -1,6 +1,6 @@
 import { lazy } from 'react';
 import { Briefcase, Code2, Folder, LogIn, Mail, PencilLine, Settings as SettingsIcon, User } from 'lucide-react';
-import type { AppDef } from '@/types';
+import type { AppDef, AppId, EditorSection } from '@/types';
 
 const About = lazy(() => import('@/modules/about').then((m) => ({ default: m.AboutScreen })));
 const Skills = lazy(() => import('@/modules/skills').then((m) => ({ default: m.SkillsScreen })));
@@ -96,4 +96,14 @@ export const APP_REGISTRY: AppDef[] = [
     system: true,
     description: 'Manage portfolio content live',
   },
+];
+
+/** Editable content apps: the portfolio section each app window displays and
+ *  the corresponding admin editor section. Drives the editor's app switcher
+ *  and the WindowFrame edit affordance. */
+export const EDITABLE_SECTIONS: { appId: AppId; section: EditorSection }[] = [
+  { appId: 'about', section: 'profile' },
+  { appId: 'skills', section: 'skills' },
+  { appId: 'projects', section: 'projects' },
+  { appId: 'experience', section: 'experience' },
 ];
