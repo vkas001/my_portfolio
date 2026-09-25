@@ -1,6 +1,8 @@
 <?php
 
+use App\Http\Controllers\Admin\EducationController;
 use App\Http\Controllers\Admin\ExperienceController;
+use App\Http\Controllers\Admin\HobbyController;
 use App\Http\Controllers\Admin\ProfileController;
 use App\Http\Controllers\Admin\ProjectController;
 use App\Http\Controllers\Admin\SkillController;
@@ -30,4 +32,16 @@ Route::middleware(['auth:api', 'permission:'.PermissionRegistry::EXPERIENCE_MANA
     Route::post('/admin/experience', [ExperienceController::class, 'store']);
     Route::put('/admin/experience/{experience}', [ExperienceController::class, 'update']);
     Route::delete('/admin/experience/{experience}', [ExperienceController::class, 'destroy']);
+});
+
+Route::middleware(['auth:api', 'permission:'.PermissionRegistry::EDUCATION_MANAGE])->group(function () {
+    Route::post('/admin/education', [EducationController::class, 'store']);
+    Route::put('/admin/education/{education}', [EducationController::class, 'update']);
+    Route::delete('/admin/education/{education}', [EducationController::class, 'destroy']);
+});
+
+Route::middleware(['auth:api', 'permission:'.PermissionRegistry::HOBBIES_MANAGE])->group(function () {
+    Route::post('/admin/hobbies', [HobbyController::class, 'store']);
+    Route::put('/admin/hobbies/{hobby}', [HobbyController::class, 'update']);
+    Route::delete('/admin/hobbies/{hobby}', [HobbyController::class, 'destroy']);
 });

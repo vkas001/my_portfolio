@@ -8,8 +8,12 @@ import {
   type ReactNode,
 } from 'react';
 import type {
+  Education,
+  EducationInput,
   Experience,
   ExperienceInput,
+  Hobby,
+  HobbyInput,
   Profile,
   ProfileInput,
   Project,
@@ -17,7 +21,7 @@ import type {
   Skill,
   SkillInput,
 } from '@shared/types';
-import { fetchExperience, fetchProfile, fetchProjects, fetchSkills } from '@/lib/api';
+import { fetchEducation, fetchExperience, fetchHobbies, fetchProfile, fetchProjects, fetchSkills } from '@/lib/api';
 import { invalidate } from '@/lib/api/httpClient';
 import { adminService } from '@/lib/api/adminService';
 import { useShellUI } from '@/context/ShellUIContext';
@@ -37,6 +41,8 @@ export interface ContentContextValue {
   skills: Skill[];
   projects: Project[];
   experience: Experience[];
+  education: Education[];
+  hobbies: Hobby[];
   refresh: () => Promise<void>;
 
   saveProfile: (input: ProfileInput) => Promise<boolean>;
@@ -49,9 +55,13 @@ export interface ContentContextValue {
   deleteProject: (id: string) => Promise<boolean>;
   saveExperience: (value: Experience, isNew: boolean) => Promise<boolean>;
   deleteExperience: (id: string) => Promise<boolean>;
+  saveEducation: (value: Education, isNew: boolean) => Promise<boolean>;
+  deleteEducation: (id: string) => Promise<boolean>;
+  saveHobby: (value: Hobby, isNew: boolean) => Promise<boolean>;
+  deleteHobby: (id: string) => Promise<boolean>;
   /** Swap item order in the local list and persist the new orders
-   *  (projects/experience — skills have no order field). */
-  moveItem: (section: 'projects' | 'experience', id: string, dir: -1 | 1) => Promise<void>;
+   *  (projects/experience/education/hobbies — skills have no order field). */
+  moveItem: (section: 'projects' | 'experience' | 'education' | 'hobbies', id: string, dir: -1 | 1) => Promise<void>;
 }
 
 const ContentContext = createContext<ContentContextValue | null>(null);
@@ -146,20 +156,24 @@ export function ContentProvider({ children }: { children: ReactNode }) {
   const skills = useItems(fetchSkills);
   const projects = useItems(fetchProjects);
   const experience = useItems(fetchExperience);
+  const education = useItems(fetchEducation);
+  const hobbies = useItems(fetchHobbies);
 
   const refresh = useCallback(async () => {
     invalidate('/profile');
     invalidate('/skills');
     invalidate('/projects');
     invalidate('/experience');
+    invalidate('/education');
+    invalidate('/hobbies');
     try {
       setProfile(await fetchProfile());
     } catch {
       setProfile(null);
     }
-    await Promise.all([skills.reload(), projects.reload(), experience.reload()]);
+    await Promise.all([skills.reload(), projects.reload(), experience.reload(), education.reload(), hobbies.reload()]);
     setLoading(false);
-  }, [skills.reload, projects.reload, experience.reload]);
+  }, [skills.reload, projects.reload, experience.reload, education.reload, hobbies.reload]);
 
   useEffect(() => {
     void refresh();
@@ -357,6 +371,68 @@ export function ContentProvider({ children }: { children: ReactNode }) {
     [experience.items, experience.set, deleteItem],
   );
 
+  const saveEducation = useCallback(
+    (value: Education, isNew: boolean) => {
+      const input: EducationInput = {
+        ...(isNew ? { id: value.id } : {}),
+        institution: value.institution,
+        degree: value.degree,
+        startDate: value.startDate,
+        endDate: value.endDate,
+        description: value.description,
+        order: value.order,
+      };
+      return saveItem(
+        education.items,
+        education.set,
+        value,
+        isNew,
+        () =>
+          isNew
+            ? adminService.storeEducation(input)
+            : adminService.updateEducation(value.id, input),
+        (x) => x.id,
+      );
+    },
+    [education.items, education.set, saveItem],
+  );
+
+  const deleteEducation = useCallback(
+    (id: string) =>
+      deleteItem(education.items, education.set, id, () => adminService.deleteEducation(id)),
+    [education.items, education.set, deleteItem],
+  );
+
+  const saveHobby = useCallback(
+    (value: Hobby, isNew: boolean) => {
+      const input: HobbyInput = {
+        ...(isNew ? { id: value.id } : {}),
+        name: value.name,
+        icon: value.icon,
+        description: value.description,
+        order: value.order,
+      };
+      return saveItem(
+        hobbies.items,
+        hobbies.set,
+        value,
+        isNew,
+        () =>
+          isNew
+            ? adminService.storeHobby(input)
+            : adminService.updateHobby(value.id, input),
+        (x) => x.id,
+      );
+    },
+    [hobbies.items, hobbies.set, saveItem],
+  );
+
+  const deleteHobby = useCallback(
+    (id: string) =>
+      deleteItem(hobbies.items, hobbies.set, id, () => adminService.deleteHobby(id)),
+    [hobbies.items, hobbies.set, deleteItem],
+  );
+
   // Reorder an order-backed section (projects/experience): swap orders
   // locally and persist both updated rows. Skills have no order field, so
   // the editor simply doesn't offer move buttons there.
@@ -395,6 +471,24 @@ export function ContentProvider({ children }: { children: ReactNode }) {
           (rowId, row) => adminService.updateProject(rowId, row),
         );
       }
+      if (section === 'education') {
+        return commitReorder(
+          education.items,
+          education.set,
+          id,
+          dir,
+          (rowId, row) => adminService.updateEducation(rowId, row),
+        );
+      }
+      if (section === 'hobbies') {
+        return commitReorder(
+          hobbies.items,
+          hobbies.set,
+          id,
+          dir,
+          (rowId, row) => adminService.updateHobby(rowId, row),
+        );
+      }
       return commitReorder(
         experience.items,
         experience.set,
@@ -403,7 +497,7 @@ export function ContentProvider({ children }: { children: ReactNode }) {
         (rowId, row) => adminService.updateExperience(rowId, row),
       );
     },
-    [projects.items, projects.set, experience.items, experience.set, commitReorder],
+    [projects.items, projects.set, experience.items, experience.set, education.items, education.set, hobbies.items, hobbies.set, commitReorder],
   );
 
   const value = useMemo<ContentContextValue>(
@@ -413,6 +507,8 @@ export function ContentProvider({ children }: { children: ReactNode }) {
       skills: skills.items,
       projects: projects.items,
       experience: experience.items,
+      education: education.items,
+      hobbies: hobbies.items,
       refresh,
       saveProfile,
       uploadAvatar,
@@ -422,6 +518,10 @@ export function ContentProvider({ children }: { children: ReactNode }) {
       deleteProject,
       saveExperience,
       deleteExperience,
+      saveEducation,
+      deleteEducation,
+      saveHobby,
+      deleteHobby,
       moveItem,
     }),
     [
@@ -430,6 +530,8 @@ export function ContentProvider({ children }: { children: ReactNode }) {
       skills.items,
       projects.items,
       experience.items,
+      education.items,
+      hobbies.items,
       refresh,
       saveProfile,
       uploadAvatar,
@@ -439,6 +541,10 @@ export function ContentProvider({ children }: { children: ReactNode }) {
       deleteProject,
       saveExperience,
       deleteExperience,
+      saveEducation,
+      deleteEducation,
+      saveHobby,
+      deleteHobby,
       moveItem,
     ],
   );

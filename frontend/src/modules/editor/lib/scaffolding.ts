@@ -1,6 +1,6 @@
 import type { ReactNode } from 'react';
 import type { EditorSection } from '@/types';
-import type { Experience, Project, SocialLink } from '@shared/types';
+import type { Education, Experience, Hobby, Project, SocialLink } from '@shared/types';
 
 export const newId = () => crypto.randomUUID().slice(0, 8);
 
@@ -37,4 +37,12 @@ export const emptyProject = (id: string): Project => ({
 export const emptyExperience = (id: string): Experience => ({
   id, company: '', role: '', startDate: '', endDate: null, location: '', employmentType: 'Full-time',
   highlights: [], techStack: [], order: Number.MAX_SAFE_INTEGER,
+});
+
+export const emptyEducation = (id: string): Education => ({
+  id, institution: '', degree: '', startDate: '', endDate: null, description: '', order: Number.MAX_SAFE_INTEGER,
+});
+
+export const emptyHobby = (id: string): Hobby => ({
+  id, name: '', icon: 'mountain', description: '', order: Number.MAX_SAFE_INTEGER,
 });

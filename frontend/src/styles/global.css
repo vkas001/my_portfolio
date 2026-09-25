@@ -702,15 +702,47 @@ input:focus, textarea:focus, select:focus {
   flex: 1;
   min-width: 0;
   display: flex;
-  justify-content: center;
+  justify-content: flex-start;
+  align-items: flex-start;
+  flex-wrap: wrap;
+  gap: 24px;
+  padding: 0 20px 72px;
 }
 .web-main {
-  width: 100%;
-  max-width: 1080px;
-  padding: 28px 24px 72px;
+  flex: 1 1 0%;
+  min-width: 0;
+  flex-basis: 0%;
+  max-width: 940px;
+  padding: 28px 0 0;
   display: flex;
   flex-direction: column;
   gap: 48px;
+}
+/* Sticky right sidebar (right-most): shares the row with the main column and
+ * Education sits at a fixed width; Contact (right of Education) flexes to fill
+ * the remaining space. Stacks vertically below ~1100px. */
+.web-edu {
+  position: sticky;
+  top: 40px;
+  flex: 1 1 0%;
+  padding-top: 28px;
+  align-self: flex-start;
+  display: flex;
+  flex-direction: row;
+  align-items: flex-start;
+  gap: 16px;
+  max-height: calc(100vh - 56px);
+  overflow-y: auto;
+}
+.web-edu .web-section {
+  flex: 0 0 360px;
+  width: 360px;
+  padding: 18px;
+}
+.web-edu #section-contact {
+  flex: 1 1 auto;
+  width: auto;
+  min-width: 0;
 }
 .web-section-wrap { scroll-margin-top: 56px; }
 .web-section {
@@ -756,15 +788,36 @@ input:focus, textarea:focus, select:focus {
 /* Web view is the public, document-level site (no OS window), so viewport
  * media are fair here — the rail always stays leftmost, phones just get a
  * slightly tighter shell and a narrower expanded rail. */
+@media (max-width: 1100px) {
+  .web-edu {
+    position: static;
+    flex: 1 1 100%;
+    width: 100%;
+    padding-top: 0;
+    max-height: none;
+    overflow: visible;
+    flex-direction: column;
+  }
+  .web-edu .web-section,
+  .web-edu #section-contact {
+    flex: 1 1 100%;
+    width: 100%;
+  }
+}
+
 @media (max-width: 639px) {
   .web-shell { max-width: 100%; margin: 0; }
   .web-rail { width: 190px; }
   .web-rail.collapsed { width: 64px; }
-  .web-main { padding: 14px 10px 72px; gap: 40px; }
+  .web-content { padding: 0 10px 72px; }
+  .web-main { padding: 14px 0 0; gap: 40px; }
   .web-section { padding: 18px 14px; }
+  .web-edu .web-section { padding: 18px 14px; }
   .web-section-wrap { scroll-margin-top: 48px; }
+  .web-edu { padding-bottom: 24px; }
 }
 @media (max-width: 380px) {
-  .web-main { padding: 12px 10px 72px; }
+  .web-main { padding: 12px 0 0; }
   .web-section { padding: 16px 12px; }
+  .web-edu .web-section { padding: 16px 12px; }
 }

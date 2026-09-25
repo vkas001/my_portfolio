@@ -1,11 +1,13 @@
 import { lazy } from 'react';
-import { Briefcase, Code2, Folder, LogIn, Mail, PencilLine, Settings as SettingsIcon, User } from 'lucide-react';
+import { Briefcase, Code2, Folder, GraduationCap, LogIn, Mail, PencilLine, Settings as SettingsIcon, Sparkles, User } from 'lucide-react';
 import type { AppDef, AppId, EditorSection } from '@/types';
 
 const About = lazy(() => import('@/modules/about').then((m) => ({ default: m.AboutScreen })));
 const Skills = lazy(() => import('@/modules/skills').then((m) => ({ default: m.SkillsScreen })));
 const Projects = lazy(() => import('@/modules/projects').then((m) => ({ default: m.ProjectsScreen })));
 const Experience = lazy(() => import('@/modules/experience').then((m) => ({ default: m.ExperienceScreen })));
+const Education = lazy(() => import('@/modules/education').then((m) => ({ default: m.EducationScreen })));
+const Hobbies = lazy(() => import('@/modules/hobbies').then((m) => ({ default: m.HobbiesScreen })));
 const Contact = lazy(() => import('@/modules/contact').then((m) => ({ default: m.ContactScreen })));
 const Settings = lazy(() => import('@/modules/settings').then((m) => ({ default: m.SettingsScreen })));
 const Auth = lazy(() => import('@/modules/auth').then((m) => ({ default: m.AuthScreen })));
@@ -51,6 +53,26 @@ export const APP_REGISTRY: AppDef[] = [
     defaultSize: { w: 680, h: 560 },
     minSize: { w: 420, h: 360 },
     description: 'Work history timeline',
+  },
+  {
+    id: 'education',
+    name: 'Education',
+    icon: GraduationCap,
+    color: '#6366f1',
+    component: Education,
+    defaultSize: { w: 680, h: 560 },
+    minSize: { w: 420, h: 360 },
+    description: 'Academic background',
+  },
+  {
+    id: 'hobbies',
+    name: 'Hobbies & Interests',
+    icon: Sparkles,
+    color: '#f97316',
+    component: Hobbies,
+    defaultSize: { w: 620, h: 520 },
+    minSize: { w: 420, h: 340 },
+    description: 'Hobbies, interests and side joys',
   },
   {
     id: 'contact',
@@ -108,5 +130,7 @@ export const EDITABLE_APPS: { appId: AppId; section: EditorSection | null }[] = 
   { appId: 'skills', section: 'skills' },
   { appId: 'projects', section: 'projects' },
   { appId: 'experience', section: 'experience' },
+  { appId: 'education', section: 'education' },
+  { appId: 'hobbies', section: 'hobbies' },
   { appId: 'contact', section: null },
 ];

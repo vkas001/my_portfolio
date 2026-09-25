@@ -79,6 +79,27 @@ export interface Experience {
   order: number;
 }
 
+// ─── Education ────────────────────────────────────────────────────────────
+export interface Education {
+  id: string;
+  institution: string;
+  degree: string;
+  startDate: string; // ISO
+  endDate: string | null; // null = in progress
+  description: string;
+  order: number;
+}
+
+// ─── Hobbies ─────────────────────────────────────────────────────────────
+export interface Hobby {
+  id: string;
+  name: string;
+  /** Lucide icon name (frontend HOBBY_ICONS allowlist). */
+  icon: string;
+  description: string;
+  order: number;
+}
+
 // ─── Contact ────────────────────────────────────────────────────────────────
 export interface ContactFormPayload {
   name: string;
@@ -186,6 +207,24 @@ export interface ExperienceInput {
   employmentType: string;
   highlights?: string[];
   techStack?: string[];
+  order?: number;
+}
+
+export interface EducationInput {
+  id?: string;
+  institution: string;
+  degree: string;
+  startDate: string; // YYYY-MM-DD
+  endDate?: string | null; // null = in progress
+  description?: string;
+  order?: number;
+}
+
+export interface HobbyInput {
+  id?: string;
+  name: string;
+  icon: string; // lucide icon name
+  description?: string;
   order?: number;
 }
 

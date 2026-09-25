@@ -7,6 +7,8 @@ import type { AppId, EditorSection, WindowData } from '@/types';
 import SkillsTab from '@/modules/editor/components/SkillsTab/SkillsTab';
 import ProjectsTab from '@/modules/editor/components/ProjectsTab/ProjectsTab';
 import ExperienceTab from '@/modules/editor/components/ExperienceTab/ExperienceTab';
+import EducationTab from '@/modules/editor/components/EducationTab/EducationTab';
+import HobbiesTab from '@/modules/editor/components/HobbiesTab/HobbiesTab';
 import ProfileTab from '@/modules/editor/components/ProfileTab/ProfileTab';
 import FloatingSaveButton from '@/modules/editor/components/FloatingSaveButton/FloatingSaveButton';
 import type { SaveBridge } from '@/modules/editor/lib/scaffolding';
@@ -117,6 +119,8 @@ export default function EditorScreen({ data, windowId }: { data?: WindowData; wi
         {section === 'skills' ? <SkillsTab {...bridge} /> : null}
         {section === 'projects' ? <ProjectsTab {...bridge} /> : null}
         {section === 'experience' ? <ExperienceTab {...bridge} /> : null}
+        {section === 'education' ? <EducationTab {...bridge} /> : null}
+        {section === 'hobbies' ? <HobbiesTab {...bridge} /> : null}
       </div>
 
       <FloatingSaveButton canSave={saveState.canSave} saving={saveState.saving} onSave={() => commitRef.current?.()} />
