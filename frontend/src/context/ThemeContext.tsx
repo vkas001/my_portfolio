@@ -35,6 +35,9 @@ interface ThemeContextValue {
   setTheme: (patch: ThemePatch) => void;
   resetTheme: () => void;
   wallpaperLabel: string;
+  /** True once the boot theme has been hydrated (local first render, then a
+   *  server pull for the admin). The boot splash holds on this flag. */
+  themeReady: boolean;
 }
 
 const ThemeContext = createContext<ThemeContextValue | null>(null);
@@ -56,6 +59,11 @@ export function ThemeProvider({ children }: { children: ReactNode }) {
   // can never overwrite the admin's live site settings.
   const [themeKey, setThemeKey] = useState<string>(GUEST_THEME_KEY);
   const hydratedRef = useRef(false);
+  const [themeReady, setThemeReady] = useState(false);
+  const markHydrated = useCallback(() => {
+    hydratedRef.current = true;
+    setThemeReady(true);
+  }, []);
   const saveTimer = useRef<number | undefined>(undefined);
   // Mirrors for the identity-switch effect (runs on auth changes only).
   const themeRef = useRef(theme);
@@ -88,7 +96,7 @@ export function ThemeProvider({ children }: { children: ReactNode }) {
     if (!authReady) return;
     const nextKey = themeKeyFor(user?.id ?? null);
     if (nextKey === themeKeyRef.current) {
-      if (!isAdmin) hydratedRef.current = true; // guest: nothing to pull
+      if (!isAdmin) markHydrated(); // guest: nothing to pull
       return;
     }
     saveTheme(themeRef.current, themeKeyRef.current);
@@ -98,6 +106,7 @@ export function ThemeProvider({ children }: { children: ReactNode }) {
     setThemeKey(nextKey);
     setThemeState({ ...incoming, widgets });
     hydratedRef.current = false;
+    setThemeReady(false);
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [authReady, user]);
 
@@ -108,13 +117,13 @@ export function ThemeProvider({ children }: { children: ReactNode }) {
   useEffect(() => {
     if (!authReady) return;
     if (!isAdmin || hydratedRef.current) {
-      hydratedRef.current = true;
+      markHydrated();
       return;
     }
     let cancelled = false;
     void themeService.get().then((server) => {
       if (cancelled || !server || typeof server !== 'object') {
-        hydratedRef.current = true;
+        markHydrated();
         return;
       }
       const startup = (server.startupWindows as string[] | undefined) ?? [];
@@ -134,7 +143,7 @@ export function ThemeProvider({ children }: { children: ReactNode }) {
         }
         return { ...base, widgets: serverWidgets ?? prev.widgets };
       });
-      hydratedRef.current = true;
+      markHydrated();
     });
     return () => {
       cancelled = true;
@@ -161,8 +170,9 @@ export function ThemeProvider({ children }: { children: ReactNode }) {
       setTheme,
       resetTheme,
       wallpaperLabel: getWallpaper(theme.wallpaper).label,
+      themeReady,
     }),
-    [theme, setTheme, resetTheme],
+    [theme, setTheme, resetTheme, themeReady],
   );
 
   return <ThemeContext.Provider value={value}>{children}</ThemeContext.Provider>;

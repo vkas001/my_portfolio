@@ -821,3 +821,92 @@ input:focus, textarea:focus, select:focus {
   .web-section { padding: 16px 12px; }
   .web-edu .web-section { padding: 16px 12px; }
 }
+
+/* ─────────────────────────────────────────────────────────────
+   Boot splash — "You are welcomed" overlay.
+   Intentionally THEME-INDEPENDENT (ported from ibiz_v2's BootScreen):
+   hard-coded dark gradient + white text, no theme tokens. Highest
+   layer in the OS — covers everything while the shell hydrates.
+   ───────────────────────────────────────────────────────────── */
+.boot-overlay {
+  position: fixed;
+  inset: 0;
+  z-index: 300;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  background: linear-gradient(to bottom right, #0f172a, #1e293b, #0f172a);
+  color: #fff;
+  user-select: none;
+  transition: opacity 500ms ease;
+}
+.boot-overlay--leaving { opacity: 0; }
+
+.boot-wordmark {
+  display: flex;
+  font-size: 34px;
+  font-weight: 700;
+  letter-spacing: -0.02em;
+  margin-bottom: 8px;
+}
+.boot-word {
+  display: inline-block;
+  margin-right: 0.35em;
+  opacity: 0;
+  transform: translateY(22px) scale(0.94);
+  animation: bootWordIn 0.65s cubic-bezier(0.34, 1.56, 0.64, 1) forwards;
+}
+.boot-tagline {
+  font-size: 11px;
+  text-transform: uppercase;
+  letter-spacing: 0.35em;
+  color: rgba(255, 255, 255, 0.6);
+  margin-bottom: 40px;
+  opacity: 0;
+  animation: bootFadeIn 0.5s ease-out 0.9s forwards;
+}
+
+.boot-progress { width: 320px; max-width: 80vw; }
+.boot-progress__track {
+  height: 6px;
+  border-radius: 99px;
+  background: rgba(255, 255, 255, 0.1);
+  overflow: hidden;
+}
+.boot-progress__fill {
+  height: 100%;
+  border-radius: 99px;
+  background: #fff;
+  transition: width 120ms linear;
+}
+.boot-status {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  margin-top: 12px;
+  font-size: 11px;
+  color: rgba(255, 255, 255, 0.7);
+}
+.boot-status__line { display: flex; align-items: center; gap: 8px; }
+.boot-spinner { width: 14px; height: 14px; animation: bootSpin 1s linear infinite; }
+
+.boot-footer {
+  position: absolute;
+  bottom: 24px;
+  font-size: 11px;
+  color: rgba(255, 255, 255, 0.4);
+}
+
+@keyframes bootWordIn {
+  0% { opacity: 0; transform: translateY(22px) scale(0.94); }
+  60% { opacity: 1; transform: translateY(-3px) scale(1.03); }
+  100% { opacity: 1; transform: translateY(0) scale(1); }
+}
+@keyframes bootFadeIn { to { opacity: 1; } }
+@keyframes bootSpin { to { transform: rotate(360deg); } }
+
+@media (prefers-reduced-motion: reduce) {
+  .boot-word { animation: none; opacity: 1; transform: none; }
+  .boot-tagline { animation: none; opacity: 1; }
+}
