@@ -702,15 +702,47 @@ input:focus, textarea:focus, select:focus {
   flex: 1;
   min-width: 0;
   display: flex;
-  justify-content: center;
+  justify-content: flex-start;
+  align-items: flex-start;
+  flex-wrap: wrap;
+  gap: 24px;
+  padding: 0 20px 72px;
 }
 .web-main {
-  width: 100%;
-  max-width: 1080px;
-  padding: 28px 24px 72px;
+  flex: 1 1 0%;
+  min-width: 0;
+  flex-basis: 0%;
+  max-width: 940px;
+  padding: 28px 0 0;
   display: flex;
   flex-direction: column;
   gap: 48px;
+}
+/* Sticky right sidebar (right-most): shares the row with the main column and
+ * Education sits at a fixed width; Contact (right of Education) flexes to fill
+ * the remaining space. Stacks vertically below ~1100px. */
+.web-edu {
+  position: sticky;
+  top: 40px;
+  flex: 1 1 0%;
+  padding-top: 28px;
+  align-self: flex-start;
+  display: flex;
+  flex-direction: row;
+  align-items: flex-start;
+  gap: 16px;
+  max-height: calc(100vh - 56px);
+  overflow-y: auto;
+}
+.web-edu .web-section {
+  flex: 0 0 360px;
+  width: 360px;
+  padding: 18px;
+}
+.web-edu #section-contact {
+  flex: 1 1 auto;
+  width: auto;
+  min-width: 0;
 }
 .web-section-wrap { scroll-margin-top: 56px; }
 .web-section {
@@ -756,15 +788,125 @@ input:focus, textarea:focus, select:focus {
 /* Web view is the public, document-level site (no OS window), so viewport
  * media are fair here — the rail always stays leftmost, phones just get a
  * slightly tighter shell and a narrower expanded rail. */
+@media (max-width: 1100px) {
+  .web-edu {
+    position: static;
+    flex: 1 1 100%;
+    width: 100%;
+    padding-top: 0;
+    max-height: none;
+    overflow: visible;
+    flex-direction: column;
+  }
+  .web-edu .web-section,
+  .web-edu #section-contact {
+    flex: 1 1 100%;
+    width: 100%;
+  }
+}
+
 @media (max-width: 639px) {
   .web-shell { max-width: 100%; margin: 0; }
   .web-rail { width: 190px; }
   .web-rail.collapsed { width: 64px; }
-  .web-main { padding: 14px 10px 72px; gap: 40px; }
+  .web-content { padding: 0 10px 72px; }
+  .web-main { padding: 14px 0 0; gap: 40px; }
   .web-section { padding: 18px 14px; }
+  .web-edu .web-section { padding: 18px 14px; }
   .web-section-wrap { scroll-margin-top: 48px; }
+  .web-edu { padding-bottom: 24px; }
 }
 @media (max-width: 380px) {
-  .web-main { padding: 12px 10px 72px; }
+  .web-main { padding: 12px 0 0; }
   .web-section { padding: 16px 12px; }
+  .web-edu .web-section { padding: 16px 12px; }
+}
+
+/* ─────────────────────────────────────────────────────────────
+   Boot splash — "You are welcomed" overlay.
+   Intentionally THEME-INDEPENDENT (ported from ibiz_v2's BootScreen):
+   hard-coded dark gradient + white text, no theme tokens. Highest
+   layer in the OS — covers everything while the shell hydrates.
+   ───────────────────────────────────────────────────────────── */
+.boot-overlay {
+  position: fixed;
+  inset: 0;
+  z-index: 300;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  background: linear-gradient(to bottom right, #0f172a, #1e293b, #0f172a);
+  color: #fff;
+  user-select: none;
+  transition: opacity 500ms ease;
+}
+.boot-overlay--leaving { opacity: 0; }
+
+.boot-wordmark {
+  display: flex;
+  font-size: 34px;
+  font-weight: 700;
+  letter-spacing: -0.02em;
+  margin-bottom: 8px;
+}
+.boot-word {
+  display: inline-block;
+  margin-right: 0.35em;
+  opacity: 0;
+  transform: translateY(22px) scale(0.94);
+  animation: bootWordIn 0.65s cubic-bezier(0.34, 1.56, 0.64, 1) forwards;
+}
+.boot-tagline {
+  font-size: 11px;
+  text-transform: uppercase;
+  letter-spacing: 0.35em;
+  color: rgba(255, 255, 255, 0.6);
+  margin-bottom: 40px;
+  opacity: 0;
+  animation: bootFadeIn 0.5s ease-out 0.9s forwards;
+}
+
+.boot-progress { width: 320px; max-width: 80vw; }
+.boot-progress__track {
+  height: 6px;
+  border-radius: 99px;
+  background: rgba(255, 255, 255, 0.1);
+  overflow: hidden;
+}
+.boot-progress__fill {
+  height: 100%;
+  border-radius: 99px;
+  background: #fff;
+  transition: width 120ms linear;
+}
+.boot-status {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  margin-top: 12px;
+  font-size: 11px;
+  color: rgba(255, 255, 255, 0.7);
+}
+.boot-status__line { display: flex; align-items: center; gap: 8px; }
+.boot-spinner { width: 14px; height: 14px; animation: bootSpin 1s linear infinite; }
+
+.boot-footer {
+  position: absolute;
+  bottom: 24px;
+  font-size: 11px;
+  color: rgba(255, 255, 255, 0.4);
+}
+
+@keyframes bootWordIn {
+  0% { opacity: 0; transform: translateY(22px) scale(0.94); }
+  60% { opacity: 1; transform: translateY(-3px) scale(1.03); }
+  100% { opacity: 1; transform: translateY(0) scale(1); }
+}
+@keyframes bootFadeIn { to { opacity: 1; } }
+@keyframes bootSpin { to { transform: rotate(360deg); } }
+
+@media (prefers-reduced-motion: reduce) {
+  .boot-word { animation: none; opacity: 1; transform: none; }
+  .boot-tagline { animation: none; opacity: 1; }
 }

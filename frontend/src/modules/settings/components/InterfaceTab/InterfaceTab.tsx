@@ -1,5 +1,5 @@
-import { LayoutGrid, Type } from 'lucide-react';
-import { FONTS, type FontName, type GridSize, type ThemeState } from '@/styles/theme';
+import { LayoutGrid, SquareChartGantt, Type } from 'lucide-react';
+import { FONTS, type FontName, type GridSize, type SkillDisplayMode, type ThemeState } from '@/styles/theme';
 import SectionCard from '@/components/ui/SectionCard/SectionCard';
 import { RangeControl, SegmentedControl, SettingRow, SubLabel, Toggle } from '@/modules/settings/components/primitives';
 import { DENSITY_OPTIONS, GRID_SIZE_OPTIONS } from '@/modules/settings/lib/options';
@@ -19,6 +19,17 @@ export default function InterfaceTab({ theme, setTheme }: { theme: ThemeState; s
             value={theme.gridSize}
             options={GRID_SIZE_OPTIONS as { value: GridSize; label: string }[]}
             onChange={(v) => setTheme({ gridSize: v })}
+          />
+        </div>
+        <div className="col-span-12">
+          <SubLabel icon={<SquareChartGantt size={12} />}>Skills display</SubLabel>
+          <SegmentedControl<SkillDisplayMode>
+            value={theme.skillsDisplay}
+            options={[
+              { value: 'bars', label: 'Bars' },
+              { value: 'cards', label: 'Cards' },
+            ]}
+            onChange={(v) => setTheme({ skillsDisplay: v })}
           />
         </div>
       </div>
@@ -53,7 +64,14 @@ export default function InterfaceTab({ theme, setTheme }: { theme: ThemeState; s
         </SettingRow>
       </div>
 
-      <div className="pt-2 mt-2" style={{ borderTop: '1px solid var(--border)' }}>
+      <div className="pt-2 mt-2 space-y-4" style={{ borderTop: '1px solid var(--border)' }}>
+        <RangeControl
+          label="Volume"
+          value={theme.volume}
+          min={0} max={100} step={1}
+          display={`${theme.volume}%`}
+          onChange={(v) => setTheme({ volume: v })}
+        />
         <RangeControl
           label="Window opacity"
           value={theme.windowOpacity}

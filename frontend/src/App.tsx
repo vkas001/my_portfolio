@@ -5,6 +5,7 @@ import { WidgetsProvider } from '@/context/WidgetsContext';
 import { ShellUIProvider } from '@/context/ShellUIContext';
 import { ContentProvider } from '@/context/ContentContext';
 import AppShell from '@/components/shell/AppShell/AppShell';
+import BootOverlay from '@/components/shell/BootOverlay/BootOverlay';
 
 export default function App() {
   return (
@@ -14,6 +15,7 @@ export default function App() {
           <WidgetsProvider>
             <ShellUIProvider>
               <ContentProvider>
+                <BootOverlay />
                 <AppShell />
               </ContentProvider>
             </ShellUIProvider>

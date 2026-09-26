@@ -4,3 +4,5 @@ export { fetchProfile } from '@/modules/about/lib/services';
 export { fetchSkills } from '@/modules/skills/lib/services';
 export { fetchProjects } from '@/modules/projects/lib/services';
 export { fetchExperience } from '@/modules/experience/lib/services';
+export { fetchEducation } from '@/modules/education/lib/services';
+export { fetchHobbies } from '@/modules/hobbies/lib/services';

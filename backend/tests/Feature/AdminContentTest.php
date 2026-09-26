@@ -2,6 +2,7 @@
 
 namespace Tests\Feature;
 
+use App\Models\Education;
 use App\Models\Experience;
 use App\Models\Profile;
 use App\Models\Project;
@@ -23,6 +24,8 @@ class AdminContentTest extends AdminApiTestCase
             ->assertStatus(401)->assertJsonPath('ok', false);
         $this->postJson('/api/admin/projects', ['title' => 'X'])->assertStatus(401)->assertJsonPath('ok', false);
         $this->deleteJson('/api/admin/experience/nope')->assertStatus(401)->assertJsonPath('ok', false);
+        $this->deleteJson('/api/admin/education/nope')->assertStatus(401)->assertJsonPath('ok', false);
+        $this->deleteJson('/api/admin/hobbies/nope')->assertStatus(401)->assertJsonPath('ok', false);
     }
 
     // ─── Skills ──────────────────────────────────────────────────────────────
@@ -65,15 +68,35 @@ class AdminContentTest extends AdminApiTestCase
         $this->assertDatabaseMissing('skills', ['id' => 'upd']);
     }
 
-    public function test_skill_rejects_bad_category(): void
+    public function test_skill_accepts_custom_category(): void
     {
         $this->postJson('/api/admin/skills', [
-            'id' => 'bad',
+            'id' => 'custom-cat',
+            'name' => 'Dummy',
+            'category' => 'AI',
+            'proficiency' => 50,
+        ], $this->adminHeaders())->assertOk()->assertJsonPath('ok', true)
+            ->assertJsonPath('data.category', 'AI');
+
+        $this->getJson('/api/skills')->assertOk()->assertJsonFragment(['id' => 'custom-cat', 'category' => 'AI']);
+    }
+
+    public function test_skill_rejects_missing_or_overlong_category(): void
+    {
+        $this->postJson('/api/admin/skills', [
+            'id' => 'nocat',
             'name' => 'X',
-            'category' => 'nope',
+            'category' => '',
+            'proficiency' => 50,
+        ], $this->adminHeaders())->assertStatus(422)->assertJsonPath('ok', false);
+
+        $this->postJson('/api/admin/skills', [
+            'id' => 'longcat',
+            'name' => 'X',
+            'category' => str_repeat('x', 41),
             'proficiency' => 50,
         ], $this->adminHeaders())->assertStatus(422)->assertJsonPath('ok', false)
-            ->assertJsonPath('error', 'category: The selected category is invalid.');
+            ->assertJsonPath('error', 'category: The category field must not be greater than 40 characters.');
     }
 
     // ─── Projects ────────────────────────────────────────────────────────────
@@ -185,6 +208,91 @@ class AdminContentTest extends AdminApiTestCase
             'endDate' => '2023-01-01',
             'location' => 'L',
             'employmentType' => 'F',
+        ], $this->adminHeaders())->assertStatus(422)->assertJsonPath('ok', false);
+    }
+
+    // ─── Education ───────────────────────────────────────────────────────────
+
+    public function test_education_round_trip(): void
+    {
+        $this->postJson('/api/admin/education', [
+            'id' => 'edu-new',
+            'institution' => 'Uni of Tests',
+            'degree' => 'B.Sc. Applied Testing',
+            'startDate' => '2019-09-01',
+            'endDate' => null,
+            'description' => 'Focused on software engineering.',
+        ], $this->adminHeaders())->assertOk()
+            ->assertJsonPath('data.id', 'edu-new')
+            ->assertJsonPath('data.institution', 'Uni of Tests')
+            ->assertJsonPath('data.endDate', null)
+            ->assertJsonPath('data.description', 'Focused on software engineering.');
+
+        $this->getJson('/api/education')->assertOk()
+            ->assertJsonFragment(['id' => 'edu-new', 'degree' => 'B.Sc. Applied Testing']);
+
+        $this->putJson('/api/admin/education/edu-new', [
+            'institution' => 'Uni of Tests v2',
+            'degree' => 'M.Sc. Testing',
+            'startDate' => '2019-09-01',
+            'endDate' => '2023-06-30',
+            'description' => null,
+        ], $this->adminHeaders())->assertOk()->assertJsonPath('data.degree', 'M.Sc. Testing')
+            ->assertJsonPath('data.endDate', '2023-06-30');
+
+        $this->assertDatabaseHas('educations', ['id' => 'edu-new', 'order' => 1]);
+
+        $this->deleteJson('/api/admin/education/edu-new', [], $this->adminHeaders())->assertOk();
+        $this->assertDatabaseMissing('educations', ['id' => 'edu-new']);
+    }
+
+    public function test_education_rejects_end_before_start(): void
+    {
+        $this->postJson('/api/admin/education', [
+            'id' => 'edu-oops',
+            'institution' => 'X',
+            'degree' => 'Y',
+            'startDate' => '2024-01-01',
+            'endDate' => '2023-01-01',
+        ], $this->adminHeaders())->assertStatus(422)->assertJsonPath('ok', false);
+    }
+
+    // ─── Hobbies ────────────────────────────────────────────────────────────
+
+    public function test_hobby_round_trip(): void
+    {
+        $this->postJson('/api/admin/hobbies', [
+            'id' => 'hob-new',
+            'name' => 'Piano',
+            'icon' => 'music',
+            'description' => 'Evening practice and jazz standards.',
+        ], $this->adminHeaders())->assertOk()
+            ->assertJsonPath('data.id', 'hob-new')
+            ->assertJsonPath('data.name', 'Piano')
+            ->assertJsonPath('data.icon', 'music');
+
+        $this->getJson('/api/hobbies')->assertOk()
+            ->assertJsonFragment(['id' => 'hob-new', 'name' => 'Piano']);
+
+        $this->putJson('/api/admin/hobbies/hob-new', [
+            'name' => 'Piano & Synths',
+            'icon' => 'headphones',
+            'description' => null,
+        ], $this->adminHeaders())->assertOk()->assertJsonPath('data.name', 'Piano & Synths')
+            ->assertJsonPath('data.icon', 'headphones')->assertJsonPath('data.description', null);
+
+        $this->assertDatabaseHas('hobbies', ['id' => 'hob-new', 'order' => 1]);
+
+        $this->deleteJson('/api/admin/hobbies/hob-new', [], $this->adminHeaders())->assertOk();
+        $this->assertDatabaseMissing('hobbies', ['id' => 'hob-new']);
+    }
+
+    public function test_hobby_rejects_unknown_icon(): void
+    {
+        $this->postJson('/api/admin/hobbies', [
+            'id' => 'hob-oops',
+            'name' => 'Yodeling',
+            'icon' => 'mystery-icon',
         ], $this->adminHeaders())->assertStatus(422)->assertJsonPath('ok', false);
     }
 

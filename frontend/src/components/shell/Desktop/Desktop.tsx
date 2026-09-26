@@ -70,7 +70,7 @@ export default function Desktop() {
       {/* Windows */}
       {windows.map((win) => (
         <WindowFrame key={win.id} win={win}>
-          <ModuleHost appId={win.appId} data={win.data} />
+          <ModuleHost appId={win.appId} data={win.data} windowId={win.id} />
         </WindowFrame>
       ))}
 

@@ -2,7 +2,9 @@
 
 namespace App\Http\Controllers;
 
+use App\Models\Education;
 use App\Models\Experience;
+use App\Models\Hobby;
 use App\Models\Profile;
 use App\Models\Project;
 use App\Models\Skill;
@@ -66,5 +68,23 @@ class PortfolioController extends Controller
             ->get();
 
         return response()->json($experience);
+    }
+
+    public function education(): JsonResponse
+    {
+        $education = Education::query()
+            ->orderBy('order')
+            ->get();
+
+        return response()->json($education);
+    }
+
+    public function hobbies(): JsonResponse
+    {
+        $hobbies = Hobby::query()
+            ->orderBy('order')
+            ->get();
+
+        return response()->json($hobbies);
     }
 }

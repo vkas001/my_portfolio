@@ -4,7 +4,7 @@ import { useWindows } from '@/context/WindowsContext';
 import { getDockRects, getWindowBounds, getWindowSpawnBounds } from '@/lib/osLayout';
 import { useAuth } from '@/context/AuthContext';
 import { useShellUI } from '@/context/ShellUIContext';
-import { APP_REGISTRY, EDITABLE_SECTIONS } from '@/apps/registry';
+import { APP_REGISTRY, EDITABLE_APPS } from '@/apps/registry';
 import type { WindowState } from '@/types';
 import { Minus, Plus, Square, X } from 'lucide-react';
 
@@ -20,7 +20,8 @@ export default function WindowFrame({ win, children }: Props) {
   const { setActiveWidget } = useShellUI();
   const app = APP_REGISTRY.find((a) => a.id === win.appId);
   const focused = focusedId === win.id;
-  const section = EDITABLE_SECTIONS.find((e) => e.appId === win.appId)?.section;
+  // Content windows (those with an editor section) get an admin ＋ edit affordance.
+  const section = EDITABLE_APPS.find((e) => e.appId === win.appId)?.section;
   const canEdit = isAdmin && !!section && !win.isFullScreen;
   const frameRef = useRef<HTMLDivElement>(null);
 

@@ -1,0 +1,1 @@
+export type { Education, EducationInput } from '@shared/types';

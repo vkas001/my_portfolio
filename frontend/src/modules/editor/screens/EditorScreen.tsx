@@ -2,16 +2,18 @@ import { useMemo, useRef, useState } from 'react';
 import { useTheme } from '@/context/ThemeContext';
 import { useWindows } from '@/context/WindowsContext';
 import { getDockRects, getWindowSpawnBounds } from '@/lib/osLayout';
-import { APP_REGISTRY, EDITABLE_SECTIONS } from '@/apps/registry';
-import type { EditorSection, WindowData } from '@/types';
+import { APP_REGISTRY, EDITABLE_APPS } from '@/apps/registry';
+import type { AppId, EditorSection, WindowData } from '@/types';
 import SkillsTab from '@/modules/editor/components/SkillsTab/SkillsTab';
 import ProjectsTab from '@/modules/editor/components/ProjectsTab/ProjectsTab';
 import ExperienceTab from '@/modules/editor/components/ExperienceTab/ExperienceTab';
+import EducationTab from '@/modules/editor/components/EducationTab/EducationTab';
+import HobbiesTab from '@/modules/editor/components/HobbiesTab/HobbiesTab';
 import ProfileTab from '@/modules/editor/components/ProfileTab/ProfileTab';
 import FloatingSaveButton from '@/modules/editor/components/FloatingSaveButton/FloatingSaveButton';
 import type { SaveBridge } from '@/modules/editor/lib/scaffolding';
 
-export default function EditorScreen({ data }: { data?: WindowData }) {
+export default function EditorScreen({ data, windowId }: { data?: WindowData; windowId?: string }) {
   const { theme } = useTheme();
   const { windows, focusedId, launchApp, focusWindow, updateWindowRect, updateWindowData } = useWindows();
   const [section, setSection] = useState<EditorSection>(data?.section ?? 'profile');
@@ -27,27 +29,26 @@ export default function EditorScreen({ data }: { data?: WindowData }) {
   }, []);
   const bridge: SaveBridge = { commitRef, reportSave };
 
-  // The editor window driving this screen: the focused one (clicks inside a
-  // window focus it before any handler runs), falling back to the editor that
-  // owns this section when the focus write hasn't landed yet.
+  // The editor window driving this screen. Prefer the window that actually
+  // mounts this instance (windowId), then the focused editor — focus is
+  // written on pointerdown and React-batched, so a chip click fires before
+  // focusedId updates and !windowId could target a *different* editor.
   const my =
+    (windowId && windows.find((w) => w.id === windowId && w.appId === 'editor')) ??
     windows.find((w) => w.id === focusedId && w.appId === 'editor') ??
     windows.find((w) => w.appId === 'editor' && w.data?.section === section);
 
-  const appSelector = EDITABLE_SECTIONS.flatMap((entry) => {
+  const selectableApps = EDITABLE_APPS.flatMap((entry) => {
     const app = APP_REGISTRY.find((a) => a.id === entry.appId);
     return app ? [{ ...entry, app }] : [];
   });
 
-  // Switch which app this editor manages: restore the previously docked
-  // content window, then tile the editor + selected app side by side (same
-  // geometry as the titlebar ＋ edit flow) and update this window's section +
-  // dock so the close-restore stays coherent.
-  const openSection = (next: EditorSection) => {
-    if (next === section) return;
-    const entry = EDITABLE_SECTIONS.find((e) => e.section === next);
-    if (!entry) return;
-    setSection(next);
+  // Dock any selectable app next to this editor: restore the previously
+  // docked content window, then tile the editor + app side by side (same
+  // geometry as the titlebar ＋ edit flow) and update this window's dock so
+  // the close-restore stays coherent. Content apps also carry the section
+  // they manage; dock-only apps (contact) leave the current section alone.
+  const dockApp = (appId: AppId, newSection?: EditorSection) => {
     if (!my) return;
 
     // Restore the window this editor was previously docked to.
@@ -66,14 +67,14 @@ export default function EditorScreen({ data }: { data?: WindowData }) {
     const contentRect = onLeft ? right : left;
     updateWindowRect(my.id, editorRect);
 
-    // Open (or focus + retile) the content app on the other half.
-    const existing = windows.find((w) => w.appId === entry.appId);
+    // Open (or focus + retile) the app on the other half.
+    const existing = windows.find((w) => w.appId === appId);
     let contentId: string | undefined;
     if (existing) {
       updateWindowRect(existing.id, contentRect);
       contentId = existing.id;
     } else {
-      contentId = launchApp(entry.appId, { rect: contentRect });
+      contentId = launchApp(appId, { rect: contentRect });
     }
     focusWindow(my.id);
 
@@ -81,25 +82,36 @@ export default function EditorScreen({ data }: { data?: WindowData }) {
       const restoreRect = existing
         ? { x: existing.x, y: existing.y, w: existing.w, h: existing.h }
         : contentRect;
-      updateWindowData(my.id, { section: next, dock: { contentId, rect: restoreRect } });
+      updateWindowData(my.id, { section: newSection ?? section, dock: { contentId, rect: restoreRect } });
     }
+  };
+
+  const chooseApp = (appId: AppId, newSection: EditorSection | null) => {
+    if (newSection) {
+      if (newSection === section) return; // already active — click is a no-op
+      setSection(newSection);
+    }
+    dockApp(appId, newSection ?? undefined);
   };
 
   return (
     <div className="relative flex flex-col h-full gap-3">
       <div className="flex flex-wrap gap-1.5">
-        {appSelector.map(({ app, section: s }) => (
-          <button
-            key={s}
-            className={`chip cursor-pointer !py-1.5 !px-2.5 text-[11px] flex items-center gap-1.5 ${section === s ? '!bg-[var(--accent)] !text-[var(--accent-text-on)]' : ''}`}
-            onClick={() => openSection(s)}
-            title={`Edit ${app.name} content`}
-            style={section === s ? undefined : { color: app.color }}
-          >
-            <app.icon size={12} />
-            {app.name}
-          </button>
-        ))}
+        {selectableApps.map(({ app, section: s }) => {
+          const active = s !== null && s === section;
+          return (
+            <button
+              key={app.id}
+              className={`chip cursor-pointer !py-1.5 !px-2.5 text-[11px] flex items-center gap-1.5 ${active ? '!bg-[var(--accent)] !text-[var(--accent-text-on)]' : ''}`}
+              onClick={() => chooseApp(app.id, s)}
+              title={s ? `Edit ${app.name} content` : `Open ${app.name} alongside`}
+              style={active ? undefined : { color: app.color }}
+            >
+              <app.icon size={12} />
+              {app.name}
+            </button>
+          );
+        })}
       </div>
 
       <div className="flex-1 overflow-y-auto pr-1 -mr-1 pb-14">
@@ -107,6 +119,8 @@ export default function EditorScreen({ data }: { data?: WindowData }) {
         {section === 'skills' ? <SkillsTab {...bridge} /> : null}
         {section === 'projects' ? <ProjectsTab {...bridge} /> : null}
         {section === 'experience' ? <ExperienceTab {...bridge} /> : null}
+        {section === 'education' ? <EducationTab {...bridge} /> : null}
+        {section === 'hobbies' ? <HobbiesTab {...bridge} /> : null}
       </div>
 
       <FloatingSaveButton canSave={saveState.canSave} saving={saveState.saving} onSave={() => commitRef.current?.()} />

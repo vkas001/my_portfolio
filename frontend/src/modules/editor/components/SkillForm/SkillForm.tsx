@@ -1,8 +1,9 @@
+import { useMemo } from 'react';
 import type { Skill } from '@shared/types';
-import { CATEGORY_LABELS, SKILL_CATEGORIES } from '@/modules/skills';
-import Field from '@/modules/editor/components/Field/Field';
+import { CATEGORY_LABELS, collectSkillCategories } from '@/modules/skills';
+import { useContent } from '@/context/ContentContext';
 import Input from '@/components/ui/Input/Input';
-import SelectInput from '@/modules/editor/components/SelectInput/SelectInput';
+import CategoryField from '@/modules/editor/components/CategoryField/CategoryField';
 
 export default function SkillForm({
   d,
@@ -11,12 +12,20 @@ export default function SkillForm({
   d: Skill;
   set: (patch: Partial<Skill>) => void;
 }) {
+  const { skills } = useContent();
+  const categoryOptions = useMemo(() => collectSkillCategories(skills), [skills]);
+
   return (
     <>
       <Input label="Name" value={d.name} placeholder="React, Laravel, …" onChange={(e) => set({ name: e.target.value })} />
-      <Field label="Category">
-        <SelectInput value={d.category} options={SKILL_CATEGORIES} labels={CATEGORY_LABELS} onChange={(v) => set({ category: v })} />
-      </Field>
+      <CategoryField
+        label="Category"
+        value={d.category}
+        onChange={(v) => set({ category: v })}
+        options={categoryOptions}
+        labelOf={(c) => CATEGORY_LABELS[c] ?? c}
+        hint="Type a new one, or pick an existing one from the list."
+      />
       <div className="grid grid-cols-12 gap-3">
         <div className="col-span-6">
           <Input label="Proficiency (0–100)" type="number" min={0} max={100} value={d.proficiency} onChange={(e) => set({ proficiency: Number(e.target.value) })} />

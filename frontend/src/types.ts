@@ -5,10 +5,10 @@ import type { WidgetPlacement } from '@/styles/theme';
 export type { WidgetPlacement };
 
 export type AppId =
-  | 'about' | 'skills' | 'projects' | 'experience' | 'contact' | 'settings' | 'auth' | 'editor';
+  | 'about' | 'skills' | 'projects' | 'experience' | 'education' | 'hobbies' | 'contact' | 'settings' | 'auth' | 'editor';
 
 /** Which portfolio section an admin editor window manages. */
-export type EditorSection = 'profile' | 'skills' | 'projects' | 'experience';
+export type EditorSection = 'profile' | 'skills' | 'projects' | 'experience' | 'education' | 'hobbies';
 
 /** Per-window payload passed through launchApp into the app module. */
 export interface WindowData {
@@ -46,6 +46,9 @@ export interface WindowState {
   maximized: boolean;
   isFullScreen: boolean;        // full screen: covers viewport, hides taskbar
   prevRect?: { x: number; y: number; w: number; h: number };
+  /** Pre-clamp geometry remembered while the viewport was too small; restored
+   *  when it grows back. Cleared on any user move/resize. */
+  clampSource?: { x: number; y: number; w: number; h: number };
   data?: WindowData;
 }
 

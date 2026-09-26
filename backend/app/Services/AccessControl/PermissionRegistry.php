@@ -19,6 +19,10 @@ class PermissionRegistry
 
     public const EXPERIENCE_MANAGE = 'experience:manage';
 
+    public const EDUCATION_MANAGE = 'education:manage';
+
+    public const HOBBIES_MANAGE = 'hobbies:manage';
+
     public const THEME_MANAGE = 'theme:manage';
 
     /**
@@ -31,6 +35,8 @@ class PermissionRegistry
             self::SKILL_MANAGE,
             self::PROJECT_MANAGE,
             self::EXPERIENCE_MANAGE,
+            self::EDUCATION_MANAGE,
+            self::HOBBIES_MANAGE,
             self::THEME_MANAGE,
         ];
     }

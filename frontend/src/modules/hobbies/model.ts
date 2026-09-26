@@ -1,0 +1,1 @@
+export type { Hobby, HobbyInput } from '@shared/types';

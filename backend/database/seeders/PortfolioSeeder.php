@@ -2,7 +2,9 @@
 
 namespace Database\Seeders;
 
+use App\Models\Education;
 use App\Models\Experience;
+use App\Models\Hobby;
 use App\Models\Profile;
 use App\Models\Project;
 use App\Models\Skill;
@@ -185,6 +187,66 @@ class PortfolioSeeder extends Seeder
 
         foreach ($experience as $item) {
             Experience::query()->updateOrCreate(['id' => $item['id']], $item);
+        }
+
+        $education = [
+            [
+                'id' => 'edu1',
+                'institution' => 'Purbanchal University',
+                'degree' => 'B.Sc. Computer Science & Engineering',
+                'start_date' => '2015-09-01',
+                'end_date' => '2019-06-30',
+                'description' => 'Focused on software engineering, data structures and web systems; led the final-year capstone web project.',
+                'order' => 1,
+            ],
+            [
+                'id' => 'edu2',
+                'institution' => 'Nepal College of IT',
+                'degree' => 'Higher Secondary (Science)',
+                'start_date' => '2013-07-01',
+                'end_date' => '2015-05-30',
+                'description' => null,
+                'order' => 2,
+            ],
+        ];
+
+        foreach ($education as $item) {
+            Education::query()->updateOrCreate(['id' => $item['id']], $item);
+        }
+
+        $hobbies = [
+            [
+                'id' => 'hob1',
+                'name' => 'Trekking',
+                'icon' => 'mountain',
+                'description' => 'Weekend Himalayan trails, tea-house stays and slow mornings above the tree line.',
+                'order' => 1,
+            ],
+            [
+                'id' => 'hob2',
+                'name' => 'Photography',
+                'icon' => 'camera',
+                'description' => 'Street scenes and golden-hour landscapes, shot everywhere I travel.',
+                'order' => 2,
+            ],
+            [
+                'id' => 'hob3',
+                'name' => 'Open Source',
+                'icon' => 'code',
+                'description' => 'Small tools and UI experiments — building things I wish existed, and sharing them.',
+                'order' => 3,
+            ],
+            [
+                'id' => 'hob4',
+                'name' => 'Sci-Fi Reading',
+                'icon' => 'book-open',
+                'description' => 'Hard sci-fi and design essays — a good feed for overthinking product ideas.',
+                'order' => 4,
+            ],
+        ];
+
+        foreach ($hobbies as $item) {
+            Hobby::query()->updateOrCreate(['id' => $item['id']], $item);
         }
     }
 }

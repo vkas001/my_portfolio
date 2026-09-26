@@ -1,8 +1,11 @@
+import { useMemo } from 'react';
 import type { Project } from '@shared/types';
 import Field from '@/modules/editor/components/Field/Field';
 import Input from '@/components/ui/Input/Input';
 import TextArea from '@/components/ui/TextArea/TextArea';
 import StringListInput from '@/modules/editor/components/StringListInput/StringListInput';
+import CategoryField from '@/modules/editor/components/CategoryField/CategoryField';
+import { useContent } from '@/context/ContentContext';
 
 export default function ProjectFields({
   d,
@@ -11,6 +14,16 @@ export default function ProjectFields({
   d: Project;
   set: (patch: Partial<Project>) => void;
 }) {
+  const { projects } = useContent();
+  const categoryOptions = useMemo(() => {
+    const seen: string[] = [];
+    for (const p of projects) {
+      const c = (p.category ?? '').trim();
+      if (c && !seen.some((x) => x.toLowerCase() === c.toLowerCase())) seen.push(c);
+    }
+    return seen;
+  }, [projects]);
+
   return (
     <>
       <div className="grid grid-cols-12 gap-3">
@@ -18,7 +31,13 @@ export default function ProjectFields({
           <Input label="Title" value={d.title} onChange={(e) => set({ title: e.target.value })} />
         </div>
         <div className="col-span-5">
-          <Input label="Category" value={d.category} onChange={(e) => set({ category: e.target.value })} />
+          <CategoryField
+            label="Category"
+            value={d.category}
+            onChange={(v) => set({ category: v })}
+            options={categoryOptions}
+            hint="Type a new one, or pick an existing one from the list."
+          />
         </div>
       </div>
       <div className="grid grid-cols-12 gap-3">

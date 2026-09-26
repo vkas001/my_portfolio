@@ -255,7 +255,9 @@ export function WindowsProvider({ children }: { children: ReactNode }) {
             w: app?.minSize?.w ?? 0,
             h: app?.minSize?.h ?? 0,
           });
-          return { ...w, ...fitted };
+          // Any user/programmatic move takes explicit control of the window
+          // geometry, so its pre-clamp snapshot must no longer be revived.
+          return { ...w, ...fitted, clampSource: undefined };
         }),
       );
     },
@@ -279,7 +281,8 @@ export function WindowsProvider({ children }: { children: ReactNode }) {
 
   // Keep every window fully on-screen when the viewport shrinks or the top
   // bar toggles. Oversized rects shrink to fit instead of hanging cut off
-  // past an edge.
+  // past an edge. A window that gets clamped remembers its pre-clamp geometry
+  // (clampSource) and is restored to it once the viewport grows back.
   useEffect(() => {
     const reflow = () => {
       const b = getWindowBounds(themeRef.current);
@@ -288,10 +291,20 @@ export function WindowsProvider({ children }: { children: ReactNode }) {
         ws.map((w) => {
           if (w.maximized || w.isFullScreen) return w;
           const app = APP_REGISTRY.find((a) => a.id === w.appId);
-          return {
-            ...w,
-            ...fitRectInBounds(w, b, { w: app?.minSize?.w ?? 0, h: app?.minSize?.h ?? 0 }),
-          };
+          const min = { w: app?.minSize?.w ?? 0, h: app?.minSize?.h ?? 0 };
+          // Viewport grew back enough to fit the remembered geometry: restore.
+          if (w.clampSource && w.clampSource.w <= b.width && w.clampSource.h <= b.height) {
+            const restored = fitRectInBounds(w.clampSource, b, min);
+            return { ...w, x: restored.x, y: restored.y, w: restored.w, h: restored.h, clampSource: undefined };
+          }
+          // Clamp (remembering the original placement) only when the window
+          // actually overflows the current workspace.
+          const cur = { x: w.x, y: w.y, w: w.w, h: w.h };
+          const fitted = fitRectInBounds(cur, b, min);
+          if (fitted.x !== cur.x || fitted.y !== cur.y || fitted.w !== cur.w || fitted.h !== cur.h) {
+            return { ...w, ...fitted, clampSource: w.clampSource ?? cur };
+          }
+          return w;
         }),
       );
     };

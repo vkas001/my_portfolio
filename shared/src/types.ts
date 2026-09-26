@@ -35,14 +35,10 @@ export interface SocialLink {
 }
 
 // ─── Skills ─────────────────────────────────────────────────────────────────
-export type SkillCategory =
-  | 'languages'
-  | 'frontend'
-  | 'backend'
-  | 'database'
-  | 'devops'
-  | 'design'
-  | 'tools';
+// Categories are free-form (the backend column is a plain string). The curated
+// built-in set (languages, frontend, backend, database, devops, design, tools)
+// ships as frontend constants; any string is a valid custom category.
+export type SkillCategory = string;
 
 export interface Skill {
   id: string;
@@ -80,6 +76,27 @@ export interface Experience {
   employmentType: string;
   highlights: string[];
   techStack: string[];
+  order: number;
+}
+
+// ─── Education ────────────────────────────────────────────────────────────
+export interface Education {
+  id: string;
+  institution: string;
+  degree: string;
+  startDate: string; // ISO
+  endDate: string | null; // null = in progress
+  description: string;
+  order: number;
+}
+
+// ─── Hobbies ─────────────────────────────────────────────────────────────
+export interface Hobby {
+  id: string;
+  name: string;
+  /** Lucide icon name (frontend HOBBY_ICONS allowlist). */
+  icon: string;
+  description: string;
   order: number;
 }
 
@@ -190,6 +207,24 @@ export interface ExperienceInput {
   employmentType: string;
   highlights?: string[];
   techStack?: string[];
+  order?: number;
+}
+
+export interface EducationInput {
+  id?: string;
+  institution: string;
+  degree: string;
+  startDate: string; // YYYY-MM-DD
+  endDate?: string | null; // null = in progress
+  description?: string;
+  order?: number;
+}
+
+export interface HobbyInput {
+  id?: string;
+  name: string;
+  icon: string; // lucide icon name
+  description?: string;
   order?: number;
 }
 
