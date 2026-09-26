@@ -32,12 +32,12 @@ import type { AppId } from '@/types';
 import SystemTrayModal from '@/components/shell/SystemTrayModal/SystemTrayModal';
 
 const OS_ICON_MAP: Record<string, React.ReactNode> = {
-  about: <User className="w-6 h-6" />,
-  skills: <Code2 className="w-6 h-6" />,
-  projects: <Folder className="w-6 h-6" />,
-  experience: <Briefcase className="w-6 h-6" />,
-  contact: <Mail className="w-6 h-6" />,
-  settings: <Settings className="w-6 h-6" />,
+  about: <User className="w-5 h-5" />,
+  skills: <Code2 className="w-5 h-5" />,
+  projects: <Folder className="w-5 h-5" />,
+  experience: <Briefcase className="w-5 h-5" />,
+  contact: <Mail className="w-5 h-5" />,
+  settings: <Settings className="w-5 h-5" />,
 };
 
 // Windows 11-style active indicator: a small rounded underline under the icon.
@@ -251,8 +251,8 @@ const [isTrayOpen, setIsTrayOpen] = useState(false);
   const Indicator = windowsStyle ? WindowsIndicator : MacIndicator;
   const appBtnBase = windowsStyle
     ? 'h-9 w-9 flex items-center justify-center rounded-lg relative group transition-all cursor-pointer'
-    : 'h-12 w-12 flex items-center justify-center rounded-xl relative group transition-all cursor-pointer';
-  const tooltipPos = windowsStyle ? 'bottom-12' : 'bottom-16';
+    : 'h-10 w-10 flex items-center justify-center rounded-lg relative group transition-all cursor-pointer';
+  const tooltipPos = windowsStyle ? 'bottom-12' : 'bottom-14';
 
   // While a full screen tab is open the revealed bar must float above it
   // (z-90), otherwise reveal would slide it invisibly underneath. Otherwise
@@ -284,7 +284,7 @@ const [isTrayOpen, setIsTrayOpen] = useState(false);
         className={
           windowsStyle
             ? ''
-            : `absolute inset-x-0 bottom-0 flex justify-center pointer-events-none ${barLayer} pb-5`
+            : `absolute inset-x-0 bottom-0 flex justify-center pointer-events-none ${barLayer} pb-3`
         }
       >
         <footer
@@ -294,7 +294,7 @@ const [isTrayOpen, setIsTrayOpen] = useState(false);
           className={`relative flex items-center select-none ${
             windowsStyle
               ? `w-full h-12 bg-(--surface-50) backdrop-blur-xl border-t border-(--border-40) px-2 shadow-lg ${barLayer}`
-              : `w-fit h-16 bg-(--surface-40) backdrop-blur-2xl border border-(--border-40) radius-glass px-4 shadow-2xl ${barLayer} pointer-events-auto`
+              : `w-fit h-13 bg-(--surface-40) backdrop-blur-2xl border border-(--border-40) radius-glass px-3 shadow-2xl ${barLayer} pointer-events-auto`
           }`}
           style={{
             // Windows bar is edge-anchored (ibiz-v2 fixed-wrapper parity);
@@ -313,7 +313,7 @@ const [isTrayOpen, setIsTrayOpen] = useState(false);
             data-trigger="start"
             onClick={onToggleStartMenu}
             className={`flex items-center justify-center transition-all group cursor-pointer ${
-              windowsStyle ? 'w-9 h-9 rounded-lg mr-1' : 'w-12 h-12 rounded-xl mr-2'
+              windowsStyle ? 'w-9 h-9 rounded-lg mr-1' : 'w-10 h-10 rounded-lg mr-2'
             } ${
               startMenuOpen
                 ? 'bg-(--surface-60) scale-105 shadow-md'
@@ -323,7 +323,7 @@ const [isTrayOpen, setIsTrayOpen] = useState(false);
           >
             <LayoutGrid
               className={`text-(--wp-accent-fg) transition-transform ${
-                windowsStyle ? 'w-6 h-6' : 'w-7 h-7'
+                windowsStyle ? 'w-6 h-6' : 'w-6 h-6'
               } ${startMenuOpen ? 'scale-110' : 'group-hover:scale-110'}`}
             />
           </button>
@@ -331,19 +331,19 @@ const [isTrayOpen, setIsTrayOpen] = useState(false);
           <button
             onClick={() => setSpotlightOpen(true)}
             className={`flex items-center justify-center transition-all group cursor-pointer ${
-              windowsStyle ? 'w-9 h-9 rounded-lg' : 'w-12 h-12 rounded-xl'
+              windowsStyle ? 'w-9 h-9 rounded-lg' : 'w-10 h-10 rounded-lg'
             } hover:bg-(--surface-30)`}
             aria-label="Search"
             title="Search (Ctrl+K)"
           >
-            <Search className={`text-(--wp-accent-fg) ${windowsStyle ? 'w-5 h-5' : 'w-6 h-6'}`} />
+            <Search className={`text-(--wp-accent-fg) ${windowsStyle ? 'w-5 h-5' : 'w-5 h-5'}`} />
           </button>
 
-          <div className={`w-[1px] bg-(--surface-30) ${windowsStyle ? 'h-5 mx-1.5' : 'h-8 mx-2'}`} />
+          <div className={`w-[1px] bg-(--surface-30) ${windowsStyle ? 'h-5 mx-1.5' : 'h-6 mx-1.5'}`} />
 
           {/* Pinned + running apps */}
           {allOsApps.length > 0 && (
-            <div className={`flex items-center ${windowsStyle ? 'gap-1 px-1' : 'gap-2 px-2'}`}>
+            <div className={`flex items-center ${windowsStyle ? 'gap-1 px-1' : 'gap-1.5 px-1.5'}`}>
               {allOsApps.map((app) => {
                 const wins = windows.filter((w) => w.appId === app.id);
                 const isOpen = wins.length > 0;
@@ -378,25 +378,25 @@ const [isTrayOpen, setIsTrayOpen] = useState(false);
           <div className={`flex items-center gap-1.5 ${windowsStyle ? 'px-1' : 'px-2'}`}>
             <button
               onClick={() => setWidgetsOpen(!widgetsOpen)}
-              className={`${windowsStyle ? 'h-9 w-9 rounded-lg' : 'h-12 w-12 rounded-xl'} flex items-center justify-center relative group transition-all cursor-pointer ${
+              className={`${windowsStyle ? 'h-9 w-9 rounded-lg' : 'h-10 w-10 rounded-lg'} flex items-center justify-center relative group transition-all cursor-pointer ${
                 widgetsOpen ? 'bg-(--surface-50) text-(--wp-accent-fg)' : 'hover:bg-(--surface-20) text-(--wp-accent-fg)/70 hover:text-(--wp-accent-fg)'
               }`}
               title="Toggle widgets (Ctrl+W)"
             >
-              <Sparkles className={windowsStyle ? 'w-5 h-5' : 'w-6 h-6'} />
+              <Sparkles className={windowsStyle ? 'w-5 h-5' : 'w-5 h-5'} />
             </button>
           </div>
 
-          <div className={`w-[1px] bg-(--surface-30) ${windowsStyle ? 'h-5 mx-2 ml-auto' : 'h-8 mx-4'}`} />
+          <div className={`w-[1px] bg-(--surface-30) ${windowsStyle ? 'h-5 mx-2 ml-auto' : 'h-6 mx-3'}`} />
 
           {/* System Tray Area */}
-          <div className="flex items-center gap-3" ref={trayRef}>
+          <div className="flex items-center gap-2.5" ref={trayRef}>
             <ConnectionDot online={online} />
             <button
               data-trigger="tray"
               onClick={onToggleTray}
               className={`flex items-center text-(--wp-accent-fg)/90 rounded-xl hover:bg-(--surface-30) transition-colors cursor-pointer ${
-                windowsStyle ? 'gap-2 px-2.5 py-1.5 rounded-lg' : 'gap-4 px-3 py-1.5'
+                windowsStyle ? 'gap-2 px-2.5 py-1.5 rounded-lg' : 'gap-2.5 px-2.5 py-1'
               } ${isTrayOpen ? 'bg-(--surface-50) shadow-sm' : ''}`}
               title="System Tray & Quick Controls"
             >

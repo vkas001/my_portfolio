@@ -69,7 +69,7 @@ export default function StartMenu() {
       ref={ref}
       className={`menu-surface ${menuLayer} w-80 max-w-[calc(100vw-24px)] p-3 ${
         // slide-up animates transform, which would fight -translate-x-1/2
-        macos ? 'left-1/2 -translate-x-1/2 bottom-24 fade-in' : 'left-3 bottom-16 slide-up'
+        macos ? 'left-1/2 -translate-x-1/2 bottom-[68px] fade-in' : 'left-3 bottom-16 slide-up'
       }`}
     >
       {/* Search — ibiz_v2 StartMenu parity */}

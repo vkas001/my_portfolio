@@ -85,10 +85,18 @@ export default function WindowFrame({ win, children }: Props) {
       const paint = () => {
         raf = 0;
         const r = compute();
+        if (s.mode === 'move') {
+          // Compositor-only move: keep the committed left/top and translate
+          // relative to it, so no layout runs per frame (the frame's own
+          // backdrop blur / shadow are also dropped during drag — see
+          // .window-frame.window-dragging in global.css).
+          el.style.transform = `translate3d(${r.x - s.ox}px, ${r.y - s.oy}px, 0)`;
+          return;
+        }
         el.style.left = `${r.x}px`;
         // State y is workspace-relative; the frame renders at + bounds.top
-        // (top bar). Write viewport coords to the DOM so drag/resize tracks
-        // the pointer, but keep the committed rect in workspace space.
+        // (top bar). Write viewport coords to the DOM so resize tracks the
+        // pointer, but keep the committed rect in workspace space.
         el.style.top = `${r.y + s.bounds.top}px`;
         el.style.width = `${r.w}px`;
         el.style.height = `${r.h}px`;
@@ -104,7 +112,15 @@ export default function WindowFrame({ win, children }: Props) {
         if (raf) window.cancelAnimationFrame(raf);
         el.classList.remove('window-dragging');
         const r = compute(); // last pointer wins even if a rAF never fired
-        paint();
+        if (s.mode === 'move') {
+          // Collapse the translate into the committed rect in the same style
+          // flush, so the frame never snaps back to its drag origin.
+          el.style.left = `${r.x}px`;
+          el.style.top = `${r.y + s.bounds.top}px`;
+          el.style.transform = 'none';
+        } else {
+          paint();
+        }
         updateWindowRect(win.id, r);
         window.removeEventListener('pointermove', onMove);
         window.removeEventListener('pointerup', onUp);

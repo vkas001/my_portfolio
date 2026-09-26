@@ -10,7 +10,7 @@ import { PanelLeftClose, PanelLeftOpen } from 'lucide-react';
 const WEB_SECTION_IDS: AppId[] = ['about', 'skills', 'projects', 'experience', 'education'];
 
 /** Right-sidebar sections: sticky column beside the main content. Hobbies sits
- *  at a fixed width; Contact fills the remaining space. */
+ *  at a fixed width; Contact fills the remaining space (stacks below ~1350px). */
 const SIDEBAR_IDS: AppId[] = ['hobbies', 'contact'];
 
 const RAIL_KEY = 'portfolio.webRailCollapsed';
