@@ -227,7 +227,7 @@ export default function ProfileTab({ commitRef, reportSave }: SaveBridge) {
               <SelectInput value={s.icon} options={SOCIAL_ICONS} onChange={(v) => patchSocial(i, { icon: v })} />
             </div>
             <div className="col-span-1 flex justify-end">
-              <button className="icon-btn w-6 h-6" aria-label="Remove link" style={{ color: '#f87171' }} onClick={() => patch({ socials: form.socials.filter((_, idx) => idx !== i) })}>
+              <button className="icon-btn w-6 h-6" aria-label="Remove link" style={{ color: 'var(--error)' }} onClick={() => patch({ socials: form.socials.filter((_, idx) => idx !== i) })}>
                 <X size={11} />
               </button>
             </div>
@@ -242,9 +242,9 @@ export default function ProfileTab({ commitRef, reportSave }: SaveBridge) {
         </button>
       </div>
 
-      {error ? <p className="text-xs" style={{ color: '#f87171' }}>{error}</p> : null}
+      {error ? <p className="text-xs" style={{ color: 'var(--error)' }}>{error}</p> : null}
       {saved ? (
-        <p className="text-xs font-semibold flex items-center gap-1" style={{ color: '#34d399' }}>
+        <p className="text-xs font-semibold flex items-center gap-1" style={{ color: 'var(--success)' }}>
           <Check size={12} /> Saved — every open window updated live
         </p>
       ) : null}

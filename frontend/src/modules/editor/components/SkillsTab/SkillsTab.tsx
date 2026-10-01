@@ -3,6 +3,7 @@ import { useContent } from '@/context/ContentContext';
 import SectionEditor from '@/modules/editor/components/SectionEditor/SectionEditor';
 import SkillForm from '@/modules/editor/components/SkillForm/SkillForm';
 import { CATEGORY_LABELS } from '@/modules/skills';
+import { Wrench } from 'lucide-react';
 import type { SaveBridge } from '@/modules/editor/lib/scaffolding';
 
 export default function SkillsTab({ commitRef, reportSave }: SaveBridge) {
@@ -14,6 +15,7 @@ export default function SkillsTab({ commitRef, reportSave }: SaveBridge) {
       scaffold={{
         section: 'skills',
         items: skills,
+        icon: <Wrench size={18} />,
         titleOf: (s) => s.name,
         subOf: (s) => `${CATEGORY_LABELS[s.category] ?? s.category} · ${s.proficiency}%`,
         emptyFor: (id) => ({ id, name: '', category: 'tools', proficiency: 80, yearsUsed: 0, icon: null }),

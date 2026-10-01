@@ -9,7 +9,9 @@ class Experience extends Model
     protected $table = 'experience';
 
     public $incrementing = false;
+
     protected $keyType = 'string';
+
     protected $primaryKey = 'id';
 
     protected $fillable = [

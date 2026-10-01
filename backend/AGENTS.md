@@ -54,7 +54,7 @@ RBAC, and Scramble sections were dropped — they don't exist here).
 
 ## Commands
 
-- `php artisan serve --port=4000` — API server (frontend proxies `/api` here)
+- `php artisan serve --port=8000` — API server (frontend proxies `/api` here)
 - `php artisan test` — PHPUnit (SQLite `:memory:`, see `phpunit.xml`)
 - `vendor\bin\pint.bat <file>` (Windows) — format changed PHP files (run before
   finalizing any PHP change)

@@ -158,6 +158,14 @@ export function ContentProvider({ children }: { children: ReactNode }) {
   const experience = useItems(fetchExperience);
   const education = useItems(fetchEducation);
   const hobbies = useItems(fetchHobbies);
+  // `useItems` returns a fresh object every render, so depend on the stable
+  // reload callbacks themselves — depending on the wrapper objects would make
+  // `refresh` change on every render and re-trigger the boot effect forever.
+  const { reload: reloadSkills } = skills;
+  const { reload: reloadProjects } = projects;
+  const { reload: reloadExperience } = experience;
+  const { reload: reloadEducation } = education;
+  const { reload: reloadHobbies } = hobbies;
 
   const refresh = useCallback(async () => {
     invalidate('/profile');
@@ -171,9 +179,9 @@ export function ContentProvider({ children }: { children: ReactNode }) {
     } catch {
       setProfile(null);
     }
-    await Promise.all([skills.reload(), projects.reload(), experience.reload(), education.reload(), hobbies.reload()]);
+    await Promise.all([reloadSkills(), reloadProjects(), reloadExperience(), reloadEducation(), reloadHobbies()]);
     setLoading(false);
-  }, [skills.reload, projects.reload, experience.reload, education.reload, hobbies.reload]);
+  }, [reloadSkills, reloadProjects, reloadExperience, reloadEducation, reloadHobbies]);
 
   useEffect(() => {
     void refresh();

@@ -18,6 +18,9 @@ export interface BaseItem {
 export interface SectionScaffold<T extends BaseItem> {
   section: EditorSection;
   items: T[];
+  /** Icon shown in the page hero and, unless `rowIcon` overrides it, per row. */
+  icon?: ReactNode;
+  rowIcon?: (t: T) => ReactNode;
   titleOf: (t: T) => string;
   subOf: (t: T) => string;
   emptyFor: (id: string) => T;
@@ -28,6 +31,18 @@ export interface SectionScaffold<T extends BaseItem> {
   renderRowMeta: (t: T) => ReactNode;
   move?: (id: string, dir: -1 | 1) => void;
 }
+
+export const SECTION_LABELS: Record<EditorSection, string> = {
+  profile: 'Profile',
+  skills: 'Skills',
+  projects: 'Projects',
+  experience: 'Experience',
+  education: 'Education',
+  hobbies: 'Hobbies',
+};
+
+/** "3 items" / "2 entries" — experience reads better as entries. */
+export const SECTION_UNIT = (section: EditorSection) => (section === 'experience' ? 'entry' : 'item');
 
 export const emptyProject = (id: string): Project => ({
   id, title: '', description: '', longDescription: '', techStack: [], category: '',

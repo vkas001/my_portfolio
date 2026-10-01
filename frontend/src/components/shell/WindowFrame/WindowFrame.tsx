@@ -1,7 +1,7 @@
 import { useCallback, useRef, type ReactNode } from 'react';
 import { useTheme } from '@/context/ThemeContext';
 import { useWindows } from '@/context/WindowsContext';
-import { getDockRects, getWindowBounds, getWindowSpawnBounds } from '@/lib/osLayout';
+import { getDockRects, getWindowBounds, getWindowSpawnBounds, Z_ABOVE_TASKBAR } from '@/lib/osLayout';
 import { useAuth } from '@/context/AuthContext';
 import { useShellUI } from '@/context/ShellUIContext';
 import { APP_REGISTRY, EDITABLE_APPS } from '@/apps/registry';
@@ -140,7 +140,7 @@ export default function WindowFrame({ win, children }: Props) {
         dock: { contentId: win.id, rect: { x: win.x, y: win.y, w: win.w, h: win.h } },
       },
     });
-  }, [section, win.id, win.x, win.w, win.maximized, theme, toggleMaximize, updateWindowRect, launchApp]);
+  }, [section, win.id, win.x, win.y, win.w, win.h, win.maximized, theme, toggleMaximize, updateWindowRect, launchApp]);
 
   // Full screen (green traffic light): covers the entire viewport, above the
   // top bar and taskbar (which auto-hides), with flat edges and no shadow.
@@ -151,7 +151,7 @@ export default function WindowFrame({ win, children }: Props) {
         left: 0,
         width: '100vw',
         height: '100vh',
-        zIndex: 90,
+        zIndex: Z_ABOVE_TASKBAR,
         borderRadius: 0,
         boxShadow: 'none',
         display: win.minimized ? 'none' : undefined,

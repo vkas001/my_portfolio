@@ -21,7 +21,7 @@ export default function SkillsScreen() {
 
   return (
     <div className="space-y-4">
-      <div className="flex flex-wrap items-center justify-between gap-2">
+      <div className="cph-toolbar">
         <div className="flex flex-wrap gap-1.5">
           <button
             className={`chip cursor-pointer ${active === 'all' ? '!bg-[var(--accent)] !text-[var(--accent-text-on)]' : ''}`}

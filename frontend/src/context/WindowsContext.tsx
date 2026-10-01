@@ -323,7 +323,6 @@ export function WindowsProvider({ children }: { children: ReactNode }) {
       window.clearTimeout(settled);
       cancelAnimationFrame(raf);
     };
-    // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [theme.showTopBar]);
 
   const value = useMemo<WindowsContextValue>(

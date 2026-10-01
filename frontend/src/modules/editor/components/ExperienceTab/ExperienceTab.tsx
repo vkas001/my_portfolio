@@ -3,6 +3,7 @@ import type { Experience } from '@shared/types';
 import { useContent } from '@/context/ContentContext';
 import SectionEditor from '@/modules/editor/components/SectionEditor/SectionEditor';
 import ExperienceFields from '@/modules/editor/components/ExperienceFields/ExperienceFields';
+import { Building2 } from 'lucide-react';
 import { emptyExperience, type SaveBridge } from '@/modules/editor/lib/scaffolding';
 
 export default function ExperienceTab({ commitRef, reportSave }: SaveBridge) {
@@ -15,6 +16,7 @@ export default function ExperienceTab({ commitRef, reportSave }: SaveBridge) {
       scaffold={{
         section: 'experience',
         items: experience,
+        icon: <Building2 size={18} />,
         titleOf: (x) => x.role,
         subOf: (x) => `${x.company} · ${x.location}`,
         emptyFor: emptyExperience,

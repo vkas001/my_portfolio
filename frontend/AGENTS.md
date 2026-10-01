@@ -7,10 +7,12 @@ layer — were dropped. Do not reintroduce them.)
 
 ## Commands
 
-- `npm run dev` — dev server (port 3000, proxies `/api` → `localhost:4000`)
+- `npm run dev` — dev server (port 3000, proxies `/api` + `/storage` →
+  `http://127.0.0.1:8000`; override with `VITE_DEV_API_TARGET`)
 - `npm run build` — `tsc --noEmit` + production build
 - `npm run typecheck` — `tsc --noEmit` typecheck
-- `npm run lint` — eslint (may not be configured; typecheck is the gate)
+- `npm run lint` — ESLint 10 flat config (`eslint.config.js`), zero warnings
+  allowed; lint and typecheck are both gates
 - There is no test runner or E2E harness here; verify with `typecheck` + `build`
   and, for UI behavior, a headless-Chrome pass with screenshots.
 
@@ -39,11 +41,13 @@ src/
                          # ShellUIContext, ContentContext — one narrow concern each
   lib/
     api/                 # httpClient (envelope unwrap), services, themeService
-    osLayout.ts          # getWorkspaceBounds + fitRectInBounds (single source of truth)
+    osLayout.ts          # bar heights, z-layer constants, workspace/dock bounds,
+                         # fitRectInBounds (single source of truth for geometry)
+    hooks/               # useLocalStorage, useMediaQuery (useIsMobile)
     shortcuts/           # shortcut registry (SHORTCUTS drives Settings → Shortcuts too)
     sound.ts wallpapers.ts gridUtils.ts
-  data/portfolio.ts      # local fallback data when the API is unreachable
   styles/                # theme.ts (ThemeState, palettes, applyTheme), global.css
+                         # (.cph/.crow CompactPageHero/CompactRow, .cph-toolbar)
   types.ts               # AppDef, WindowState, WidgetMeta, … (OS-level types only)
 ```
 
@@ -74,11 +78,16 @@ types come from `@shared/types`; `@shared/types` may not import the app.
 - Feature areas mount as OS windows via `apps/registry.tsx` (lazy import from
   `@/modules/<feature>`) — never a standalone page/route.
 - Window z stays in `[41, 79]` (see `assignTopZ`): tabs stack above widgets
-  (30) and below the taskbar/overlays (80). Never hardcode other z-layers.
+  (30) and below the taskbar/overlays (80). Never hardcode other z-layers —
+  import the named constants from `lib/osLayout.ts` (`Z_WIDGET_BASE`,
+  `Z_WINDOW_BASE`/`Z_WINDOW_TOP`, `Z_TASKBAR`, `Z_ABOVE_TASKBAR`,
+  `Z_OVERLAY_TOP`, …).
 
 ### 3. Windows & widgets stay on-screen
 
-- All geometry goes through `lib/osLayout.ts`: `getWorkspaceBounds(theme)` and
+- All geometry goes through `lib/osLayout.ts`: bar heights (`TOPBAR_H`,
+  `TASKBAR_H`, `TASKBAR_AUTOHIDE_H`), `workspaceInsets()`,
+  `getWorkspaceBounds(theme)`, `taskbarBottomInset(theme)` and
   `fitRectInBounds()`. Never hardcode `40/56` bar offsets.
 - The taskbar is DOM-measured (`[data-os-taskbar]`) for maximized windows.
 - New windows/widgets spawn fitted; drag/resize clamp fully inside bounds.
@@ -90,10 +99,11 @@ types come from `@shared/types`; `@shared/types` may not import the app.
   `--text-primary/...`, `--border-*`). Do not hardcode colors.
 - `frontend-design` skill for new UI direction; theme tokens stay in `styles/theme.ts`.
 - `lucide-react` for icons (never inline SVG or emoji in UI chrome).
-- `framer-motion` is installed for window/desktop transitions.
-- `zod` is installed but there is **no shared validation layer yet** — contact
-  validation lives in the backend controller. If a second form appears, build
-  the shared layer first (see ibiz_v2's Rule 14 as reference, not as law).
+- No animation library is installed — CSS transitions on `global.css` utilities
+  (`transition-*`, `animate-pulse`, `animate-spin`) cover window/desktop motion.
+- No schema-validation library either: contact validation lives in the backend
+  controller and the frontend trusts `shared` types. If a second form appears,
+  ask before adding a validation dependency.
 
 ### 4b. Responsive — container queries, never viewport breakpoints (ibiz parity)
 
@@ -109,7 +119,9 @@ types come from `@shared/types`; `@shared/types` may not import the app.
 - Page heroes use `components/ui/CompactPageHero`; dense rows use
   `components/ui/CompactRow` — both collapse automatically in narrow windows
   (540/600px `@container` rules in `global.css`). Don't hand-roll hero cards
-  or list rows when these cover the need.
+  or list rows when these cover the need. Filter/action strips above a list use
+  the `.cph-toolbar` class. Current users: the editor's `SectionEditor` (all
+  five content tabs), `ContactScreen`.
 
 ### 5. Settings & theme
 

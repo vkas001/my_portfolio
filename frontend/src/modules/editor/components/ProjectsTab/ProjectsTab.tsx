@@ -2,6 +2,7 @@ import type { Project } from '@shared/types';
 import { useContent } from '@/context/ContentContext';
 import SectionEditor from '@/modules/editor/components/SectionEditor/SectionEditor';
 import ProjectFields from '@/modules/editor/components/ProjectFields/ProjectFields';
+import { FolderKanban } from 'lucide-react';
 import { emptyProject, type SaveBridge } from '@/modules/editor/lib/scaffolding';
 
 export default function ProjectsTab({ commitRef, reportSave }: SaveBridge) {
@@ -13,6 +14,7 @@ export default function ProjectsTab({ commitRef, reportSave }: SaveBridge) {
       scaffold={{
         section: 'projects',
         items: projects,
+        icon: <FolderKanban size={18} />,
         titleOf: (p) => p.title,
         subOf: (p) => `${p.year} · ${p.techStack.slice(0, 3).join(', ')}`,
         emptyFor: emptyProject,

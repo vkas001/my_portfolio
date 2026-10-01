@@ -1,4 +1,5 @@
 import { Toaster as RHT } from 'react-hot-toast';
+import { Z_ABOVE_TASKBAR } from '@/lib/osLayout';
 
 /** App-level toast mount (react-hot-toast). Styled with the OS glass tokens;
  *  mounted once in AppShell so toasts float above every window. */
@@ -7,7 +8,7 @@ export default function Toaster() {
     <RHT
       position="bottom-right"
       gutter={8}
-      containerStyle={{ zIndex: 90 }}
+      containerStyle={{ zIndex: Z_ABOVE_TASKBAR }}
       toastOptions={{
         duration: 4000,
         style: {

@@ -6,7 +6,9 @@ import type { ThemeState } from '@/styles/theme';
 // [top, viewport - bottom] so nothing is ever cut off at a screen edge.
 
 export const TOPBAR_H = 40;
-export const TASKBAR_H = 56;
+/** Pre-paint fallback only — `taskbarBottomInset` measures the real bar. Must
+ *  match the rendered heights in `Taskbar`: `h-12` for the Windows bar. */
+export const TASKBAR_H = 48;
 export const TASKBAR_AUTOHIDE_H = 14;
 /** Breathing room between a maximized window and the bar — ibiz_v2 BOTTOM_GAP. */
 export const BOTTOM_GAP = 16;
@@ -24,6 +26,18 @@ export const Z_WINDOW_BASE = 41;
 export const Z_WINDOW_TOP = 78;
 export const Z_WIDGET_BASE = 30;
 export const Z_WIDGET_ACTIVE = 79;
+/** Desktop home indicator — under the bar, over the wallpaper. */
+export const Z_HOME_INDICATOR = 60;
+/** Taskbar, start menu and tray panel — above every window and widget. */
+export const Z_TASKBAR = 80;
+/** Taskbar reveal affordance while the bar is hidden. */
+export const Z_TASKBAR_REVEAL = 85;
+/** Above the bar: fullscreen windows, toasts and dropdown menus. */
+export const Z_ABOVE_TASKBAR = 90;
+/** Reveal arrow that must stay clickable over a fullscreen window. */
+export const Z_FULLSCREEN_REVEAL = 95;
+/** Beats a fullscreen window: spotlight, modals, lightboxes, floating bar. */
+export const Z_OVERLAY_TOP = 100;
 
 export interface WorkspaceInsets {
   top: number;

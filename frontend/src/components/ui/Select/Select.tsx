@@ -1,6 +1,7 @@
 import { useId } from 'react';
 import SelectR, { type StylesConfig } from 'react-select';
 import { ChevronDown } from 'lucide-react';
+import { Z_ABOVE_TASKBAR } from '@/lib/osLayout';
 
 export interface SelectOption<T extends string | number = string> {
   label: string;
@@ -60,7 +61,7 @@ const selectStyles = (error?: string): StylesConfig<SelectOption<string | number
     borderRadius: 8,
     boxShadow: '0 8px 24px rgba(0,0,0,.25)',
     overflow: 'hidden',
-    zIndex: 90,
+    zIndex: Z_ABOVE_TASKBAR,
   }),
   menuList: (base) => ({ ...base, maxHeight: 240, padding: 4 }),
   noOptionsMessage: (base) => ({ ...base, color: 'var(--text-low)', fontSize: 12 }),
@@ -84,7 +85,10 @@ export default function Select<T extends string | number = string>({
   id,
   className,
 }: SelectProps<T>) {
-  const selectId = id ?? useId();
+  // Always call the hook: `id ?? useId()` would skip it whenever an explicit id
+  // is passed and break the hook order across renders.
+  const autoId = useId();
+  const selectId = id ?? autoId;
   const flat = options as unknown as SelectOption<string | number>[];
   const current = flat.find((o) => String(o.value) === String(value)) ?? null;
 

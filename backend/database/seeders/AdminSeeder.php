@@ -17,7 +17,8 @@ class AdminSeeder extends Seeder
         $user = User::query()->firstWhere('email', 'admin');
 
         if ($user === null) {
-            User::query()->create([
+            // forceFill: `is_admin` is not fillable on purpose (see User).
+            User::query()->forceCreate([
                 'name' => 'Admin',
                 'email' => 'admin',
                 'password' => 'password',
@@ -27,6 +28,6 @@ class AdminSeeder extends Seeder
             return;
         }
 
-        $user->update(['name' => 'Admin', 'is_admin' => true]);
+        $user->forceFill(['name' => 'Admin', 'is_admin' => true])->save();
     }
 }

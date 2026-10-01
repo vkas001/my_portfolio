@@ -34,7 +34,7 @@ export default function BootOverlay() {
 
   const blocking = !authReady || !themeReady || loading;
   const statusLine =
-    !themeReady ? 'Loading your theme…' : loading ? 'Loading your portfolio…' : null;
+    !themeReady ? 'Loading your theme…' : loading ? 'Loading portfolio…' : null;
 
   return (
     <BootScreen

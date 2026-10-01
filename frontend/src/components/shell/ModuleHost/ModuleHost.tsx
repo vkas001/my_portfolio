@@ -1,4 +1,5 @@
 import { Suspense, useEffect, useState, type ComponentType, type ReactNode, Component } from 'react';
+import { AlertTriangle } from 'lucide-react';
 import { APP_REGISTRY } from '@/apps/registry';
 import type { AppId, WindowData } from '@/types';
 
@@ -19,7 +20,7 @@ export default function ModuleHost({ appId, data, windowId }: { appId: AppId; da
   if (error) {
     return (
       <div className="flex flex-col items-center justify-center h-full gap-3 text-center">
-        <span className="text-3xl">⚠️</span>
+        <AlertTriangle size={30} style={{ color: 'var(--error)' }} />
         <p className="text-sm font-medium">Something went wrong</p>
         <p className="text-xs" style={{ color: 'var(--text-mid)' }}>{error.message}</p>
         <button className="btn-ghost text-xs" onClick={() => setError(null)}>Retry</button>

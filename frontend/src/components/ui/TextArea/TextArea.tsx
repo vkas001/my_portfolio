@@ -18,7 +18,10 @@ export const TextArea = forwardRef<HTMLTextAreaElement, TextAreaProps>(function 
   { label, error, hint, helperText, className, textareaClassName, style, id, ...rest },
   ref,
 ) {
-  const areaId = id ?? useId();
+  // Always call the hook: `id ?? useId()` would skip it whenever an explicit id
+  // is passed and break the hook order across renders.
+  const autoId = useId();
+  const areaId = id ?? autoId;
   const resolvedHint = helperText ?? hint;
 
   return (

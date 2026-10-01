@@ -3,7 +3,7 @@ import type { ReactNode } from 'react';
 export interface CompactPageHeroProps {
   icon: ReactNode;
   title: string;
-  subtitle?: string;
+  subtitle?: ReactNode;
   badge?: string;
   actions?: ReactNode;
   className?: string;

@@ -3,6 +3,7 @@ import type { Education } from '@shared/types';
 import { useContent } from '@/context/ContentContext';
 import SectionEditor from '@/modules/editor/components/SectionEditor/SectionEditor';
 import EducationFields from '@/modules/editor/components/EducationFields/EducationFields';
+import { GraduationCap } from 'lucide-react';
 import { emptyEducation, type SaveBridge } from '@/modules/editor/lib/scaffolding';
 
 export default function EducationTab({ commitRef, reportSave }: SaveBridge) {
@@ -15,6 +16,7 @@ export default function EducationTab({ commitRef, reportSave }: SaveBridge) {
       scaffold={{
         section: 'education',
         items: education,
+        icon: <GraduationCap size={18} />,
         titleOf: (x) => x.institution,
         subOf: (x) => x.degree,
         emptyFor: emptyEducation,
