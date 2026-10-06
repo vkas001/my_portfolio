@@ -1,6 +1,7 @@
 import type { Hobby } from '@shared/types';
 import Field from '@/modules/editor/components/Field/Field';
 import Input from '@/components/ui/Input/Input';
+import TextArea from '@/components/ui/TextArea/TextArea';
 import SelectInput from '@/modules/editor/components/SelectInput/SelectInput';
 import { hobbyIcon, HOBBY_ICONS, HOBBY_ICON_LABELS, type HobbyIcon } from '@/modules/hobbies';
 
@@ -34,11 +35,12 @@ export default function HobbiesFields({
         <span className="text-[10px]" style={{ color: 'var(--text-mid)' }}>Preview: {d.name.trim() || 'hobby name'}</span>
       </div>
       <Field label="Description">
-        <textarea
+        <TextArea
+          autoGrow
+          maxRows={6}
           rows={2}
-          className="w-full text-sm"
           value={d.description ?? ''}
-          placeholder="Why you enjoy it, what it looks like…"
+          placeholder="Why you enjoy it, what it looks like."
           onChange={(e) => set({ description: e.target.value })}
         />
       </Field>

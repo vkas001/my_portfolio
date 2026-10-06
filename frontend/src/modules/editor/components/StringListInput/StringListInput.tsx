@@ -1,20 +1,25 @@
-import { inputCls } from '@/modules/editor/components/Field/Field';
+import TextArea from '@/components/ui/TextArea/TextArea';
 
 export default function StringListInput({
   value,
   onChange,
   placeholder = 'Comma-separated values',
   rows = 1,
+  maxRows = 8,
+  autoGrow = true,
 }: {
   value: string[];
   onChange: (next: string[]) => void;
   placeholder?: string;
   rows?: number;
+  maxRows?: number;
+  autoGrow?: boolean;
 }) {
   const text = value.join(rows > 1 ? '\n' : ', ');
   return (
-    <textarea
-      className={`${inputCls} resize-y`}
+    <TextArea
+      autoGrow={autoGrow}
+      maxRows={maxRows}
       rows={rows}
       placeholder={placeholder}
       value={text}

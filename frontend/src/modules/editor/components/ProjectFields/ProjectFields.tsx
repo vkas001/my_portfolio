@@ -50,8 +50,8 @@ export default function ProjectFields({
           </label>
         </div>
       </div>
-      <TextArea label="Short description" rows={2} value={d.description} onChange={(e) => set({ description: e.target.value })} />
-      <TextArea label="Long description" rows={3} value={d.longDescription ?? ''} onChange={(e) => set({ longDescription: e.target.value })} />
+      <TextArea label="Short description" rows={2} maxRows={6} autoGrow value={d.description} onChange={(e) => set({ description: e.target.value })} />
+      <TextArea label="Long description" rows={3} maxRows={14} autoGrow value={d.longDescription ?? ''} onChange={(e) => set({ longDescription: e.target.value })} />
       <Field label="Tech stack">
         <StringListInput value={d.techStack} onChange={(v) => set({ techStack: v })} />
       </Field>

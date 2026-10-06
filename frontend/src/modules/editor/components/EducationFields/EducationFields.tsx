@@ -2,6 +2,7 @@ import { useEffect } from 'react';
 import type { Education } from '@shared/types';
 import Field from '@/modules/editor/components/Field/Field';
 import Input from '@/components/ui/Input/Input';
+import TextArea from '@/components/ui/TextArea/TextArea';
 
 export default function EducationFields({
   d,
@@ -47,11 +48,12 @@ export default function EducationFields({
         </div>
       </div>
       <Field label="Description">
-        <textarea
+        <TextArea
+          autoGrow
+          maxRows={10}
           rows={3}
-          className="w-full text-sm"
           value={d.description ?? ''}
-          placeholder="Scope of study, thesis, notable coursework…"
+          placeholder="Scope of study, thesis, notable coursework."
           onChange={(e) => set({ description: e.target.value })}
         />
       </Field>

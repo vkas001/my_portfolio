@@ -29,7 +29,6 @@ import { http } from '@/lib/api/httpClient';
 import { subscribeForcedOffline } from '@/lib/network';
 import {
   TASKBAR_H,
-  Z_FULLSCREEN_REVEAL,
   Z_OVERLAY_TOP,
   Z_TASKBAR,
   Z_TASKBAR_REVEAL,
@@ -211,11 +210,11 @@ const Taskbar = memo(function Taskbar() {
 
   // Auto-hide, ibiz_v2 parity: the bar hides fully; a bottom hover zone +
   // chevron affordance reveals it. Stays put while menu/tray are open. A
-  // maximized tab pins the bar visible (the frame runs behind it); a full
-  // screen tab forces auto-hide and hides the bar as soon as fullscreen opens.
-  const hasFullScreenWindow = windows.some((w) => w.isFullScreen && !w.minimized);
+  // maximized tab pins the bar visible (the frame runs behind it). A tab
+  // doubled by the green dot is an ordinary floating window, so the bar
+  // behaves normally and never has to hide or float above it.
   const hasMaximizedWindow = windows.some((w) => w.maximized && !w.minimized);
-  const autoHide = hasFullScreenWindow || (theme.taskbarMode === 'auto-hide' && !hasMaximizedWindow);
+  const autoHide = theme.taskbarMode === 'auto-hide' && !hasMaximizedWindow;
   const hidden = autoHide && !taskbarVisible;
   const reveal = () => setTaskbarVisible(true);
   const hideBar = () => {
@@ -224,12 +223,6 @@ const Taskbar = memo(function Taskbar() {
 
 const [isTrayOpen, setIsTrayOpen] = useState(false);
   const trayRef = useRef<HTMLDivElement>(null);
-
-  // Hide the bar as soon as a tab goes fullscreen: the frame covers the
-  // whole viewport, so a lingering bar would float mid-screen over it.
-  useEffect(() => {
-    if (hasFullScreenWindow) setTaskbarVisible(false);
-  }, [hasFullScreenWindow, setTaskbarVisible]);
 
   useEffect(() => {
     if (!isTrayOpen) return;
@@ -264,13 +257,8 @@ const [isTrayOpen, setIsTrayOpen] = useState(false);
     : 'h-12 w-12 flex items-center justify-center rounded-xl relative group transition-all cursor-pointer';
   const tooltipPos = windowsStyle ? 'bottom-12' : 'bottom-16';
 
-  // While a full screen tab is open the revealed bar must float above it,
-  // otherwise reveal would slide it invisibly underneath. Otherwise the bar
-  // keeps its normal layer below fullscreen content.
-  const floatAbove = hasFullScreenWindow && !hidden;
-  const barLayer = floatAbove ? Z_OVERLAY_TOP : Z_TASKBAR;
-  // The reveal arrow must sit above the fullscreen tab to stay clickable.
-  const revealLayer = hasFullScreenWindow ? Z_FULLSCREEN_REVEAL : Z_TASKBAR_REVEAL;
+  const barLayer = Z_TASKBAR;
+  const revealLayer = Z_TASKBAR_REVEAL;
 
   return (
     <>

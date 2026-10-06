@@ -5,11 +5,11 @@ import { useTheme } from '@/context/ThemeContext';
 import { useAuth } from '@/context/AuthContext';
 import { APP_REGISTRY } from '@/apps/registry';
 import { Moon, Sun, RotateCcw, Search, Settings, Undo2, X, LogIn, CircleUserRound } from 'lucide-react';
-import { Z_OVERLAY_TOP, Z_TASKBAR } from '@/lib/osLayout';
+import { Z_TASKBAR } from '@/lib/osLayout';
 
 export default function StartMenu() {
   const { startMenuOpen, setStartMenuOpen } = useShellUI();
-  const { launchApp, closeAllWindows, windows } = useWindows();
+  const { launchApp, closeAllWindows } = useWindows();
   const { theme, setTheme, resetTheme } = useTheme();
   const { user } = useAuth();
   const ref = useRef<HTMLDivElement>(null);
@@ -62,11 +62,6 @@ export default function StartMenu() {
   // bottom-left over a Windows bar, centered over the macOS dock.
   const macos = theme.taskbarStyle === 'macos';
 
-  // Above a full screen tab when one is open (matches the floating bar).
-  const menuLayer = windows.some((w) => w.isFullScreen && !w.minimized)
-    ? Z_OVERLAY_TOP
-    : Z_TASKBAR;
-
   return (
     <div
       ref={ref}
@@ -74,7 +69,7 @@ export default function StartMenu() {
         // slide-up animates transform, which would fight -translate-x-1/2
         macos ? 'left-1/2 -translate-x-1/2 bottom-24 fade-in' : 'left-3 bottom-16 slide-up'
       }`}
-      style={{ zIndex: menuLayer }}
+      style={{ zIndex: Z_TASKBAR }}
     >
       {/* Search — ibiz_v2 StartMenu parity */}
       <div className="relative mb-2">

@@ -161,7 +161,7 @@ export default function ProfileTab({ commitRef, reportSave }: SaveBridge) {
         <div className="col-span-12 rounded-xl p-3 space-y-2.5" style={{ background: 'var(--bg-elev)', border: '1px solid var(--border)' }}>
           <h3 className={labelCls} style={{ color: 'var(--accent)' }}>Opening</h3>
           <Input label="Open-to-work badge" hint="Shown next to your location — leave empty to hide it" value={form.openToWork} onChange={(e) => patch({ openToWork: e.target.value })} />
-          <TextArea label="Description" hint="Who you are, what you build, and what you want to be hired or contacted for — recruiters stop reading here" rows={2} value={form.shortBio} onChange={(e) => patch({ shortBio: e.target.value })} />
+          <TextArea label="Description" hint="Who you are, what you build, and what you want to be hired or contacted for — recruiters stop reading here" rows={2} maxRows={6} autoGrow value={form.shortBio} onChange={(e) => patch({ shortBio: e.target.value })} />
         </div>
         <div className="col-span-12 rounded-xl p-3 space-y-2.5" style={{ background: 'var(--bg-elev)', border: '1px solid var(--border)' }}>
           <h3 className={labelCls} style={{ color: 'var(--accent)' }}>What I'm good at</h3>
@@ -186,6 +186,8 @@ export default function ProfileTab({ commitRef, reportSave }: SaveBridge) {
               onChange={(strengths) => patch({ strengths })}
               placeholder="One strength per line"
               rows={4}
+              maxRows={10}
+              autoGrow
             />
           </Field>
         </div>
@@ -206,10 +208,10 @@ export default function ProfileTab({ commitRef, reportSave }: SaveBridge) {
               </Field>
             </div>
           </div>
-          <TextArea label="Description" hint="Location, interests, what you're exploring now" rows={3} value={form.personalNote} onChange={(e) => patch({ personalNote: e.target.value })} />
+          <TextArea label="Description" hint="Location, interests, what you're exploring now" rows={3} maxRows={8} autoGrow value={form.personalNote} onChange={(e) => patch({ personalNote: e.target.value })} />
         </div>
         <div className="col-span-12">
-          <TextArea label="Bio — the longer story" rows={4} value={form.bio} onChange={(e) => patch({ bio: e.target.value })} />
+          <TextArea label="Bio — the longer story" rows={4} maxRows={10} autoGrow value={form.bio} onChange={(e) => patch({ bio: e.target.value })} />
         </div>
       </div>
 
