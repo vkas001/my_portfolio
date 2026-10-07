@@ -178,6 +178,9 @@ button { font-family: inherit; }
   overflow: auto;
   padding: 18px 22px;
   container-type: inline-size; /* ibiz_v2 parity: nested anchor so inner grids key off the card, not the frame */
+  /* Promote the scroller to its own composited layer so scroll paints are
+     tile-cached inside it instead of invalidating the blurred window frame. */
+  transform: translateZ(0);
 }
 
 /* Narrow windows: tighter window padding so content keeps room. */
@@ -188,6 +191,20 @@ button { font-family: inherit; }
 }
 
 .window-dragging { transition: none !important; }
+/* Dragging fast-path (macOS-style): while a window is moved/resized, drop its
+   backtracking backdrop blur + soft shadow and go near-opaque so each frame
+   composites without a full-surface re-blur or shadow re-raster. Restored on
+   release. */
+.window-frame.window-dragging {
+  backdrop-filter: none;
+  -webkit-backdrop-filter: none;
+  box-shadow: none;
+  background: rgba(16, 16, 28, .97);
+}
+
+:root[data-mode='light'] .window-frame.window-dragging {
+  background: rgba(252, 252, 255, .98);
+}
 .window-animating { transition: transform .18s ease, width .18s ease, height .18s ease; }
 
 /* Traffic lights */
@@ -720,7 +737,8 @@ input:focus, textarea:focus, select:focus {
 }
 /* Sticky right sidebar (right-most): shares the row with the main column and
  * Education sits at a fixed width; Contact (right of Education) flexes to fill
- * the remaining space. Stacks vertically below ~1100px. */
+ * the remaining space. Stacks vertically below ~1350px (raised from 1100 so
+ * Contact never collapses into an unusable sliver on typical laptop widths). */
 .web-edu {
   position: sticky;
   top: 40px;
@@ -786,83 +804,9 @@ input:focus, textarea:focus, select:focus {
 }
 
 /* Web view is the public, document-level site (no OS window), so viewport
- * media are fair here — on desktop the rail stays leftmost; on phones it moves
- * to the top (see the phone block below). */
-
-/* Phones: the section rail becomes a horizontal bar pinned under the topbar.
- * A vertical 190px rail eats a third of a phone screen and pushes the content
- * off-canvas; up top it reads as a nav strip and keeps the full width for the
- * sections themselves. Matches `useIsMobile` (768px) so the OS shell and the web
- * view switch over at the same width. */
-@media (max-width: 768px) {
-  .web-shell {
-    flex-direction: column;
-    align-items: stretch;
-  }
-  .web-rail {
-    position: sticky;
-    top: 40px;
-    left: 0;
-    right: 0;
-    width: auto;
-    flex-direction: row;
-    align-items: center;
-    gap: 4px;
-    padding: 8px 10px;
-    overflow-x: auto;
-    overscroll-behavior-x: contain;
-    scrollbar-width: none;
-    background: color-mix(in srgb, var(--bg) 88%, transparent);
-    backdrop-filter: blur(10px);
-    border-bottom: 1px solid var(--border);
-  }
-  .web-rail::-webkit-scrollbar { display: none; }
-  /* Collapsible: the toggle stays reachable at the start of the strip and, when
-   * collapsed, the links drop to icons only — the row direction is kept (unlike
-   * the desktop column rail) so it still reads as a horizontal nav. */
-  .web-rail.collapsed { width: auto; align-items: center; }
-  .web-rail.collapsed .web-rail-link {
-    flex-direction: row;
-    gap: 8px;
-    padding: 8px 12px;
-    width: auto;
-  }
-  .web-rail.collapsed .web-rail-label { display: none; }
-  .web-rail.collapsed .web-rail-link { padding: 8px 10px; }
-  /* Icon-only pin at the head of the strip (the desktop label has no room). */
-  .web-rail-toggle {
-    display: flex;
-    flex-shrink: 0;
-    align-self: stretch;
-    margin: 0;
-    padding: 0 10px;
-    align-items: center;
-    justify-content: center;
-  }
-  .web-rail-toggle span { display: none; }
-  /* Divider so the toggle reads as a control, not another section. */
-  .web-rail-toggle::after {
-    content: '';
-    position: absolute;
-    right: 0;
-    top: 6px;
-    bottom: 6px;
-    width: 1px;
-    background: var(--border);
-  }
-  .web-rail-toggle { position: relative; }
-  .web-rail-link {
-    flex-shrink: 0;
-    gap: 8px;
-    padding: 8px 12px;
-    white-space: nowrap;
-  }
-  .web-content { padding-top: 0; }
-  /* Sections start clear of the sticky nav strip. */
-  .web-section-wrap { scroll-margin-top: 100px; }
-}
-
-@media (max-width: 1100px) {
+ * media are fair here — the rail always stays leftmost, phones just get a
+ * slightly tighter shell and a narrower expanded rail. */
+@media (max-width: 1350px) {
   .web-edu {
     position: static;
     flex: 1 1 100%;
@@ -876,6 +820,8 @@ input:focus, textarea:focus, select:focus {
   .web-edu #section-contact {
     flex: 1 1 100%;
     width: 100%;
+    min-width: 0;
+    max-width: none;
   }
 }
 
@@ -922,6 +868,8 @@ input:focus, textarea:focus, select:focus {
 
 .boot-wordmark {
   display: flex;
+  flex-wrap: wrap;
+  justify-content: center;
   font-size: 34px;
   font-weight: 700;
   letter-spacing: -0.02em;

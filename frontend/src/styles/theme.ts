@@ -429,7 +429,7 @@ export function applyTheme(theme: ThemeState): void {
   // Taskbar height — collapses when auto-hide is on so windows use the space.
   // macOS reserves the floating dock (footer + wrapper padding); keep in
   // sync with osLayout MACOS_DOCK_FALLBACK_H + MACOS_DOCK_PAD.
-  set('--taskbar-h', theme.taskbarMode === 'auto-hide' ? '14px' : theme.taskbarStyle === 'macos' ? '84px' : '56px');
+  set('--taskbar-h', theme.taskbarMode === 'auto-hide' ? '14px' : theme.taskbarStyle === 'macos' ? '64px' : '56px');
   // Topbar height — collapses when hidden so windows/widgets use the space
   set('--topbar-h', theme.showTopBar ? '40px' : '0px');
 
