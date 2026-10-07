@@ -10,7 +10,7 @@ import {
 } from 'react';
 import { useTheme } from '@/context/ThemeContext';
 import { fitRectInBounds, followWindowBoundsChange, getWindowBounds, getWindowSpawnBounds, Z_WINDOW_BASE, Z_WINDOW_TOP, type WindowAnchorSpan } from '@/lib/osLayout';
-import type { ThemeState } from '@/styles/theme';
+import { WINDOW_SIZE_SCALES, type ThemeState } from '@/styles/theme';
 import type { AppDef, AppId, WindowData, WindowState } from '@/types';
 import { sound } from '@/lib/sound';
 import { APP_REGISTRY } from '@/apps/registry';
@@ -34,7 +34,10 @@ interface WindowsContextValue {
   restoreWindow: (id: string) => void;
   minimizeWindow: (id: string) => void;
   toggleMaximize: (id: string) => void;
-  toggleFullScreen: (id: string) => void;
+  /** Green-dot zoom. `content` carries the window body's measured sizes so
+   *  the zoom hugs the content height (width follows proportionally), never
+   *  past 1.5x. Taller content than that keeps scrolling. */
+  toggleFullScreen: (id: string, content?: { bodyW: number; bodyH: number; scrollW: number; scrollH: number }) => void;
   updateWindowRect: (id: string, rect: Partial<Pick<WindowState, 'x' | 'y' | 'w' | 'h'>>) => void;
   /** Replace a window's per-app payload (e.g. the editor keeping its
    *  section + dock in sync while switching apps). */
@@ -135,8 +138,11 @@ export function WindowsProvider({ children }: { children: ReactNode }) {
       // launched on their own; an explicit `rect` — the dock/tile flow — always
       // wins, so opening one from a content window still tiles the pair.
       const coverWorkspace = !opts?.rect && app.openMaximized === true;
-      const w = opts?.rect?.w ?? Math.min(app.defaultSize.w, bounds.width - 24);
-      const h = opts?.rect?.h ?? Math.min(app.defaultSize.h, bounds.height - 24);
+      // Settings → Apps window-size preset scales the app's default size; an
+      // explicit `rect` (dock/tile flow) keeps its own dimensions untouched.
+      const sizeScale = WINDOW_SIZE_SCALES[themeRef.current.windowSize] ?? 1;
+      const w = opts?.rect?.w ?? Math.min(app.defaultSize.w * sizeScale, bounds.width - 24);
+      const h = opts?.rect?.h ?? Math.min(app.defaultSize.h * sizeScale, bounds.height - 24);
       const offset = (windows.length % 6) * 28;
       instanceCounter += 1;
       const id = `${appId}#${instanceCounter}`;
@@ -240,14 +246,20 @@ export function WindowsProvider({ children }: { children: ReactNode }) {
     [focusWindow],
   );
 
-// Green dot: double the tab rather than swallow the viewport. The window
-  // stays an ordinary floating tab (rounded corners, draggable, resizable,
-  // top bar + taskbar untouched) at twice its size, grown around its center and
-  // clamped to the space above the taskbar. Pressing the dot again restores the
-  // rect it had before (prevRect, shared with maximize) — so doubling a
-  // maximized tab grows the size it restores to, not the whole screen.
+// Green dot: zoom the tab toward its content rather than swallow the
+// viewport. Height grows only up to what the window body's content needs
+// (scroll height vs. visible height), floored at 1.2x so a single tap always
+// visibly expands even when the content already fits. Width follows the
+// height's growth ratio so the tab keeps its shape; fluid layouts never
+// overflow horizontally, so there is no content width to hug. Everything is
+// capped at 1.5x, and content taller than the cap keeps its scrollbar. The
+// window stays an ordinary floating tab (rounded corners, draggable,
+// resizable, top bar + taskbar untouched), grown around its center and
+// clamped to the space above the taskbar. Pressing the dot again restores
+// the rect it had before (prevRect, shared with maximize) — so zooming a
+// maximized tab grows the size it restores to, not the whole screen.
   const toggleFullScreen = useCallback(
-    (id: string) => {
+    (id: string, content?: { bodyW: number; bodyH: number; scrollW: number; scrollH: number }) => {
       setWindows((ws) =>
         ws.map((w) => {
           if (w.id !== id) return w;
@@ -258,14 +270,33 @@ export function WindowsProvider({ children }: { children: ReactNode }) {
           const b = getWindowSpawnBounds(themeRef.current);
           const app = APP_REGISTRY.find((a) => a.id === w.appId);
           const base = w.maximized && w.prevRect ? w.prevRect : { x: w.x, y: w.y, w: w.w, h: w.h };
-          const doubled = fitRectInBounds(
-            { x: base.x - base.w / 2, y: base.y - base.h / 2, w: base.w * 2, h: base.h * 2 },
+          // Settings is the OS control surface: its green dot fills the
+          // whole workspace (header to taskbar) instead of the content zoom.
+          if (w.appId === 'settings') {
+            return { ...w, x: 0, y: 0, w: b.width, h: b.height, isFullScreen: true, maximized: false, prevRect: base, clampSource: undefined };
+          }
+          // Content-hugging zoom: chrome (titlebar/borders) is the gap
+          // between the window rect and the measured body; each body axis
+          // grows from its visible size toward its scroll size, capped at
+          // 1.5x, and the window follows by the same delta (also capped).
+          const bodyH = content?.bodyH && content.bodyH > 0 ? content.bodyH : base.h;
+          const wantH = content ? Math.min(Math.max(content.scrollH, bodyH), bodyH * 1.5) : base.h * 1.5;
+          // A single tap must always visibly expand: floor the zoom at 1.2x
+          // even when the content already fits (which alone would be a no-op).
+          const newH = Math.min(Math.max(base.h + Math.max(0, wantH - bodyH), base.h * 1.2), base.h * 1.5);
+          // Width follows the height's growth ratio so the tab keeps its
+          // shape instead of going tall and narrow; fluid content never
+          // overflows horizontally, so there is no content width to hug.
+          // Still hard-capped at 1.5x.
+          const newW = Math.min(base.w * (base.h > 0 ? newH / base.h : 1), base.w * 1.5);
+          const zoomed = fitRectInBounds(
+            { x: base.x - (newW - base.w) / 2, y: base.y - (newH - base.h) / 2, w: newW, h: newH },
             b,
             { w: app?.minSize?.w ?? 0, h: app?.minSize?.h ?? 0 },
           );
-          // clampSource must go: it describes the *pre-doubled* placement, and
+          // clampSource must go: it describes the *pre-zoom* placement, and
           // reviving it on the next resize would snap the window back.
-          return { ...w, ...doubled, isFullScreen: true, maximized: false, prevRect: base, clampSource: undefined };
+          return { ...w, ...zoomed, isFullScreen: true, maximized: false, prevRect: base, clampSource: undefined };
         }),
       );
 focusWindow(id);

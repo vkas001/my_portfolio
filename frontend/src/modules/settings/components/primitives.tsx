@@ -95,26 +95,27 @@ export const RangeControl: React.FC<{
 }> = React.memo(({ label, value, min, max, step, display, onChange }) => {
   const pct = max > min ? ((value - min) / (max - min)) * 100 : 0;
   return (
-    <div className="flex items-center justify-between gap-3 py-2">
-      <div className="min-w-0">
-        <div className="text-[13px] font-bold" style={{ color: 'var(--text-hi)' }}>{label}</div>
-      </div>
-      <div className="shrink-0 flex items-center gap-3">
-        <input
-          type="range"
-          min={min}
-          max={max}
-          step={step}
-          value={value}
-          onChange={(e) => onChange(Number(e.target.value))}
-          className="w-28 accent-[var(--accent)] cursor-pointer"
-          style={{ accentColor: 'var(--accent)' }}
-        />
-        <span className="text-[12px] font-bold w-12 text-right tabular-nums" style={{ color: 'var(--text-mid)' }}>
+    // Stacked (label row + full-width bar): the old side-by-side row let the
+    // fixed-width bar overlap the label in narrow windows and float with a
+    // gap beside it in wide ones.
+    <div className="py-2">
+      <div className="flex items-center justify-between gap-3 mb-1">
+        <div className="text-[13px] font-bold truncate" style={{ color: 'var(--text-hi)' }}>{label}</div>
+        <span className="text-[12px] font-bold tabular-nums shrink-0" style={{ color: 'var(--text-mid)' }}>
           {display}
         </span>
       </div>
-      <span className="hidden" data-progress={pct} />
+      <input
+        type="range"
+        min={min}
+        max={max}
+        step={step}
+        value={value}
+        onChange={(e) => onChange(Number(e.target.value))}
+        className="setting-range w-full cursor-pointer"
+        style={{ '--p': `${pct}%` } as React.CSSProperties}
+        aria-label={label}
+      />
     </div>
   );
 });

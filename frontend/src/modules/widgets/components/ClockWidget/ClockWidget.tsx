@@ -18,7 +18,7 @@ export default function ClockWidget() {
 
   const date = theme.dateFormat === 'long'
     ? now.toLocaleDateString([], { weekday: 'long', year: 'numeric', month: 'long', day: 'numeric' })
-    : now.toLocaleDateString([], { weekday: 'long', month: 'short', day: 'numeric' });
+    : now.toLocaleDateString([], { weekday: 'short', month: 'short', day: 'numeric' });
 
   return (
     <div className="flex flex-col items-center justify-center h-full gap-1">

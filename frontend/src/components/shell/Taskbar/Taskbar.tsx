@@ -33,6 +33,7 @@ import {
   Z_TASKBAR,
   Z_TASKBAR_REVEAL,
 } from '@/lib/osLayout';
+import { TASKBAR_HEIGHTS } from '@/styles/theme';
 import { APP_REGISTRY } from '@/apps/registry';
 import type { AppId } from '@/types';
 import SystemTrayModal from '@/components/shell/SystemTrayModal/SystemTrayModal';
@@ -47,6 +48,8 @@ const OS_ICON_MAP: Record<string, React.ReactNode> = {
 };
 
 // Windows 11-style active indicator: a small rounded underline under the icon.
+// Rendered in-flow (in a reserved row below the glyph) so it can never
+// overlap the icon at any button size.
 const WindowsIndicator: React.FC<{ isOpen: boolean; isActive: boolean; isMinimized: boolean }> = ({
   isOpen,
   isActive,
@@ -55,7 +58,7 @@ const WindowsIndicator: React.FC<{ isOpen: boolean; isActive: boolean; isMinimiz
   if (!isOpen) return null;
   return (
     <span
-      className={`absolute bottom-0.5 left-1/2 -translate-x-1/2 h-1 rounded-full transition-all duration-200 ${
+      className={`h-1 rounded-full transition-all duration-200 ${
         isActive
           ? 'w-5 bg-(--accent)'
           : isMinimized
@@ -66,7 +69,7 @@ const WindowsIndicator: React.FC<{ isOpen: boolean; isActive: boolean; isMinimiz
   );
 };
 
-// macOS-style indicator: a small status dot under the icon.
+// macOS-style indicator: a small status dot under the icon (same in-flow row).
 const MacIndicator: React.FC<{ isOpen: boolean; isActive: boolean; isMinimized: boolean }> = ({
   isOpen,
   isActive,
@@ -75,7 +78,7 @@ const MacIndicator: React.FC<{ isOpen: boolean; isActive: boolean; isMinimized: 
   if (!isOpen) return null;
   return (
     <div
-      className={`w-1.5 h-1.5 rounded-full absolute bottom-1.5 left-1/2 -translate-x-1/2 transition-all ${
+      className={`w-1.5 h-1.5 rounded-full transition-all ${
         isActive
           ? 'bg-(--accent) scale-125'
           : isMinimized
@@ -172,7 +175,7 @@ const Taskbar = memo(function Taskbar() {
       };
       setCurrentTime(now.toLocaleTimeString(undefined, timeOptions));
       setCurrentDate(now.toLocaleDateString(undefined, dateOptions));
-      setCurrentWeekday(now.toLocaleDateString(undefined, { weekday: 'long' }));
+      setCurrentWeekday(now.toLocaleDateString(undefined, { weekday: theme.dateFormat === 'long' ? 'long' : 'short' }));
     };
 
     updateDateTime();
@@ -210,8 +213,8 @@ const Taskbar = memo(function Taskbar() {
 
   // Auto-hide, ibiz_v2 parity: the bar hides fully; a bottom hover zone +
   // chevron affordance reveals it. Stays put while menu/tray are open. A
-  // maximized tab pins the bar visible (the frame runs behind it). A tab
-  // doubled by the green dot is an ordinary floating window, so the bar
+  // maximized tab pins the bar visible. A tab
+  // zoomed by the green dot is an ordinary floating window, so the bar
   // behaves normally and never has to hide or float above it.
   const hasMaximizedWindow = windows.some((w) => w.maximized && !w.minimized);
   const autoHide = theme.taskbarMode === 'auto-hide' && !hasMaximizedWindow;
@@ -252,9 +255,23 @@ const [isTrayOpen, setIsTrayOpen] = useState(false);
   };
 
   const Indicator = windowsStyle ? WindowsIndicator : MacIndicator;
-  const appBtnBase = windowsStyle
-    ? 'h-9 w-9 flex items-center justify-center rounded-lg relative group transition-all cursor-pointer'
-    : 'h-10 w-10 flex items-center justify-center rounded-lg relative group transition-all cursor-pointer';
+  // App-button + glyph size preset (large = the original look). Glyphs ride
+  // on the pre-rendered OS_ICON_MAP svgs, so they scale via a child selector
+  // (higher specificity than the svg's own w-5 h-5 classes). The bar itself
+  // breathes with the preset (TASKBAR_HEIGHTS) — keep these in sync.
+  const taskbarIconSize = theme.taskbarIconSize ?? 'medium';
+  const barH = windowsStyle
+    ? taskbarIconSize === 'small' ? 'h-10' : taskbarIconSize === 'large' ? 'h-14' : 'h-12'
+    : taskbarIconSize === 'small' ? 'h-14' : taskbarIconSize === 'large' ? 'h-18' : 'h-16';
+  const barPx = TASKBAR_HEIGHTS[theme.taskbarStyle]?.[taskbarIconSize] ?? TASKBAR_H;
+  const appBtnBox = windowsStyle
+    ? taskbarIconSize === 'small' ? 'h-7 w-7' : taskbarIconSize === 'large' ? 'h-9 w-9' : 'h-8 w-8'
+    : taskbarIconSize === 'small' ? 'h-7 w-7' : taskbarIconSize === 'large' ? 'h-10 w-10' : 'h-8 w-8';
+  const appGlyphSize =
+    taskbarIconSize === 'small' ? '[&>svg]:w-3.5 [&>svg]:h-3.5'
+    : taskbarIconSize === 'large' ? ''
+    : '[&>svg]:w-4 [&>svg]:h-4';
+  const appBtnBase = `${appBtnBox} flex flex-col items-center justify-center gap-[3px] rounded-lg relative group transition-all cursor-pointer ${appGlyphSize}`;
   const tooltipPos = windowsStyle ? 'bottom-12' : 'bottom-14';
 
   const barLayer = Z_TASKBAR;
@@ -290,13 +307,13 @@ const [isTrayOpen, setIsTrayOpen] = useState(false);
           onMouseLeave={hideBar}
           className={`relative flex items-center select-none ${
             windowsStyle
-              ? 'w-full h-12 bg-(--surface-50) backdrop-blur-xl border-t border-(--border-40) px-2 shadow-lg'
-              : 'w-fit h-16 bg-(--surface-40) backdrop-blur-2xl border border-(--border-40) radius-glass px-4 shadow-2xl pointer-events-auto'
+              ? `w-full ${barH} bg-(--surface-50) backdrop-blur-xl border-t border-(--border-40) px-2 shadow-lg`
+              : `w-fit ${barH} bg-(--surface-40) backdrop-blur-2xl border border-(--border-40) radius-glass px-2 shadow-2xl pointer-events-auto`
           }`}
           style={{
             // Windows bar is edge-anchored (ibiz-v2 fixed-wrapper parity);
             // the legacy .taskbar class is intentionally not used here.
-            ...(windowsStyle ? { position: 'absolute', bottom: 0, left: 0, right: 0, height: `${TASKBAR_H}px` } : {}),
+            ...(windowsStyle ? { position: 'absolute', bottom: 0, left: 0, right: 0, height: `${barPx}px` } : {}),
             zIndex: barLayer,
             transform: hidden
               ? windowsStyle
@@ -359,9 +376,16 @@ const [isTrayOpen, setIsTrayOpen] = useState(false);
                     }`}
                     title={isOpen && isMinimized ? `Restore ${app.name}` : app.name}
                   >
-                    {OS_ICON_MAP[app.id] ?? <LayoutGrid className="w-5 h-5" />}
+                    <span className="leading-none inline-flex">
+                      {OS_ICON_MAP[app.id] ?? <LayoutGrid className="w-5 h-5" />}
+                    </span>
 
-                    <Indicator isOpen={isOpen} isActive={isActive} isMinimized={isMinimized} />
+                    {/* Reserved dot row: fixes the indicator's slot so it
+                        never overlaps the glyph and opening an app never
+                        shifts the icon. */}
+                    <span className="flex h-2 items-center justify-center">
+                      <Indicator isOpen={isOpen} isActive={isActive} isMinimized={isMinimized} />
+                    </span>
 
                     {/* Tooltip */}
                     <span

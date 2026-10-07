@@ -1,9 +1,9 @@
 import { AppWindow, ChevronDown, ChevronUp, LayoutGrid, Monitor, Plus, Rocket, Trash2 } from 'lucide-react';
-import type { ThemeState } from '@/styles/theme';
+import type { IconSize, ThemeState } from '@/styles/theme';
 import { APP_REGISTRY } from '@/apps/registry';
 import SectionCard from '@/components/ui/SectionCard/SectionCard';
-import { SegmentedControl, SettingRow, Toggle } from '@/modules/settings/components/primitives';
-import { TASKBAR_MODE_OPTIONS, TASKBAR_STYLE_OPTIONS } from '@/modules/settings/lib/options';
+import { SegmentedControl, SettingRow, SubLabel, Toggle } from '@/modules/settings/components/primitives';
+import { ICON_SIZE_OPTIONS, TASKBAR_MODE_OPTIONS, TASKBAR_STYLE_OPTIONS } from '@/modules/settings/lib/options';
 import type { SetTheme } from '@/modules/settings/lib/types';
 
 export default function TaskbarTab({ theme, setTheme }: { theme: ThemeState; setTheme: SetTheme }) {
@@ -51,6 +51,15 @@ export default function TaskbarTab({ theme, setTheme }: { theme: ThemeState; set
         </SettingRow>
       </SectionCard>
 
+      <SectionCard title="App icon size" icon={<LayoutGrid size={13} />}>
+        <SubLabel>Pinned and running app buttons</SubLabel>
+        <SegmentedControl<IconSize>
+          value={theme.taskbarIconSize}
+          options={ICON_SIZE_OPTIONS}
+          onChange={(v) => setTheme({ taskbarIconSize: v })}
+        />
+      </SectionCard>
+
       <SectionCard title="Pinned apps (left section)" icon={<LayoutGrid size={13} />}>
         {pinned.length === 0 ? (
           <p className="text-[12px]" style={{ color: 'var(--text-low)' }}>Nothing pinned.</p>
@@ -61,7 +70,7 @@ export default function TaskbarTab({ theme, setTheme }: { theme: ThemeState; set
               return (
                 <div
                   key={id}
-                  className="col-span-12 @md:col-span-6 flex items-center gap-2 p-2 rounded-[var(--radius-sm)] border"
+                  className="col-span-12 @2xl:col-span-6 flex items-center gap-2 p-2 rounded-[var(--radius-sm)] border"
                   style={{ background: 'var(--accent-soft)', borderColor: 'var(--border)' }}
                 >
                   <span className="leading-none shrink-0 inline-flex" style={{ color: app?.color }}>
@@ -108,7 +117,7 @@ export default function TaskbarTab({ theme, setTheme }: { theme: ThemeState; set
                 <button
                   key={a.id}
                   onClick={() => add(a.id)}
-                  className="col-span-12 @md:col-span-6 flex items-center gap-2 p-2 rounded-[var(--radius-sm)] border transition-all cursor-pointer text-left"
+                  className="col-span-12 @2xl:col-span-6 flex items-center gap-2 p-2 rounded-[var(--radius-sm)] border transition-all cursor-pointer text-left"
                   style={{ background: 'var(--accent-soft)', borderColor: 'var(--border)' }}
                 >
                   <span className="leading-none shrink-0 inline-flex" style={{ color: a.color }}>
@@ -131,7 +140,7 @@ export default function TaskbarTab({ theme, setTheme }: { theme: ThemeState; set
         </p>
         <div className="grid grid-cols-12 gap-x-4">
           {APP_REGISTRY.filter((app) => !app.system).map((app) => (
-            <div key={app.id} className="col-span-12 @md:col-span-6">
+            <div key={app.id} className="col-span-12 @2xl:col-span-6">
             <SettingRow label={app.name}>
               <Toggle
                 enabled={theme.startupWindows.includes(app.id)}

@@ -25,11 +25,13 @@ export default function WindowFrame({ win, children }: Props) {
   const canEdit = isAdmin && !!section;
   const frameRef = useRef<HTMLDivElement>(null);
 
-  // Maximized windows fill the workspace down to the bottom of the viewport
-  // (the taskbar floats above the frame, so tabs run behind it).
+  // Maximized windows fill the workspace but stop above the taskbar —
+  // no tab may slide behind the bar on its own (only an explicit user drag
+  // can still push one there afterwards).
   const bounds = getWindowBounds(theme);
+  const spawn = getWindowSpawnBounds(theme);
   const rect = win.maximized
-    ? { x: 0, y: bounds.top, w: bounds.width, h: bounds.height }
+    ? { x: 0, y: spawn.top, w: spawn.width, h: spawn.height }
     : { x: win.x, y: win.y + bounds.top, w: win.w, h: win.h };
 
   // Drag/resize writes the frame geometry straight to the DOM on an
@@ -157,7 +159,7 @@ export default function WindowFrame({ win, children }: Props) {
     });
   }, [section, win.id, win.x, win.y, win.w, win.h, win.maximized, theme, toggleMaximize, updateWindowRect, launchApp]);
 
-  // Every window — maximized, doubled by the green dot, or plain — renders as a
+  // Every window — maximized, zoomed by the green dot, or plain — renders as a
   // normal tab inside .desktop-area: only the rect changes. The top bar and the
   // floating taskbar stay visible, so no bar has to hide or float above a
   // window that covers it.
@@ -215,7 +217,18 @@ export default function WindowFrame({ win, children }: Props) {
             className="tl-btn tl-max"
             aria-label={win.isFullScreen ? 'Exit full screen' : 'Full screen'}
             title={win.isFullScreen ? 'Exit full screen' : 'Full screen'}
-            onClick={(e) => { e.stopPropagation(); toggleFullScreen(win.id); }}
+            onClick={(e) => {
+              e.stopPropagation();
+              // Measure the body's visible vs. scroll size so the zoom hugs
+              // the content (each axis capped at 1.5x; taller content scrolls).
+              const body = e.currentTarget.closest('.window-frame')?.querySelector('.window-body');
+              toggleFullScreen(
+                win.id,
+                body
+                  ? { bodyW: body.clientWidth, bodyH: body.clientHeight, scrollW: body.scrollWidth, scrollH: body.scrollHeight }
+                  : undefined,
+              );
+            }}
             onPointerDown={(e) => e.stopPropagation()}
           />
           <button className="tl-btn tl-close" aria-label="Close" onClick={(e) => { e.stopPropagation(); closeWindow(win.id); }} onPointerDown={(e) => e.stopPropagation()} />
