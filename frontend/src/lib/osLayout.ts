@@ -6,7 +6,9 @@ import type { ThemeState } from '@/styles/theme';
 // [top, viewport - bottom] so nothing is ever cut off at a screen edge.
 
 export const TOPBAR_H = 40;
-export const TASKBAR_H = 56;
+/** Pre-paint fallback only — `taskbarBottomInset` measures the real bar. Must
+ *  match the rendered heights in `Taskbar`: `h-12` for the Windows bar. */
+export const TASKBAR_H = 48;
 export const TASKBAR_AUTOHIDE_H = 14;
 /** Breathing room between a maximized window and the bar — ibiz_v2 BOTTOM_GAP. */
 export const BOTTOM_GAP = 16;
@@ -16,14 +18,25 @@ export const MACOS_DOCK_PAD = 12;
 export const MACOS_DOCK_FALLBACK_H = 52;
 
 // ─── OS z-layers (single source of truth) ───────────────────────────────────
-// Tabs live in [41, 78]; the taskbar floats at 80 (fullscreen above that).
-// Widgets sit behind tabs at 30 by default; the last-clicked widget jumps to
-// 79 — the single slot above every tab — so clicking a widget surfaces it over
-// the stack, and any later window focus drops it back behind the tabs.
+// Tabs live in [41, 78] and the taskbar floats at 80, so no window state can
+// push a tab over the bar — maximized tabs run behind it on purpose. Widgets
+// sit behind tabs at 30 by default; the last-clicked widget jumps to 79 — the
+// single slot above every tab — so clicking a widget surfaces it over the
+// stack, and any later window focus drops it back behind the tabs.
 export const Z_WINDOW_BASE = 41;
 export const Z_WINDOW_TOP = 78;
 export const Z_WIDGET_BASE = 30;
 export const Z_WIDGET_ACTIVE = 79;
+/** Desktop home indicator — under the bar, over the wallpaper. */
+export const Z_HOME_INDICATOR = 60;
+/** Taskbar, start menu and tray panel — above every window and widget. */
+export const Z_TASKBAR = 80;
+/** Taskbar reveal affordance while the bar is hidden. */
+export const Z_TASKBAR_REVEAL = 85;
+/** Above the bar: toasts and dropdown menus. */
+export const Z_ABOVE_TASKBAR = 90;
+/** Above everything: spotlight, modals, lightboxes, floating bar. */
+export const Z_OVERLAY_TOP = 100;
 
 export interface WorkspaceInsets {
   top: number;
@@ -151,6 +164,55 @@ export function getDockRects(
     right: { x: Math.max(gap, b.width - gap - w), y: gap, w, h },
     w,
     h,
+  };
+}
+
+/** Centered tolerance (px): a window whose two margins on an axis are this
+ *  close was *placed* centred, not nudged by hand. */
+const CENTERED_TOLERANCE = 2;
+
+/** One axis of {@link followWindowBoundsChange}.
+ *
+ *  Centred placement re-centres (the whole point of the helper); anything else
+ *  keeps its absolute offset and is left to the caller's clamp. Deliberately
+ *  *not* margin-to-nearest-edge: that rule picks a different edge as the
+ *  viewport changes, so a hand-placed window drifts sideways between resize
+ *  steps instead of holding still.
+ *
+ *  `fit*` is the range the window has to live in; `center*` is the band it is
+ *  visually centred in (above the taskbar) — different, because a window is
+ *  spawned centred in the free area while it may legally extend behind the bar. */
+function anchorAxis(pos: number, size: number, oldFit: number, oldCenter: number, nextCenter: number): number {
+  const centered = Math.abs(pos - (oldCenter - (pos + size))) <= CENTERED_TOLERANCE;
+  // The placement never fitted the old workspace (it was clamped/shrunk there),
+  // so its margins carry no intent — centre it rather than revive a stale gap.
+  const squeezed = pos < 0 || oldFit - (pos + size) < 0;
+  return centered || squeezed ? Math.round((nextCenter - size) / 2) : pos;
+}
+
+/** Workspace sizes for {@link followWindowBoundsChange}. Windows are positioned
+ *  in `0..width` / `0..height` ranges (unlike widgets, which offset by
+ *  `bounds.top`); `centerHeight` is the free height above the taskbar. */
+export interface WindowAnchorSpan {
+  width: number;
+  height: number;
+  centerHeight: number;
+}
+
+/**
+ * Re-anchor a *window* rect when the workspace resizes.
+ *
+ * Position follows the window: centred placement stays centred at any
+ * width/height, anything else keeps its absolute offset (the caller clamps what
+ * falls off-screen). Size is deliberately left alone — callers shrink only when
+ * it no longer fits (`fitRectInBounds`).
+ */
+export function followWindowBoundsChange(rect: Rect, old: WindowAnchorSpan, next: WindowAnchorSpan): Rect {
+  return {
+    x: anchorAxis(rect.x, rect.w, old.width, old.width, next.width),
+    y: anchorAxis(rect.y, rect.h, old.height, old.centerHeight, next.centerHeight),
+    w: rect.w,
+    h: rect.h,
   };
 }
 

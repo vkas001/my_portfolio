@@ -3,6 +3,7 @@ import { useContactForm } from '@/modules/contact';
 import Input from '@/components/ui/Input/Input';
 import TextArea from '@/components/ui/TextArea/TextArea';
 import { X, Send, LoaderCircle, Check } from 'lucide-react';
+import { Z_ABOVE_TASKBAR } from '@/lib/osLayout';
 
 interface Props {
   open?: boolean;
@@ -18,7 +19,10 @@ export default function ContactModal({ open, onClose }: Props) {
   if (!isOpen) return null;
 
   return (
-    <div className="fixed inset-0 z-[90] flex items-center justify-center p-4 fade-in" style={{ background: 'rgba(0,0,0,.45)' }}>
+    <div
+      className="fixed inset-0 flex items-center justify-center p-4 fade-in"
+      style={{ background: 'rgba(0,0,0,.45)', zIndex: Z_ABOVE_TASKBAR }}
+    >
       <div className="menu-surface !relative w-[440px] max-w-full p-5">
         <div className="flex items-center justify-between mb-4">
           <h2 className="text-sm font-semibold">Get in touch</h2>
@@ -44,7 +48,7 @@ export default function ContactModal({ open, onClose }: Props) {
             <Input required placeholder="Subject" value={form.subject} onChange={(e) => setField('subject')(e.target.value)} />
             <TextArea required rows={5} placeholder="Message…" value={form.message} onChange={(e) => setField('message')(e.target.value)} textareaClassName="resize-none" />
             {status === 'error' && (
-              <p className="text-xs" style={{ color: '#f87171' }}>{error}</p>
+              <p className="text-xs" style={{ color: 'var(--error)' }}>{error}</p>
             )}
             <button type="submit" disabled={status === 'sending'} className="btn-accent text-xs justify-center disabled:opacity-60">
               {status === 'sending' ? <LoaderCircle size={13} className="animate-spin" /> : <Send size={13} />}

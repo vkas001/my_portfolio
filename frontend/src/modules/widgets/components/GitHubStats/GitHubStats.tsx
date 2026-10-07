@@ -4,7 +4,7 @@ import { fallbackStats } from '@/modules/widgets/lib/seeds';
 import type { GitHubStats } from '@shared/types';
 import { Star, GitFork, Users, BookOpen } from 'lucide-react';
 
-export default function GitHubStatsWidget() {
+export default function GitHubStats() {
   const [stats, setStats] = useState<GitHubStats | null>(null);
 
   useEffect(() => {

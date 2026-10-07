@@ -22,7 +22,7 @@ export default function WindowFrame({ win, children }: Props) {
   const focused = focusedId === win.id;
   // Content windows (those with an editor section) get an admin ＋ edit affordance.
   const section = EDITABLE_APPS.find((e) => e.appId === win.appId)?.section;
-  const canEdit = isAdmin && !!section && !win.isFullScreen;
+  const canEdit = isAdmin && !!section;
   const frameRef = useRef<HTMLDivElement>(null);
 
   // Maximized windows fill the workspace down to the bottom of the viewport
@@ -39,7 +39,6 @@ export default function WindowFrame({ win, children }: Props) {
   const startDrag = useCallback(
     (mode: 'move' | 'resize') => (e: React.PointerEvent) => {
       if (e.button !== 0) return;
-      if (win.isFullScreen) return;
       if (win.maximized && mode === 'move') return;
       focusWindow(win.id);
       const el = frameRef.current;
@@ -156,30 +155,20 @@ export default function WindowFrame({ win, children }: Props) {
         dock: { contentId: win.id, rect: { x: win.x, y: win.y, w: win.w, h: win.h } },
       },
     });
-  }, [section, win.id, win.x, win.w, win.maximized, theme, toggleMaximize, updateWindowRect, launchApp]);
+  }, [section, win.id, win.x, win.y, win.w, win.h, win.maximized, theme, toggleMaximize, updateWindowRect, launchApp]);
 
-  // Full screen (green traffic light): covers the entire viewport, above the
-  // top bar and taskbar (which auto-hides), with flat edges and no shadow.
-  const style: React.CSSProperties = win.isFullScreen
-    ? {
-        position: 'fixed',
-        top: 0,
-        left: 0,
-        width: '100vw',
-        height: '100vh',
-        zIndex: 90,
-        borderRadius: 0,
-        boxShadow: 'none',
-        display: win.minimized ? 'none' : undefined,
-      }
-    : {
-        left: rect.x,
-        top: rect.y,
-        width: rect.w,
-        height: rect.h,
-        zIndex: win.z,
-        display: win.minimized ? 'none' : undefined,
-      };
+  // Every window — maximized, doubled by the green dot, or plain — renders as a
+  // normal tab inside .desktop-area: only the rect changes. The top bar and the
+  // floating taskbar stay visible, so no bar has to hide or float above a
+  // window that covers it.
+  const style: React.CSSProperties = {
+    left: rect.x,
+    top: rect.y,
+    width: rect.w,
+    height: rect.h,
+    zIndex: win.z,
+    display: win.minimized ? 'none' : undefined,
+  };
 
   return (
     <div
@@ -235,7 +224,7 @@ export default function WindowFrame({ win, children }: Props) {
 
       <div className="window-body">{children}</div>
 
-      {app?.resizable !== false && !win.maximized && !win.isFullScreen && (
+      {app?.resizable !== false && !win.maximized && (
         <>
           {/* corner + edge resize handles. The frame has a large border-radius,
               which clips its own corners — the corner grab must be big enough

@@ -114,6 +114,10 @@ export const APP_REGISTRY: AppDef[] = [
     component: Editor,
     defaultSize: { w: 620, h: 640 },
     minSize: { w: 480, h: 520 },
+    // A full-height form surface: opening it as a small tab leaves most of the
+    // workspace empty. Cover the workspace instead (the dock flow passes an
+    // explicit half-screen rect and is unaffected).
+    openMaximized: true,
     singleInstance: false,
     system: true,
     description: 'Manage portfolio content live',

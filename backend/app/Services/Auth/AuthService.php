@@ -14,6 +14,13 @@ use Illuminate\Support\Facades\Hash;
 class AuthService
 {
     /**
+     * Bearer-token lifetime. Without an expiry a leaked token stays valid
+     * forever; the frontend keeps the token in localStorage, so a bounded
+     * lifetime is the only thing that limits the damage.
+     */
+    public const TOKEN_TTL_DAYS = 7;
+
+    /**
      * Validate credentials, returning `{ token, user }` on success or null.
      * Constant-time failure: same result whether the email or the password
      * is wrong so accounts can't be enumerated.
@@ -40,7 +47,7 @@ class AuthService
             'user_id' => $user->id,
             'token_hash' => hash('sha256', $raw),
             'last_used_at' => now(),
-            'expires_at' => null,
+            'expires_at' => now()->addDays(self::TOKEN_TTL_DAYS),
         ]);
 
         return $raw;

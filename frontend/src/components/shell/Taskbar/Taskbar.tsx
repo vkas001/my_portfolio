@@ -27,6 +27,12 @@ import { useWindows } from '@/context/WindowsContext';
 import { useShellUI } from '@/context/ShellUIContext';
 import { http } from '@/lib/api/httpClient';
 import { subscribeForcedOffline } from '@/lib/network';
+import {
+  TASKBAR_H,
+  Z_OVERLAY_TOP,
+  Z_TASKBAR,
+  Z_TASKBAR_REVEAL,
+} from '@/lib/osLayout';
 import { APP_REGISTRY } from '@/apps/registry';
 import type { AppId } from '@/types';
 import SystemTrayModal from '@/components/shell/SystemTrayModal/SystemTrayModal';
@@ -95,7 +101,10 @@ const ConnectionDot: React.FC<{ online: boolean }> = ({ online }) => {
         <ZapOff size={14} className="text-red-500" />
       )}
       {showTooltip && (
-        <div className="absolute bottom-full left-1/2 -translate-x-1/2 mb-2 px-2 py-1 bg-(--surface-80) border border-(--border-60) rounded-lg text-[11px] text-(--text-primary) whitespace-nowrap shadow-lg z-[100]">
+        <div
+          className="absolute bottom-full left-1/2 -translate-x-1/2 mb-2 px-2 py-1 bg-(--surface-80) border border-(--border-60) rounded-lg text-[11px] text-(--text-primary) whitespace-nowrap shadow-lg"
+          style={{ zIndex: Z_OVERLAY_TOP }}
+        >
           {online ? 'Online' : 'Offline'}
         </div>
       )}
@@ -201,11 +210,11 @@ const Taskbar = memo(function Taskbar() {
 
   // Auto-hide, ibiz_v2 parity: the bar hides fully; a bottom hover zone +
   // chevron affordance reveals it. Stays put while menu/tray are open. A
-  // maximized tab pins the bar visible (the frame runs behind it); a full
-  // screen tab forces auto-hide and hides the bar as soon as fullscreen opens.
-  const hasFullScreenWindow = windows.some((w) => w.isFullScreen && !w.minimized);
+  // maximized tab pins the bar visible (the frame runs behind it). A tab
+  // doubled by the green dot is an ordinary floating window, so the bar
+  // behaves normally and never has to hide or float above it.
   const hasMaximizedWindow = windows.some((w) => w.maximized && !w.minimized);
-  const autoHide = hasFullScreenWindow || (theme.taskbarMode === 'auto-hide' && !hasMaximizedWindow);
+  const autoHide = theme.taskbarMode === 'auto-hide' && !hasMaximizedWindow;
   const hidden = autoHide && !taskbarVisible;
   const reveal = () => setTaskbarVisible(true);
   const hideBar = () => {
@@ -214,12 +223,6 @@ const Taskbar = memo(function Taskbar() {
 
 const [isTrayOpen, setIsTrayOpen] = useState(false);
   const trayRef = useRef<HTMLDivElement>(null);
-
-  // Hide the bar as soon as a tab goes fullscreen: the frame covers the
-  // whole viewport, so a lingering bar would float mid-screen over it.
-  useEffect(() => {
-    if (hasFullScreenWindow) setTaskbarVisible(false);
-  }, [hasFullScreenWindow, setTaskbarVisible]);
 
   useEffect(() => {
     if (!isTrayOpen) return;
@@ -254,13 +257,8 @@ const [isTrayOpen, setIsTrayOpen] = useState(false);
     : 'h-10 w-10 flex items-center justify-center rounded-lg relative group transition-all cursor-pointer';
   const tooltipPos = windowsStyle ? 'bottom-12' : 'bottom-14';
 
-  // While a full screen tab is open the revealed bar must float above it
-  // (z-90), otherwise reveal would slide it invisibly underneath. Otherwise
-  // the bar keeps its normal layer below fullscreen content.
-  const floatAbove = hasFullScreenWindow && !hidden;
-  const barLayer = floatAbove ? 'z-[100]' : 'z-[80]';
-  // The reveal arrow must sit above the fullscreen tab to stay clickable.
-  const revealLayer = hasFullScreenWindow ? 'z-[95]' : 'z-[85]';
+  const barLayer = Z_TASKBAR;
+  const revealLayer = Z_TASKBAR_REVEAL;
 
   return (
     <>
@@ -272,12 +270,12 @@ const [isTrayOpen, setIsTrayOpen] = useState(false);
             title="Show taskbar (Ctrl+T)"
             onClick={reveal}
             onMouseEnter={reveal}
-            className={`fixed bottom-0 left-1/2 -translate-x-1/2 ${revealLayer} flex items-center justify-center px-3 py-0.5 rounded-t-lg cursor-pointer`}
-            style={{ background: 'var(--bg-elev)', border: '1px solid var(--border)', borderBottom: 'none', color: 'var(--wp-fg-mid)' }}
+            className={`fixed bottom-0 left-1/2 -translate-x-1/2 flex items-center justify-center px-3 py-0.5 rounded-t-lg cursor-pointer`}
+            style={{ background: 'var(--bg-elev)', border: '1px solid var(--border)', borderBottom: 'none', color: 'var(--wp-fg-mid)', zIndex: revealLayer }}
           >
             <ChevronUp size={14} />
           </button>
-          <div onMouseEnter={reveal} className={`fixed bottom-0 inset-x-0 h-2.5 ${revealLayer}`} />
+          <div onMouseEnter={reveal} className="fixed bottom-0 inset-x-0 h-2.5" style={{ zIndex: revealLayer }} />
         </>
       )}
       <div
@@ -286,6 +284,7 @@ const [isTrayOpen, setIsTrayOpen] = useState(false);
             ? ''
             : `absolute inset-x-0 bottom-0 flex justify-center pointer-events-none ${barLayer} pb-3`
         }
+        style={windowsStyle ? undefined : { zIndex: barLayer }}
       >
         <footer
           data-os-taskbar
@@ -299,7 +298,8 @@ const [isTrayOpen, setIsTrayOpen] = useState(false);
           style={{
             // Windows bar is edge-anchored (ibiz-v2 fixed-wrapper parity);
             // the legacy .taskbar class is intentionally not used here.
-            ...(windowsStyle ? { position: 'absolute', bottom: 0, left: 0, right: 0, height: '48px' } : {}),
+            ...(windowsStyle ? { position: 'absolute', bottom: 0, left: 0, right: 0, height: `${TASKBAR_H}px` } : {}),
+            zIndex: barLayer,
             transform: hidden
               ? windowsStyle
                 ? 'translateY(100%)'
@@ -366,7 +366,10 @@ const [isTrayOpen, setIsTrayOpen] = useState(false);
                     <Indicator isOpen={isOpen} isActive={isActive} isMinimized={isMinimized} />
 
                     {/* Tooltip */}
-                    <span className={`absolute ${tooltipPos} left-1/2 -translate-x-1/2 bg-[#191c1e] text-white text-[12px] font-medium px-3 py-1.5 rounded-lg opacity-0 group-hover:opacity-100 transition-opacity pointer-events-none whitespace-nowrap shadow-xl border border-(--border-20)`}>
+                    <span
+                      className={`absolute ${tooltipPos} left-1/2 -translate-x-1/2 bg-(--surface-80) text-(--text-primary) text-[12px] font-medium px-3 py-1.5 rounded-lg opacity-0 group-hover:opacity-100 transition-opacity pointer-events-none whitespace-nowrap shadow-xl border border-(--border-20)`}
+                      style={{ zIndex: Z_OVERLAY_TOP }}
+                    >
                       {isOpen && isMinimized ? `Restore ${app.name}` : app.name}
                     </span>
                   </button>

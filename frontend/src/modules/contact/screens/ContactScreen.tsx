@@ -3,6 +3,7 @@ import { useContactForm } from '@/modules/contact';
 import { useProfile } from '@/modules/about';
 import Input from '@/components/ui/Input/Input';
 import TextArea from '@/components/ui/TextArea/TextArea';
+import CompactPageHero from '@/components/ui/CompactPageHero/CompactPageHero';
 import { Send, LoaderCircle, Check, Copy, Mail } from 'lucide-react';
 
 export default function ContactScreen() {
@@ -19,25 +20,24 @@ export default function ContactScreen() {
     } catch { /* clipboard unavailable */ }
   };
 
-  return (
+return (
     <div className="max-w-xl space-y-5">
-      <div className="flex items-center gap-3">
-        <span className="w-10 h-10 rounded-xl flex items-center justify-center" style={{ background: 'var(--accent-soft)', color: 'var(--accent)' }}>
-          <Mail size={18} />
-        </span>
-        <div className="min-w-0">
-          <p className="text-sm font-semibold">Let's build something</p>
+      <CompactPageHero
+        icon={<Mail size={18} />}
+        title="Let’s build something"
+        subtitle={profile?.email ?? ''}
+        actions={
           <button
-            className="text-xs flex items-center gap-1 hover:underline min-w-0"
-            style={{ color: 'var(--text-mid)' }}
+            className="btn-ghost text-[11px] !py-1.5 flex items-center gap-1"
             onClick={copyEmail}
             title="Copy email"
+            disabled={!profile}
           >
-            <span className="break-all">{profile?.email ?? '…'}</span> <Copy size={10} />
-            {copied && <span style={{ color: 'var(--accent)' }}>copied!</span>}
+            <Copy size={11} />
+            {copied ? 'Copied' : 'Copy'}
           </button>
-        </div>
-      </div>
+        }
+/>
 
       {status === 'sent' ? (
         <div className="flex flex-col items-center gap-2 py-10">

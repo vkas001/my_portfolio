@@ -1,2 +1,3 @@
+export * from './useAutoGrow';
 export * from './useLocalStorage';
-export * from './useMediaQuery';
+export { useIsMobile } from './useMediaQuery';

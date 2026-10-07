@@ -9,6 +9,7 @@ import Taskbar from '@/components/shell/Taskbar/Taskbar';
 import StartMenu from '@/components/shell/StartMenu/StartMenu';
 import { WidgetsPanel } from '@/modules/widgets';
 import { useIsMobile, useLocalStorage } from '@/lib/hooks';
+import { Z_HOME_INDICATOR } from '@/lib/osLayout';
 import MobileNotice from '@/components/shell/MobileNotice/MobileNotice';
 
 const FORCE_OS_ON_MOBILE_KEY = 'portfolio.forceOsOnMobile';
@@ -78,7 +79,7 @@ export default function Desktop() {
 
       {/* Home indicator (Settings → Taskbar, ported from ibiz_v2) */}
       {theme.showHomeIndicator && (
-        <div className="absolute inset-x-0 bottom-1 flex justify-center pointer-events-none z-[60]">
+        <div className="absolute inset-x-0 bottom-1 flex justify-center pointer-events-none" style={{ zIndex: Z_HOME_INDICATOR }}>
           <div
             className="h-1 rounded-full"
             style={{ width: 134, background: 'var(--text-low)', opacity: 0.65 }}

@@ -161,7 +161,7 @@ export default function ProfileTab({ commitRef, reportSave }: SaveBridge) {
         <div className="col-span-12 rounded-xl p-3 space-y-2.5" style={{ background: 'var(--bg-elev)', border: '1px solid var(--border)' }}>
           <h3 className={labelCls} style={{ color: 'var(--accent)' }}>Opening</h3>
           <Input label="Open-to-work badge" hint="Shown next to your location — leave empty to hide it" value={form.openToWork} onChange={(e) => patch({ openToWork: e.target.value })} />
-          <TextArea label="Description" hint="Who you are, what you build, and what you want to be hired or contacted for — recruiters stop reading here" rows={2} value={form.shortBio} onChange={(e) => patch({ shortBio: e.target.value })} />
+          <TextArea label="Description" hint="Who you are, what you build, and what you want to be hired or contacted for — recruiters stop reading here" rows={2} maxRows={6} autoGrow value={form.shortBio} onChange={(e) => patch({ shortBio: e.target.value })} />
         </div>
         <div className="col-span-12 rounded-xl p-3 space-y-2.5" style={{ background: 'var(--bg-elev)', border: '1px solid var(--border)' }}>
           <h3 className={labelCls} style={{ color: 'var(--accent)' }}>What I'm good at</h3>
@@ -186,6 +186,8 @@ export default function ProfileTab({ commitRef, reportSave }: SaveBridge) {
               onChange={(strengths) => patch({ strengths })}
               placeholder="One strength per line"
               rows={4}
+              maxRows={10}
+              autoGrow
             />
           </Field>
         </div>
@@ -206,10 +208,10 @@ export default function ProfileTab({ commitRef, reportSave }: SaveBridge) {
               </Field>
             </div>
           </div>
-          <TextArea label="Description" hint="Location, interests, what you're exploring now" rows={3} value={form.personalNote} onChange={(e) => patch({ personalNote: e.target.value })} />
+          <TextArea label="Description" hint="Location, interests, what you're exploring now" rows={3} maxRows={8} autoGrow value={form.personalNote} onChange={(e) => patch({ personalNote: e.target.value })} />
         </div>
         <div className="col-span-12">
-          <TextArea label="Bio — the longer story" rows={4} value={form.bio} onChange={(e) => patch({ bio: e.target.value })} />
+          <TextArea label="Bio — the longer story" rows={4} maxRows={10} autoGrow value={form.bio} onChange={(e) => patch({ bio: e.target.value })} />
         </div>
       </div>
 
@@ -227,7 +229,7 @@ export default function ProfileTab({ commitRef, reportSave }: SaveBridge) {
               <SelectInput value={s.icon} options={SOCIAL_ICONS} onChange={(v) => patchSocial(i, { icon: v })} />
             </div>
             <div className="col-span-1 flex justify-end">
-              <button className="icon-btn w-6 h-6" aria-label="Remove link" style={{ color: '#f87171' }} onClick={() => patch({ socials: form.socials.filter((_, idx) => idx !== i) })}>
+              <button className="icon-btn w-6 h-6" aria-label="Remove link" style={{ color: 'var(--error)' }} onClick={() => patch({ socials: form.socials.filter((_, idx) => idx !== i) })}>
                 <X size={11} />
               </button>
             </div>
@@ -242,9 +244,9 @@ export default function ProfileTab({ commitRef, reportSave }: SaveBridge) {
         </button>
       </div>
 
-      {error ? <p className="text-xs" style={{ color: '#f87171' }}>{error}</p> : null}
+      {error ? <p className="text-xs" style={{ color: 'var(--error)' }}>{error}</p> : null}
       {saved ? (
-        <p className="text-xs font-semibold flex items-center gap-1" style={{ color: '#34d399' }}>
+        <p className="text-xs font-semibold flex items-center gap-1" style={{ color: 'var(--success)' }}>
           <Check size={12} /> Saved — every open window updated live
         </p>
       ) : null}

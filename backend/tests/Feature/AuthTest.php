@@ -2,6 +2,9 @@
 
 namespace Tests\Feature;
 
+use App\Models\AuthToken;
+use App\Models\User;
+use App\Services\Auth\AuthService;
 use Database\Seeders\AdminSeeder;
 use Illuminate\Foundation\Testing\RefreshDatabase;
 use Tests\TestCase;
@@ -56,6 +59,39 @@ class AuthTest extends TestCase
         ])->assertUnauthorized()
             ->assertJsonPath('ok', false)
             ->assertJsonPath('error', 'Invalid credentials.');
+    }
+
+    public function test_issued_token_has_a_bounded_lifetime(): void
+    {
+        $this->loginToken();
+
+        $token = AuthToken::query()->latest('id')->firstOrFail();
+
+        $this->assertNotNull($token->expires_at, 'Bearer tokens must expire so a leak cannot be used forever.');
+        $this->assertTrue(
+            $token->expires_at->isFuture(),
+            'Expected expires_at to be in the future, got '.$token->expires_at->toDateTimeString().'.',
+        );
+        $this->assertTrue(
+            $token->expires_at->isBefore(now()->addDays(AuthService::TOKEN_TTL_DAYS + 1)),
+            'Token lifetime must be bounded by AuthService::TOKEN_TTL_DAYS.',
+        );
+    }
+
+    public function test_admin_flag_cannot_be_granted_through_mass_assignment(): void
+    {
+        $user = User::query()->create([
+            'name' => 'Not Admin',
+            'email' => 'not-admin@example.com',
+            'password' => 'password',
+            'is_admin' => true,
+        ]);
+
+        $this->assertFalse((bool) $user->fresh()->is_admin, 'is_admin must not be fillable.');
+
+        // Promotion stays possible, but only explicitly.
+        $user->forceFill(['is_admin' => true])->save();
+        $this->assertTrue((bool) $user->fresh()->is_admin);
     }
 
     public function test_me_returns_user_with_valid_token(): void

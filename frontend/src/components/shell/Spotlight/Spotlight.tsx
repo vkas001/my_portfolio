@@ -5,7 +5,8 @@ import { useWidgets } from '@/context/WidgetsContext';
 import { APP_REGISTRY } from '@/apps/registry';
 import { WIDGET_DEFS } from '@/modules/widgets';
 import type { AppId } from '@/types';
-import { Search } from 'lucide-react';
+import { Puzzle, Search } from 'lucide-react';
+import { Z_OVERLAY_TOP } from '@/lib/osLayout';
 
 interface Result {
   kind: 'app' | 'widget';
@@ -54,7 +55,7 @@ export default function Spotlight() {
       id: w.id,
       name: w.name,
       sub: `Widget — ${w.description}`,
-      icon: '🧩',
+      icon: <Puzzle size={16} />,
       run: () => addWidget(w.id),
     }));
     const all = [...apps, ...widgets];
@@ -89,8 +90,8 @@ export default function Spotlight() {
 
   return (
     <div
-      className="fixed inset-0 z-[100] flex items-start justify-center pt-[18vh] fade-in"
-      style={{ background: 'rgba(0,0,0,.35)' }}
+      className="fixed inset-0 flex items-start justify-center pt-[18vh] fade-in"
+      style={{ background: 'rgba(0,0,0,.35)', zIndex: Z_OVERLAY_TOP }}
       onMouseDown={() => setSpotlightOpen(false)}
     >
       <div

@@ -10,7 +10,10 @@ use Illuminate\Database\Eloquent\Factories\HasFactory;
 use Illuminate\Foundation\Auth\User as Authenticatable;
 use Illuminate\Notifications\Notifiable;
 
-#[Fillable(['name', 'email', 'password', 'is_admin'])]
+// `is_admin` is deliberately NOT fillable: the privilege flag must never be
+// reachable through mass assignment. Promote an account explicitly
+// (`$user->forceFill(['is_admin' => true])`), as AdminSeeder does.
+#[Fillable(['name', 'email', 'password'])]
 #[Hidden(['password', 'remember_token'])]
 class User extends Authenticatable
 {
