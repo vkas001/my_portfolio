@@ -56,8 +56,12 @@ export default function AboutScreen() {
     );
   }
 
+  // No max-width cap: the window is the frame, and the sections below already
+  // scale with container queries (strengths go 1-up → 2-up @md → 3-up @2xl).
+  // Capping the page left the right half of a wide About window empty and
+  // pinned the grid at one column.
   return (
-    <div className="max-w-2xl space-y-5">
+    <div className="space-y-5">
       <AboutIntro profile={profile} />
       <AboutStrengths profile={profile} />
       <AboutPersonalNote profile={profile} />

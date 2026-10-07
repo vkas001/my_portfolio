@@ -21,7 +21,10 @@ export const Input = forwardRef<HTMLInputElement, InputProps>(function Input(
   { label, error, hint, helperText, suffix, className, inputClassName, id, style, ...rest },
   ref,
 ) {
-  const inputId = id ?? useId();
+  // Always call the hook: `id ?? useId()` would skip it whenever an explicit id
+  // is passed and break the hook order across renders.
+  const autoId = useId();
+  const inputId = id ?? autoId;
   const resolvedHint = helperText ?? hint;
 
   return (

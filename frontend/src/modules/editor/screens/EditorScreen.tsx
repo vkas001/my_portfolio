@@ -15,7 +15,7 @@ import type { SaveBridge } from '@/modules/editor/lib/scaffolding';
 
 export default function EditorScreen({ data, windowId }: { data?: WindowData; windowId?: string }) {
   const { theme } = useTheme();
-  const { windows, focusedId, launchApp, focusWindow, updateWindowRect, updateWindowData } = useWindows();
+  const { windows, focusedId, launchApp, focusWindow, toggleMaximize, updateWindowRect, updateWindowData } = useWindows();
   const [section, setSection] = useState<EditorSection>(data?.section ?? 'profile');
   const commitRef = useRef<(() => void) | null>(null);
   const [saveState, setSaveState] = useState({ canSave: false, saving: false });
@@ -62,9 +62,14 @@ export default function EditorScreen({ data, windowId }: { data?: WindowData; wi
     const b = getWindowSpawnBounds(theme);
     const editorMin = APP_REGISTRY.find((a) => a.id === 'editor')?.minSize ?? { w: 420, h: 460 };
     const { left, right } = getDockRects(theme, editorMin);
-    const onLeft = my.x + my.w / 2 < b.width / 2;
+    // A workspace-covering editor (opened on its own) must drop back to a
+    // floating tab before it can take a half — rect writes are ignored while
+    // maximized, same reason the titlebar edit flow un-maximizes first.
+    const wasMaximized = my.maximized;
+    const onLeft = wasMaximized || my.x + my.w / 2 < b.width / 2;
     const editorRect = onLeft ? left : right;
     const contentRect = onLeft ? right : left;
+    if (wasMaximized) toggleMaximize(my.id);
     updateWindowRect(my.id, editorRect);
 
     // Open (or focus + retile) the app on the other half.

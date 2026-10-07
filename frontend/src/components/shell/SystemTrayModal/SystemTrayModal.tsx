@@ -6,6 +6,7 @@ import { Wifi, Plane, Volume2, VolumeX, Monitor, Moon, Sun, AppWindow, Server, R
 import { useTheme } from '@/context/ThemeContext';
 import { useWindows } from '@/context/WindowsContext';
 import { readNetworkInfo, type NetworkInfo } from '@/lib/network';
+import { taskbarBottomInset, Z_OVERLAY_TOP, Z_TASKBAR } from '@/lib/osLayout';
 
 interface SystemTrayModalProps {
   onClose: () => void;
@@ -114,7 +115,12 @@ export const SystemTrayModal: React.FC<SystemTrayModalProps> = ({ onClose }) => 
   return (
     <div
       data-tray
-      className="tray-modal absolute right-2 bottom-[80px] w-80 max-w-[calc(100vw-24px)] bg-(--surface-80) backdrop-blur-3xl border border-(--border-60) radius-glass shadow-2xl p-5 text-(--text-primary) z-[80] animate-in fade-in slide-in-from-bottom-4 select-none"
+      // Anchored to the viewport, not the bar: `taskbarBottomInset` is the
+      // measured distance from the screen bottom to the top of the bar, so the
+      // panel clears the Windows bar, the padded macOS dock and the autohide
+      // bar alike. A literal offset overlaps the dock in macOS style.
+      className="tray-modal fixed right-2 w-80 max-w-[calc(100vw-24px)] bg-(--surface-80) backdrop-blur-3xl border border-(--border-60) radius-glass shadow-2xl p-5 text-(--text-primary) animate-in fade-in slide-in-from-bottom-4 select-none"
+      style={{ bottom: taskbarBottomInset(theme), zIndex: Z_TASKBAR }}
     >
       {/* Quick Toggles */}
       <div className="grid grid-cols-2 gap-2.5 mb-4">
@@ -205,7 +211,7 @@ export const SystemTrayModal: React.FC<SystemTrayModalProps> = ({ onClose }) => 
             {backend === 'up' ? 'Connected' : backend === 'down' ? 'Unreachable' : 'Checking…'}
           </span>
           {showBackendTip && (
-            <span className="absolute bottom-full right-0 mb-2 px-2 py-1 bg-(--surface-80) border border-(--border-60) rounded-lg text-[11px] text-(--text-primary) whitespace-nowrap shadow-lg z-[100]">
+            <span className="absolute bottom-full right-0 mb-2 px-2 py-1 bg-(--surface-80) border border-(--border-60) rounded-lg text-[11px] text-(--text-primary) whitespace-nowrap shadow-lg" style={{ zIndex: Z_OVERLAY_TOP }}>
               {backend === 'up' ? 'Backend connected' : backend === 'down' ? 'Backend disconnected' : 'Probing backend…'}
             </span>
           )}

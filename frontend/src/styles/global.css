@@ -806,7 +806,7 @@ input:focus, textarea:focus, select:focus {
 /* Web view is the public, document-level site (no OS window), so viewport
  * media are fair here — the rail always stays leftmost, phones just get a
  * slightly tighter shell and a narrower expanded rail. */
-@media (max-width: 1350px) {
+@media (max-width: 1100px) {
   .web-edu {
     position: static;
     flex: 1 1 100%;
@@ -827,13 +827,16 @@ input:focus, textarea:focus, select:focus {
 
 @media (max-width: 639px) {
   .web-shell { max-width: 100%; margin: 0; }
-  .web-rail { width: 190px; }
-  .web-rail.collapsed { width: 64px; }
+  /* The rail is the horizontal top strip here (see the 768px block) — it
+   * stretches full width and scrolls sideways, so it has no fixed width. */
+  .web-rail,
+  .web-rail.collapsed { width: auto; }
   .web-content { padding: 0 10px 72px; }
   .web-main { padding: 14px 0 0; gap: 40px; }
   .web-section { padding: 18px 14px; }
   .web-edu .web-section { padding: 18px 14px; }
-  .web-section-wrap { scroll-margin-top: 48px; }
+  /* Topbar (40) + horizontal rail (~53): keep the anchored section below both. */
+  .web-section-wrap { scroll-margin-top: 100px; }
   .web-edu { padding-bottom: 24px; }
 }
 @media (max-width: 380px) {

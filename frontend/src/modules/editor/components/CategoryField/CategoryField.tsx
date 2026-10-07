@@ -3,6 +3,7 @@ import { createPortal } from 'react-dom';
 import { Check, ChevronDown } from 'lucide-react';
 import Input from '@/components/ui/Input/Input';
 import { categoryColor } from '@/modules/skills';
+import { Z_ABOVE_TASKBAR } from '@/lib/osLayout';
 
 /** Combobox for a category field: a normal text input where you can type a
  *  brand-new category, plus a chevron-down button that opens the list of
@@ -112,7 +113,7 @@ export default function CategoryField({
                 border: '1px solid var(--border)',
                 borderRadius: 8,
                 boxShadow: '0 8px 24px rgba(0,0,0,.25)',
-                zIndex: 1100,
+                zIndex: Z_ABOVE_TASKBAR,
               }}
             >
               {options.map((c) => (

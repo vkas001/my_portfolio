@@ -2,6 +2,7 @@ import { useEffect, useState } from 'react';
 import { createPortal } from 'react-dom';
 import { X } from 'lucide-react';
 import type { Profile } from '@shared/types';
+import { Z_OVERLAY_TOP } from '@/lib/osLayout';
 
 /** Circular profile avatar: initial-letter fallback + img overlay when
  *  avatarUrl is set. Sizing and font size come from className.
@@ -65,8 +66,8 @@ export default function UserAvatar({
             role="dialog"
             aria-modal="true"
             aria-label="Avatar preview"
-            className="fixed inset-0 z-[100] flex items-center justify-center p-6"
-            style={{ background: 'rgba(0, 0, 0, 0.75)', backdropFilter: 'blur(4px)' }}
+            className="fixed inset-0 flex items-center justify-center p-6"
+            style={{ background: 'rgba(0, 0, 0, 0.75)', backdropFilter: 'blur(4px)', zIndex: Z_OVERLAY_TOP }}
             onClick={() => setZoomed(false)}
           >
             <img

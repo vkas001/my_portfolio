@@ -3,6 +3,7 @@ import { useContent } from '@/context/ContentContext';
 import SectionEditor from '@/modules/editor/components/SectionEditor/SectionEditor';
 import HobbiesFields from '@/modules/editor/components/HobbiesFields/HobbiesFields';
 import { hobbyIcon, type HobbyIcon } from '@/modules/hobbies';
+import { Heart } from 'lucide-react';
 import { emptyHobby, type SaveBridge } from '@/modules/editor/lib/scaffolding';
 
 export default function HobbiesTab({ commitRef, reportSave }: SaveBridge) {
@@ -14,6 +15,11 @@ export default function HobbiesTab({ commitRef, reportSave }: SaveBridge) {
       scaffold={{
         section: 'hobbies',
         items: hobbies,
+        icon: <Heart size={18} />,
+        rowIcon: (x) => {
+          const Icon = hobbyIcon(x.icon as HobbyIcon);
+          return <Icon size={14} />;
+        },
         titleOf: (x) => x.name,
         subOf: (x) => x.description,
         emptyFor: emptyHobby,

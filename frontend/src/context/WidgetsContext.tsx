@@ -47,7 +47,9 @@ export function WidgetsProvider({ children }: { children: ReactNode }) {
   const variantRectsRef = useRef(new Map<string, Record<string, { x: number; y: number; w: number; h: number }>>());
   const themeRef = useRef(theme);
   themeRef.current = theme;
-  const widgetPlacements = theme.widgets ?? [];
+  // Memoised so the fallback `[]` is a stable reference: an inline default would
+  // change identity on every render and invalidate the context value memo.
+  const widgetPlacements = useMemo(() => theme.widgets ?? [], [theme.widgets]);
 
   const registerWidgets = useCallback((meta: WidgetMeta[]) => {
     setWidgetMetaMap((prev) => {
@@ -62,7 +64,6 @@ export function WidgetsProvider({ children }: { children: ReactNode }) {
       const meta = widgetMetaMap[id];
       if (!meta) {
         if (import.meta.env.DEV) {
-          // eslint-disable-next-line no-console
           console.warn(`[os] addWidget: unknown widget "${id}" (metadata not registered yet)`);
         }
         return;

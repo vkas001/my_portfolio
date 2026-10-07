@@ -1,12 +1,16 @@
 // Minimal WebAudio blip synth for UI sounds (no asset files needed).
-// `configure()` is driven by the theme (soundsEnabled + volume) — the gain of
+// `configure()` is driven by the theme (soundsEnabled + volume) - the gain of
 // every blip scales with the in-OS volume so the tray slider genuinely affects
 // these sounds, and level 0 / sounds-off behaves as mute.
 let ctx: AudioContext | null = null;
 
+/** Safari/older WebKit still only exposes the prefixed constructor. */
+type WebkitAudioWindow = Window & typeof globalThis & { webkitAudioContext?: typeof AudioContext };
+
 function getCtx(): AudioContext | null {
   try {
-    if (!ctx) ctx = new (window.AudioContext || (window as any).webkitAudioContext)();
+    const Ctor = window.AudioContext ?? (window as WebkitAudioWindow).webkitAudioContext;
+    if (!ctx && Ctor) ctx = new Ctor();
     return ctx;
   } catch {
     return null;

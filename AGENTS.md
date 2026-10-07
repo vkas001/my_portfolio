@@ -54,10 +54,11 @@ Rules:
 
 - Frontend: `cd frontend` then `npm run dev` (port 3000), `npm run build`
   (`tsc --noEmit` + `vite build`), `npm run typecheck`, `npm run lint`
-- Backend: `cd backend` then `php artisan serve --port=4000`, `php artisan test`,
+- Backend: `cd backend` then `php artisan serve --port=8000`, `php artisan test`,
   `vendor\bin\pint.bat <file>` (Windows) to format changed PHP files
-- Root: `npm run dev` (concurrently: frontend + backend), `npm run build`
-  (frontend only)
+- Root: `npm run dev` (concurrently: frontend + backend; `dev:backend` is the
+  Laravel server), `npm run build` (frontend only), `npm run typecheck`
+  (all workspaces), `npm run lint` (frontend — the only workspace with ESLint)
 
 ## API envelope
 

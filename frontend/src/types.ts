@@ -28,6 +28,12 @@ export interface AppDef {
   component: LazyExoticComponent<ComponentType> | ComponentType;
   defaultSize: { w: number; h: number };
   minSize?: { w: number; h: number };
+  /** Open covering the whole workspace instead of `defaultSize` (the editor:
+   *  a full-width form surface, so a small floating tab leaves the screen
+   *  half empty). Ignored when a caller passes an explicit `rect` — the
+   *  dock/tile flow still gets its explicit halves. Un-maximizing (double
+   *  click / titlebar button) restores `defaultSize`. */
+  openMaximized?: boolean;
   singleInstance?: boolean;
   resizable?: boolean;
   description?: string;
@@ -44,7 +50,7 @@ export interface WindowState {
   z: number;
   minimized: boolean;
   maximized: boolean;
-  isFullScreen: boolean;        // full screen: covers viewport, hides taskbar
+  isFullScreen: boolean;        // green dot: doubled size (a normal tab, 2x its rect)
   prevRect?: { x: number; y: number; w: number; h: number };
   /** Pre-clamp geometry remembered while the viewport was too small; restored
    *  when it grows back. Cleared on any user move/resize. */
