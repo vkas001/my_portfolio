@@ -161,7 +161,7 @@ export default function ProfileTab({ commitRef, reportSave }: SaveBridge) {
         <div className="col-span-12 rounded-xl p-3 space-y-2.5" style={{ background: 'var(--bg-elev)', border: '1px solid var(--border)' }}>
           <h3 className={labelCls} style={{ color: 'var(--accent)' }}>Opening</h3>
           <Input label="Open-to-work badge" hint="Shown next to your location — leave empty to hide it" value={form.openToWork} onChange={(e) => patch({ openToWork: e.target.value })} />
-          <TextArea label="Description" hint="Who you are, what you build, and what you want to be hired or contacted for — recruiters stop reading here" rows={2} maxRows={6} autoGrow value={form.shortBio} onChange={(e) => patch({ shortBio: e.target.value })} />
+          <TextArea label="Description" hint="Who you are, what you build, and what you want to be hired or contacted for — recruiters stop reading here" rows={4} maxRows={8} autoGrow value={form.shortBio} onChange={(e) => patch({ shortBio: e.target.value })} />
         </div>
         <div className="col-span-12 rounded-xl p-3 space-y-2.5" style={{ background: 'var(--bg-elev)', border: '1px solid var(--border)' }}>
           <h3 className={labelCls} style={{ color: 'var(--accent)' }}>What I'm good at</h3>

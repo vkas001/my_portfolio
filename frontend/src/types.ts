@@ -50,7 +50,7 @@ export interface WindowState {
   z: number;
   minimized: boolean;
   maximized: boolean;
-  isFullScreen: boolean;        // green dot: doubled size (a normal tab, 2x its rect)
+  isFullScreen: boolean;        // green dot: zoomed size (a normal tab, 1.5x its rect)
   prevRect?: { x: number; y: number; w: number; h: number };
   /** Pre-clamp geometry remembered while the viewport was too small; restored
    *  when it grows back. Cleared on any user move/resize. */

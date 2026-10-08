@@ -15,6 +15,8 @@ export type BlurLevel = 'normal' | 'high' | 'ultra';
 export type RadiusLevel = 'sharp' | 'rounded' | 'pill';
 export type Density = 'compact' | 'normal' | 'comfortable';
 export type GridSize = 16 | 24 | 32;
+export type WindowSize = 'small' | 'medium' | 'large';
+export type IconSize = 'small' | 'medium' | 'large';
 export type FontName =
   | 'Inter' | 'Manrope' | 'Space Grotesk' | 'Sora' | 'Outfit'
   | 'DM Sans' | 'Plus Jakarta Sans' | 'IBM Plex Sans' | 'JetBrains Mono' | 'System UI';
@@ -144,6 +146,15 @@ export const DENSITY_SPACING: Record<Density, string> = {
 
 export const GRID_SIZES: GridSize[] = [16, 24, 32];
 
+// Preset scale applied to an app's default window size on launch
+// (Settings → Apps). Fitted to the workspace afterwards, so "large" never
+// means off-screen — it just means the window opens bigger.
+export const WINDOW_SIZE_SCALES: Record<WindowSize, number> = {
+  small: 0.78,
+  medium: 1,
+  large: 1.18,
+};
+
 // ─── Status colors (ported from ibiz_v2 ERROR_COLORS + status tokens) ───────
 export const STATUS_COLORS: Record<ThemeMode, { error: string; errorSoft: string; success: string; successSoft: string; warning: string; warningSoft: string }> = {
   light: {
@@ -176,6 +187,7 @@ export interface ThemeState {
   density: Density;
   gridSize: GridSize;
   windowOpacity: number; // 0.5-1 (ibiz_v2 InterfacePanel)
+  windowSize: WindowSize; // launch-size preset for app windows (Settings → Apps)
   showTopBar: boolean;
   wallpaper: string; // WallpaperDef.id
   wallpaperDim: number;  // 0-60 (%)
@@ -192,6 +204,12 @@ export interface ThemeState {
   airplaneMode: boolean; // connectivity override: fails all API reads → local seeds
   skillsDisplay: SkillDisplayMode;
   widgets: WidgetPlacement[];
+  /** Desktop icon drag offsets (px) keyed by app id — absent = default column. */
+  desktopIconOffsets: Record<string, { x: number; y: number }>;
+  /** Desktop icon size preset (large = the original look). */
+  desktopIconSize: IconSize;
+  /** Taskbar app-button size preset (medium = the original look). */
+  taskbarIconSize: IconSize;
   startupWindows: string[];
   clockFormat: ClockFormat;
   dateFormat: DateFormat;
@@ -205,6 +223,14 @@ export interface WidgetPlacement {
   variant: string;        // widget variant key
 }
 
+// Taskbar bar height (px) per style + app-icon size — the bar breathes with
+// the icon preset. Medium matches the original look (48px Windows bar,
+// 64px macOS dock).
+export const TASKBAR_HEIGHTS: Record<TaskbarStyle, Record<IconSize, number>> = {
+  windows: { small: 40, medium: 48, large: 56 },
+  macos: { small: 56, medium: 64, large: 72 },
+};
+
 export const DEFAULT_THEME: ThemeState = {
   mode: 'light',
   accent: 'orange',
@@ -216,6 +242,7 @@ export const DEFAULT_THEME: ThemeState = {
   density: 'normal',
   gridSize: 24,
   windowOpacity: 0.85,
+  windowSize: 'small',
   showTopBar: true,
   wallpaper: 'mint',
   wallpaperDim: 0,
@@ -231,6 +258,9 @@ export const DEFAULT_THEME: ThemeState = {
   airplaneMode: false,
   skillsDisplay: 'bars',
   widgets: [],
+  desktopIconOffsets: {},
+  desktopIconSize: 'medium',
+  taskbarIconSize: 'medium',
   startupWindows: [],
   clockFormat: '12h',
   dateFormat: 'short',
@@ -384,6 +414,7 @@ export function applyTheme(theme: ThemeState): void {
   set('--grid-size', String(theme.gridSize ?? 24));
   const opacity = Math.min(1, Math.max(0.5, theme.windowOpacity ?? 1));
   set('--window-opacity', String(opacity));
+  set('--window-size-scale', String(WINDOW_SIZE_SCALES[theme.windowSize] ?? 1));
 
   // Shadow depth
   set('--shadow-window', isDark
@@ -427,9 +458,12 @@ export function applyTheme(theme: ThemeState): void {
   set('--wallpaper-blur', `${Math.min(25, Math.max(0, theme.wallpaperBlur))}px`);
 
   // Taskbar height — collapses when auto-hide is on so windows use the space.
-  // macOS reserves the floating dock (footer + wrapper padding); keep in
-  // sync with osLayout MACOS_DOCK_FALLBACK_H + MACOS_DOCK_PAD.
-  set('--taskbar-h', theme.taskbarMode === 'auto-hide' ? '14px' : theme.taskbarStyle === 'macos' ? '64px' : '56px');
+  // Otherwise follows the app-icon size preset (TASKBAR_HEIGHTS) so the bar
+  // breathes with its icons; keep in sync with the Taskbar footer heights.
+  const taskbarH = theme.taskbarMode === 'auto-hide'
+    ? 14
+    : TASKBAR_HEIGHTS[theme.taskbarStyle]?.[theme.taskbarIconSize] ?? 64;
+  set('--taskbar-h', `${taskbarH}px`);
   // Topbar height — collapses when hidden so windows/widgets use the space
   set('--topbar-h', theme.showTopBar ? '40px' : '0px');
 
@@ -461,6 +495,7 @@ export function loadTheme(key: string = GUEST_THEME_KEY): ThemeState {
     if (!['compact', 'normal', 'comfortable'].includes(merged.density as string)) merged.density = 'normal';
     if (![16, 24, 32].includes(merged.gridSize as number)) merged.gridSize = 24;
     if (typeof merged.windowOpacity !== 'number' || Number.isNaN(merged.windowOpacity)) merged.windowOpacity = DEFAULT_THEME.windowOpacity;
+    if (merged.windowSize !== 'small' && merged.windowSize !== 'medium' && merged.windowSize !== 'large') merged.windowSize = 'small';
     if (typeof merged.showTopBar !== 'boolean') merged.showTopBar = true;
     if (typeof merged.showSeconds !== 'boolean') merged.showSeconds = false;
     if (typeof merged.showHomeIndicator !== 'boolean') merged.showHomeIndicator = false;
@@ -469,6 +504,15 @@ export function loadTheme(key: string = GUEST_THEME_KEY): ThemeState {
     if (typeof merged.airplaneMode !== 'boolean') merged.airplaneMode = false;
     if (merged.skillsDisplay !== 'bars' && merged.skillsDisplay !== 'cards') merged.skillsDisplay = 'bars';
     if (!Array.isArray(merged.taskbarApps)) merged.taskbarApps = [...DEFAULT_THEME.taskbarApps];
+    if (
+      typeof merged.desktopIconOffsets !== 'object' ||
+      merged.desktopIconOffsets === null ||
+      Array.isArray(merged.desktopIconOffsets)
+    ) {
+      merged.desktopIconOffsets = {};
+    }
+    if (merged.desktopIconSize !== 'small' && merged.desktopIconSize !== 'medium' && merged.desktopIconSize !== 'large') merged.desktopIconSize = 'medium';
+    if (merged.taskbarIconSize !== 'small' && merged.taskbarIconSize !== 'medium' && merged.taskbarIconSize !== 'large') merged.taskbarIconSize = 'medium';
     // One-time stale clear: the old default auto-opened About+Skills. An
     // explicit user pick (anything else, including []) is preserved.
     if (

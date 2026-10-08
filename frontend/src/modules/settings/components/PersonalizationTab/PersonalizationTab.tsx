@@ -1,10 +1,9 @@
 import { LayoutGrid, Palette, Sparkles, Sun } from 'lucide-react';
 import { ACCENTS, WALLPAPERS, type ThemeState } from '@/styles/theme';
 import SectionCard from '@/components/ui/SectionCard/SectionCard';
-import { SegmentedControl, SubLabel } from '@/modules/settings/components/primitives';
+import { RangeControl, SegmentedControl, SubLabel } from '@/modules/settings/components/primitives';
 import {
   BLUR_OPTIONS, GLASS_OPTIONS, MODE_OPTIONS, RADIUS_OPTIONS,
-  WALLPAPER_BLUR_OPTIONS, WALLPAPER_DIM_OPTIONS,
 } from '@/modules/settings/lib/options';
 import type { SetTheme } from '@/modules/settings/lib/types';
 
@@ -141,17 +140,18 @@ export default function PersonalizationTab({
       </SectionCard>
 
       <SectionCard title="Wallpaper effects" icon={<Sparkles size={13} />}>
-        <SubLabel>Dim level</SubLabel>
-        <SegmentedControl
+        <RangeControl
+          label="Dim"
           value={theme.wallpaperDim}
-          options={WALLPAPER_DIM_OPTIONS}
+          min={0} max={60} step={5}
+          display={`${theme.wallpaperDim}%`}
           onChange={(v) => setTheme({ wallpaperDim: v })}
         />
-        <div className="h-3" />
-        <SubLabel>Blur level</SubLabel>
-        <SegmentedControl
+        <RangeControl
+          label="Blur"
           value={theme.wallpaperBlur}
-          options={WALLPAPER_BLUR_OPTIONS}
+          min={0} max={25} step={1}
+          display={`${theme.wallpaperBlur}px`}
           onChange={(v) => setTheme({ wallpaperBlur: v })}
         />
       </SectionCard>

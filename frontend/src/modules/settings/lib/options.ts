@@ -1,9 +1,9 @@
 import {
   BLUR_LEVELS, DENSITY_SPACING, GLASS_LEVELS, RADIUS_LEVELS,
   type BlurLevel, type ClockFormat, type DateFormat, type Density, type GlassLevel,
-  type RadiusLevel, type TaskbarMode, type TaskbarStyle, type ThemeMode,
-} from '@/styles/theme';
-import {
+  type IconSize, type RadiusLevel, type TaskbarMode, type TaskbarStyle, type ThemeMode, type WindowSize,
+} from '@/styles/theme';import {
+  AppWindow,
   Blocks,
   Clock,
   FileJson,
@@ -56,13 +56,24 @@ export const DENSITY_OPTIONS = (Object.keys(DENSITY_SPACING) as Density[]).map((
   value: v, label: v[0].toUpperCase() + v.slice(1),
 }));
 
-export const WALLPAPER_DIM_OPTIONS = [0, 10, 20, 30, 40, 50, 60].map((v) => ({ value: v, label: `${v}%` }));
-export const WALLPAPER_BLUR_OPTIONS = [0, 5, 10, 15, 20, 25].map((v) => ({ value: v, label: `${v}px` }));
 export const GRID_SIZE_OPTIONS = [16, 24, 32].map((v) => ({ value: v, label: String(v) }));
+
+export const WINDOW_SIZE_OPTIONS: { value: WindowSize; label: string }[] = [
+  { value: 'small', label: 'Small' },
+  { value: 'medium', label: 'Medium' },
+  { value: 'large', label: 'Large' },
+];
+
+export const ICON_SIZE_OPTIONS: { value: IconSize; label: string }[] = [
+  { value: 'small', label: 'Small' },
+  { value: 'medium', label: 'Medium' },
+  { value: 'large', label: 'Large' },
+];
 
 export const SETTINGS_TABS = [
   { id: 'personalization', label: 'Personalization', icon: Palette },
   { id: 'interface', label: 'Interface', icon: SlidersHorizontal },
+  { id: 'apps', label: 'Apps', icon: AppWindow },
   { id: 'taskbar', label: 'Taskbar', icon: Monitor },
   { id: 'time', label: 'Time', icon: Clock },
   { id: 'widgets', label: 'Widgets', icon: Blocks },
@@ -76,6 +87,7 @@ export type SettingsTabId = (typeof SETTINGS_TABS)[number]['id'];
 export const TAB_DESCRIPTIONS: Record<SettingsTabId, string> = {
   personalization: 'Accent color, mode, glass, wallpaper',
   interface: 'Font, effects and behavior',
+  apps: 'Window size and desktop icons',
   taskbar: 'Mode, style, pinned and startup apps',
   time: 'Clock and date formatting',
   widgets: 'Manage widgets on the desktop',

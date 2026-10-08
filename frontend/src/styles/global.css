@@ -581,6 +581,64 @@ input:focus, textarea:focus, select:focus {
   background: rgba(0, 0, 0, .04);
 }
 
+/* Settings slider bars (RangeControl): opt out of the boxed input look
+ * (its padding/border read as gaps at both ends of the bar) and paint a
+ * full-bleed track with an accent fill driven by --p, so the fill always
+ * starts at the very start of the bar and ends at the thumb. */
+.setting-range {
+  -webkit-appearance: none;
+  appearance: none;
+  display: block;
+  width: 100%;
+  height: 22px;
+  margin: 0;
+  padding: 0;
+  border: none;
+  background: transparent;
+  outline: none;
+}
+.setting-range:focus { box-shadow: none; }
+:root[data-mode='light'] .setting-range,
+:root[data-mode='dark'] .setting-range {
+  background: transparent;
+  border: none;
+}
+.setting-range::-webkit-slider-runnable-track {
+  height: 6px;
+  border-radius: 999px;
+  background: linear-gradient(to right, var(--accent) var(--p, 50%), var(--accent-soft) var(--p, 50%));
+}
+.setting-range::-webkit-slider-thumb {
+  -webkit-appearance: none;
+  width: 16px;
+  height: 16px;
+  margin-top: -5px;
+  border-radius: 50%;
+  background: var(--accent-text-on, #fff);
+  border: 2px solid var(--accent);
+  box-shadow: 0 1px 4px rgba(0, 0, 0, .35);
+  cursor: grab;
+}
+.setting-range::-moz-range-track {
+  height: 6px;
+  border-radius: 999px;
+  background: var(--accent-soft);
+}
+.setting-range::-moz-range-progress {
+  height: 6px;
+  border-radius: 999px;
+  background: var(--accent);
+}
+.setting-range::-moz-range-thumb {
+  width: 12px;
+  height: 12px;
+  border-radius: 50%;
+  background: var(--accent-text-on, #fff);
+  border: 2px solid var(--accent);
+  box-shadow: 0 1px 4px rgba(0, 0, 0, .35);
+  cursor: grab;
+}
+
 /* ═══ Animations ═══════════════════════════════════════════════════════════ */
 @keyframes window-open {
   from { opacity: 0; transform: scale(.96) translateY(8px); }
@@ -810,7 +868,7 @@ input:focus, textarea:focus, select:focus {
 /* Web view is the public, document-level site (no OS window), so viewport
  * media are fair here — the rail always stays leftmost, phones just get a
  * slightly tighter shell and a narrower expanded rail. */
-@media (max-width: 1350px) {
+@media (max-width: 1100px) {
   .web-edu {
     position: static;
     flex: 1 1 100%;

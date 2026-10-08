@@ -7,6 +7,7 @@ import { ACCENTS, ACCENTS_DARK } from '@/styles/theme';
 import { SETTINGS_TABS, TAB_DESCRIPTIONS, type SettingsTabId } from '@/modules/settings/lib/options';
 import PersonalizationTab from '@/modules/settings/components/PersonalizationTab/PersonalizationTab';
 import InterfaceTab from '@/modules/settings/components/InterfaceTab/InterfaceTab';
+import AppsTab from '@/modules/settings/components/AppsTab/AppsTab';
 import TaskbarTab from '@/modules/settings/components/TaskbarTab/TaskbarTab';
 import TimeTab from '@/modules/settings/components/TimeTab/TimeTab';
 import WidgetsTab from '@/modules/settings/components/WidgetsTab/WidgetsTab';
@@ -75,6 +76,7 @@ export default function SettingsScreen() {
             <PersonalizationTab isDark={isDark} palette={palette} theme={theme} setTheme={setTheme} isAdmin={isAdmin} />
           )}
           {activeTab === 'interface' && <InterfaceTab theme={theme} setTheme={setTheme} />}
+          {activeTab === 'apps' && <AppsTab theme={theme} setTheme={setTheme} />}
           {activeTab === 'taskbar' && <TaskbarTab theme={theme} setTheme={setTheme} />}
           {activeTab === 'time' && <TimeTab theme={theme} setTheme={setTheme} />}
           {activeTab === 'widgets' && (

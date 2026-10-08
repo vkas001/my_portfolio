@@ -1,4 +1,5 @@
 import type { ThemeState } from '@/styles/theme';
+import { TASKBAR_HEIGHTS } from '@/styles/theme';
 
 // ─── Workspace geometry — single source of truth ────────────────────────────
 // Adapted from ibiz_v2 lib/osLayout (workspaceInsets/taskbarBottomInset),
@@ -6,14 +7,15 @@ import type { ThemeState } from '@/styles/theme';
 // [top, viewport - bottom] so nothing is ever cut off at a screen edge.
 
 export const TOPBAR_H = 40;
-/** Pre-paint fallback only — `taskbarBottomInset` measures the real bar. Must
- *  match the rendered heights in `Taskbar`: `h-12` for the Windows bar. */
+/** Medium Windows-bar height — the table default. Pre-paint fallback only;
+ *  `taskbarBottomInset` measures the real bar (which now breathes with the
+ *  app-icon size preset — see TASKBAR_HEIGHTS in styles/theme). */
 export const TASKBAR_H = 48;
 export const TASKBAR_AUTOHIDE_H = 14;
 /** Breathing room between a maximized window and the bar — ibiz_v2 BOTTOM_GAP. */
 export const BOTTOM_GAP = 16;
-/** Bottom padding on the macOS centering wrapper (pb-3), outside the dock. */
-export const MACOS_DOCK_PAD = 12;
+/** Bottom padding on the macOS centering wrapper (pb-5), outside the dock. */
+export const MACOS_DOCK_PAD = 20;
 /** Fallback dock height before it has painted (footer padding + content). */
 export const MACOS_DOCK_FALLBACK_H = 52;
 
@@ -50,7 +52,7 @@ export interface WorkspaceInsets {
  * touching or overlapping the dock. Falls back to constants pre-paint.
  */
 export function taskbarBottomInset(
-  theme: Pick<ThemeState, 'taskbarMode' | 'taskbarStyle'>,
+  theme: Pick<ThemeState, 'taskbarMode' | 'taskbarStyle' | 'taskbarIconSize'>,
 ): number {
   if (theme.taskbarMode !== 'always') return TASKBAR_AUTOHIDE_H;
   let measured = 0;
@@ -58,11 +60,11 @@ export function taskbarBottomInset(
     measured = document.querySelector('[data-os-taskbar]')?.getBoundingClientRect().height ?? 0;
   }
   const pad = theme.taskbarStyle === 'macos' ? MACOS_DOCK_PAD : 0;
-  const height = measured > 0 ? Math.round(measured) : theme.taskbarStyle === 'macos' ? MACOS_DOCK_FALLBACK_H : TASKBAR_H;
+  const height = measured > 0 ? Math.round(measured) : TASKBAR_HEIGHTS[theme.taskbarStyle]?.[theme.taskbarIconSize] ?? TASKBAR_H;
   return height + pad + BOTTOM_GAP;
 }
 
-export function workspaceInsets(theme: Pick<ThemeState, 'showTopBar' | 'taskbarMode' | 'taskbarStyle'>): WorkspaceInsets {
+export function workspaceInsets(theme: Pick<ThemeState, 'showTopBar' | 'taskbarMode' | 'taskbarStyle' | 'taskbarIconSize'>): WorkspaceInsets {
   return {
     top: theme.showTopBar ? TOPBAR_H : 0,
     bottom: taskbarBottomInset(theme),
@@ -78,7 +80,7 @@ export interface ViewportBounds {
 
 /** Usable rectangle between the bars for the given viewport size. */
 export function getWorkspaceBoundsFor(
-  theme: Pick<ThemeState, 'showTopBar' | 'taskbarMode' | 'taskbarStyle'>,
+  theme: Pick<ThemeState, 'showTopBar' | 'taskbarMode' | 'taskbarStyle' | 'taskbarIconSize'>,
   viewport: { width: number; height: number } = { width: window.innerWidth, height: window.innerHeight },
 ): ViewportBounds {
   const { top, bottom } = workspaceInsets(theme);
@@ -92,23 +94,23 @@ export function getWorkspaceBoundsFor(
 
 /** Current workspace bounds (fallback defaults before a theme exists). */
 export function getWorkspaceBounds(
-  theme?: Pick<ThemeState, 'showTopBar' | 'taskbarMode' | 'taskbarStyle'> | null,
+  theme?: Pick<ThemeState, 'showTopBar' | 'taskbarMode' | 'taskbarStyle' | 'taskbarIconSize'> | null,
 ): ViewportBounds {
   return getWorkspaceBoundsFor(
-    theme ?? { showTopBar: true, taskbarMode: 'always', taskbarStyle: 'windows' },
+    theme ?? { showTopBar: true, taskbarMode: 'always', taskbarStyle: 'windows', taskbarIconSize: 'medium' },
   );
 }
 
 /**
  * Window bounds: the usable bottom edge is the very bottom of the viewport,
  * *behind* the taskbar. The bar floats above tabs (z-80; window z stays in
- * [41, 79]), so maximized/dragged tabs fill to the bottom of the screen.
- * Widgets keep `getWorkspaceBounds` so they still sit above the bar.
+ * [41, 79]), so user-dragged/resized tabs can fill to the bottom of the
+ * screen. Widgets keep `getWorkspaceBounds` so they still sit above the bar.
  */
 export function getWindowBounds(
-  theme?: Pick<ThemeState, 'showTopBar' | 'taskbarMode' | 'taskbarStyle'> | null,
+  theme?: Pick<ThemeState, 'showTopBar' | 'taskbarMode' | 'taskbarStyle' | 'taskbarIconSize'> | null,
 ): ViewportBounds {
-  const t = theme ?? { showTopBar: true, taskbarMode: 'always', taskbarStyle: 'windows' };
+  const t = theme ?? { showTopBar: true, taskbarMode: 'always', taskbarStyle: 'windows', taskbarIconSize: 'medium' };
   const { top } = workspaceInsets(t);
   return {
     width: window.innerWidth,
@@ -121,14 +123,14 @@ export function getWindowBounds(
 /**
  * First-launch / auto-fit bounds for windows: a freshly opened window is sized
  * and centered in the space *above* the taskbar, so opening an app never
- * collides with the bar. Maximized tabs and user drags/resizes still use
- * `getWindowBounds` (full height, behind the bar) — the difference is intent:
- * the bar only ever gets covered by explicit user action.
+ * collides with the bar. Maximized tabs render inside these bounds too — only
+ * an explicit user drag/resize still uses `getWindowBounds` (full height,
+ * behind the bar): the bar only ever gets covered by explicit user action.
  */
 export function getWindowSpawnBounds(
-  theme?: Pick<ThemeState, 'showTopBar' | 'taskbarMode' | 'taskbarStyle'> | null,
+  theme?: Pick<ThemeState, 'showTopBar' | 'taskbarMode' | 'taskbarStyle' | 'taskbarIconSize'> | null,
 ): ViewportBounds {
-  const t = theme ?? { showTopBar: true, taskbarMode: 'always', taskbarStyle: 'windows' };
+  const t = theme ?? { showTopBar: true, taskbarMode: 'always', taskbarStyle: 'windows', taskbarIconSize: 'medium' };
   const { top, bottom } = workspaceInsets(t);
   return {
     width: window.innerWidth,
@@ -152,7 +154,7 @@ export interface Rect {
  * (drag can still push a tab behind it afterwards).
  */
 export function getDockRects(
-  theme?: Pick<ThemeState, 'showTopBar' | 'taskbarMode' | 'taskbarStyle'> | null,
+  theme?: Pick<ThemeState, 'showTopBar' | 'taskbarMode' | 'taskbarStyle' | 'taskbarIconSize'> | null,
   min: { w: number; h: number } = { w: 420, h: 460 },
 ): { left: Rect; right: Rect; w: number; h: number } {
   const b = getWindowSpawnBounds(theme);
