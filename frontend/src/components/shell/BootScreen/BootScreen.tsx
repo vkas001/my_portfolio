@@ -18,13 +18,28 @@ const WORDS = ['You', 'are', 'welcomed'];
 interface BootScreenProps {
   onDone?: () => void;
   /** Live phase message (e.g. still hydrating content) shown instead of the
-   *  canned step text. */
+   *  canned step text. Pass '' to show just the spinner + percentage. */
   statusLine?: string | null;
   /** Keep the overlay up at 100% until released — async phases still pending. */
   hold?: boolean;
+  /** Wall-clock for the progress bar to reach 100%. Defaults to the full boot
+   *  time; view switches pass a shorter value since data is already loaded. */
+  duration?: number;
+  /** Override the animated wordmark (default "You are welcomed"). */
+  words?: string[];
+  /** Override the tagline under the wordmark (default "My digital workspace").
+   *  Pass null to hide it entirely. */
+  tagline?: string | null;
 }
 
-export function BootScreen({ onDone, statusLine, hold = false }: BootScreenProps) {
+export function BootScreen({
+  onDone,
+  statusLine,
+  hold = false,
+  duration = BOOT_DURATION,
+  words = WORDS,
+  tagline = 'My digital workspace',
+}: BootScreenProps) {
   const [progress, setProgress] = useState(0);
   const [leaving, setLeaving] = useState(false);
 
@@ -42,7 +57,7 @@ export function BootScreen({ onDone, statusLine, hold = false }: BootScreenProps
 
     const tick = () => {
       const elapsed = Date.now() - start;
-      const p = Math.min(100, (elapsed / BOOT_DURATION) * 100);
+      const p = Math.min(100, (elapsed / duration) * 100);
       setProgress(p);
       if (p >= 100) {
         if (holdRef.current) {
@@ -69,7 +84,7 @@ export function BootScreen({ onDone, statusLine, hold = false }: BootScreenProps
   return (
     <div className={`boot-overlay${leaving ? ' boot-overlay--leaving' : ''}`}>
       <div className="boot-wordmark" aria-hidden="true">
-        {WORDS.map((word, i) => (
+        {words.map((word, i) => (
           <span
             key={word}
             className="boot-word"
@@ -79,7 +94,7 @@ export function BootScreen({ onDone, statusLine, hold = false }: BootScreenProps
           </span>
         ))}
       </div>
-      <div className="boot-tagline">My digital workspace</div>
+      {tagline && <div className="boot-tagline">{tagline}</div>}
 
       <div className="boot-progress">
         <div className="boot-progress__track">
