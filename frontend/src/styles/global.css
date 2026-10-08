@@ -140,16 +140,20 @@ button { font-family: inherit; }
   flex-direction: column;
   will-change: transform;
   container-type: inline-size; /* ibiz_v2 parity: @container anchor for window-scoped responsiveness */
-  background: rgba(16, 16, 28, .82);
+  /* Translucency lives ONLY in the background alpha — never in element `opacity`.
+     Element opacity re-composites the backdrop-filter result at a fraction, which
+     lets the sharp, unblurred wallpaper leak back underneath and cancel out the
+     frost. Multiplying the fill alpha keeps every see-through pixel going through
+     the blur, so overlapping windows read as frosted glass rather than glass. */
+  background: rgb(16 16 28 / calc(.82 * var(--window-opacity, 1)));
   backdrop-filter: blur(var(--glass-blur)) saturate(1.5);
   -webkit-backdrop-filter: blur(var(--glass-blur)) saturate(1.5);
   border: 1px solid var(--glass-border);
   box-shadow: var(--shadow-window);
-  opacity: var(--window-opacity, 1);
 }
 
 :root[data-mode='light'] .window-frame {
-  background: rgba(252, 252, 255, .86);
+  background: rgb(252 252 255 / calc(.86 * var(--window-opacity, 1)));
 }
 
 .window-frame.maximized {
