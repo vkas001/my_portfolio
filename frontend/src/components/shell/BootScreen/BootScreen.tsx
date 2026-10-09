@@ -76,7 +76,7 @@ export function BootScreen({
       cancelAnimationFrame(raf);
       window.clearTimeout(doneTimer);
     };
-  }, []);
+  }, [duration]);
 
   const stepStatus =
     [...BOOT_STEPS].reverse().find((s) => progress >= s.at)?.text ?? 'Loading theme…';

@@ -163,6 +163,15 @@ button { font-family: inherit; }
   border-bottom: 0;
 }
 
+/* Unfocused windows recede via border/shadow only. They used to get an
+   element `opacity` utility, which re-composites the backdrop-filter result
+   and lets the sharp content behind leak through unfrosted — the same bug
+   the fill-alpha change above fixes. Dimming the chrome keeps the frost. */
+.window-frame:not(.is-focused) {
+  border-color: color-mix(in srgb, var(--glass-border) 60%, transparent);
+  box-shadow: 0 10px 30px rgba(0, 0, 0, .28), 0 1px 3px rgba(0, 0, 0, .18);
+}
+
 .window-titlebar {
   display: flex;
   align-items: center;

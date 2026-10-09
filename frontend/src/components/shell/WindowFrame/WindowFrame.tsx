@@ -109,6 +109,10 @@ export default function WindowFrame({ win, children }: Props) {
         if (!raf) raf = window.requestAnimationFrame(paint);
       };
 
+      // pointerup alone is not enough: a drag can also end via pointercancel
+      // (touch gesture, OS interrupt, lost capture). Missing that listener left
+      // `.window-dragging` stuck on the frame permanently, which drops
+      // backdrop-filter — so that one window never frosted again.
       const onUp = () => {
         if (raf) window.cancelAnimationFrame(raf);
         el.classList.remove('window-dragging');
@@ -125,10 +129,15 @@ export default function WindowFrame({ win, children }: Props) {
         updateWindowRect(win.id, r);
         window.removeEventListener('pointermove', onMove);
         window.removeEventListener('pointerup', onUp);
+        window.removeEventListener('pointercancel', onUp);
+        window.removeEventListener('blur', onUp);
       };
 
       window.addEventListener('pointermove', onMove);
       window.addEventListener('pointerup', onUp);
+      window.addEventListener('pointercancel', onUp);
+      // Alt-tab / window blur mid-drag also swallows the pointerup.
+      window.addEventListener('blur', onUp);
     },
     [win, app, theme, focusWindow, updateWindowRect],
   );
@@ -175,7 +184,7 @@ export default function WindowFrame({ win, children }: Props) {
   return (
     <div
       ref={frameRef}
-      className={`window-frame window-open ${win.maximized ? 'maximized' : ''} ${focused ? '' : 'opacity-95'}`}
+      className={`window-frame window-open ${win.maximized ? 'maximized' : ''} ${focused ? 'is-focused' : ''}`}
       style={style}
       onPointerDown={() => { setActiveWidget(null); focusWindow(win.id); }}
       role="dialog"
