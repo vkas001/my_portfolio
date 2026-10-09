@@ -1,5 +1,6 @@
 import { useRef } from 'react';
 import { Download, FileJson, RotateCcw, Upload } from 'lucide-react';
+import toast from 'react-hot-toast';
 import type { ThemeState } from '@/styles/theme';
 import SectionCard from '@/components/ui/SectionCard/SectionCard';
 import type { SetTheme } from '@/modules/settings/lib/types';
@@ -17,6 +18,7 @@ export default function DataTab({ theme, setTheme, resetTheme }: { theme: ThemeS
     link.click();
     document.body.removeChild(link);
     URL.revokeObjectURL(url);
+    toast.success('Theme exported');
   };
 
   const importTheme = (file: File) => {
@@ -26,8 +28,13 @@ export default function DataTab({ theme, setTheme, resetTheme }: { theme: ThemeS
         const parsed = JSON.parse(reader.result as string) as Partial<ThemeState>;
         if (parsed && typeof parsed === 'object' && 'accent' in parsed) {
           setTheme(parsed);
+          toast.success('Theme imported');
+        } else {
+          toast.error('Not a theme file');
         }
-      } catch { /* invalid file */ }
+      } catch {
+        toast.error('Not a theme file');
+      }
     };
     reader.readAsText(file);
   };
@@ -64,7 +71,7 @@ export default function DataTab({ theme, setTheme, resetTheme }: { theme: ThemeS
           }}
         />
         <button
-          onClick={resetTheme}
+          onClick={() => { resetTheme(); toast.success('Theme reset to defaults'); }}
           className="flex-1 flex items-center justify-center gap-2 px-4 py-3 rounded-[var(--radius-sm)] font-bold text-[12px] transition-all cursor-pointer"
           style={{ background: 'var(--accent)', color: 'var(--accent-text-on)' }}
         >

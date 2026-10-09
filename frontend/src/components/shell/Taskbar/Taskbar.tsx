@@ -5,17 +5,11 @@
 // the same slide/reveal mechanics with portfolio's context visibility state.
 import { memo, useCallback, useEffect, useRef, useState } from 'react';
 import {
-  Briefcase,
   ChevronUp,
-  Code2,
-  Folder,
   LayoutGrid,
-  Mail,
   Plane,
   Search,
-  Settings,
   Sparkles,
-  User,
   Volume2,
   VolumeX,
   Wifi,
@@ -37,15 +31,6 @@ import { TASKBAR_HEIGHTS } from '@/styles/theme';
 import { APP_REGISTRY } from '@/apps/registry';
 import type { AppId } from '@/types';
 import SystemTrayModal from '@/components/shell/SystemTrayModal/SystemTrayModal';
-
-const OS_ICON_MAP: Record<string, React.ReactNode> = {
-  about: <User className="w-5 h-5" />,
-  skills: <Code2 className="w-5 h-5" />,
-  projects: <Folder className="w-5 h-5" />,
-  experience: <Briefcase className="w-5 h-5" />,
-  contact: <Mail className="w-5 h-5" />,
-  settings: <Settings className="w-5 h-5" />,
-};
 
 // Windows 11-style active indicator: a small rounded underline under the icon.
 // Rendered in-flow (in a reserved row below the glyph) so it can never
@@ -267,11 +252,15 @@ const [isTrayOpen, setIsTrayOpen] = useState(false);
   const appBtnBox = windowsStyle
     ? taskbarIconSize === 'small' ? 'h-7 w-7' : taskbarIconSize === 'large' ? 'h-9 w-9' : 'h-8 w-8'
     : taskbarIconSize === 'small' ? 'h-7 w-7' : taskbarIconSize === 'large' ? 'h-10 w-10' : 'h-8 w-8';
-  const appGlyphSize =
-    taskbarIconSize === 'small' ? '[&>svg]:w-3.5 [&>svg]:h-3.5'
-    : taskbarIconSize === 'large' ? ''
-    : '[&>svg]:w-4 [&>svg]:h-4';
-  const appBtnBase = `${appBtnBox} flex flex-col items-center justify-center gap-[3px] rounded-lg relative group transition-all cursor-pointer ${appGlyphSize}`;
+  // App glyphs match the desktop icons exactly (same lucide component from
+  // the app registry, sized by the preset — the old OS_ICON_MAP overrides
+  // are gone).
+  const appGlyphPx = taskbarIconSize === 'small' ? 14 : taskbarIconSize === 'large' ? 20 : 16;
+  const appBtnBase = `${appBtnBox} flex flex-col items-center justify-center gap-[3px] rounded-lg relative group transition-all cursor-pointer`;
+  // Chrome buttons (Start, Search, widgets) share the app-button box + glyph
+  // scale so every taskbar icon is the same size at every preset.
+  const chromeGlyph =
+    taskbarIconSize === 'small' ? 'w-4 h-4' : taskbarIconSize === 'large' ? 'w-6 h-6' : 'w-5 h-5';
   const tooltipPos = windowsStyle ? 'bottom-12' : 'bottom-14';
 
   const barLayer = Z_TASKBAR;
@@ -323,100 +312,104 @@ const [isTrayOpen, setIsTrayOpen] = useState(false);
             transition: 'transform .25s ease',
           }}
         >
-          {/* Start / App launcher button */}
-          <button
-            data-trigger="start"
-            onClick={onToggleStartMenu}
-            className={`flex items-center justify-center transition-all group cursor-pointer ${
-              windowsStyle ? 'w-9 h-9 rounded-lg mr-1' : 'w-10 h-10 rounded-lg mr-2'
-            } ${
-              startMenuOpen
-                ? 'bg-(--surface-60) scale-105 shadow-md'
-                : 'hover:bg-(--surface-30)'
-            }`}
-            title="App Launcher & Start Menu"
-          >
-            <LayoutGrid
-              className={`text-(--wp-accent-fg) transition-transform ${
-                windowsStyle ? 'w-6 h-6' : 'w-6 h-6'
-              } ${startMenuOpen ? 'scale-110' : 'group-hover:scale-110'}`}
-            />
-          </button>
+          {/* ── Left: Start + Search ─────────────────────────────── */}
+          <div className="flex items-center shrink-0">
+            {/* Start / App launcher button */}
+            <button
+              data-trigger="start"
+              onClick={onToggleStartMenu}
+              className={`${appBtnBox} flex items-center justify-center rounded-lg transition-all group cursor-pointer ${
+                windowsStyle ? 'mr-1' : 'mr-2'
+              } ${
+                startMenuOpen
+                  ? 'bg-(--surface-60) scale-105 shadow-md'
+                  : 'hover:bg-(--surface-30)'
+              }`}
+              title="App Launcher & Start Menu"
+            >
+              <LayoutGrid
+                className={`text-(--wp-accent-fg) transition-transform ${chromeGlyph} ${startMenuOpen ? 'scale-110' : 'group-hover:scale-110'}`}
+              />
+            </button>
 
-          <button
-            onClick={() => setSpotlightOpen(true)}
-            className={`flex items-center justify-center transition-all group cursor-pointer ${
-              windowsStyle ? 'w-9 h-9 rounded-lg' : 'w-10 h-10 rounded-lg'
-            } hover:bg-(--surface-30)`}
-            aria-label="Search"
-            title="Search (Ctrl+K)"
-          >
-            <Search className={`text-(--wp-accent-fg) ${windowsStyle ? 'w-5 h-5' : 'w-5 h-5'}`} />
-          </button>
+            <button
+              onClick={() => setSpotlightOpen(true)}
+              className={`${appBtnBox} flex items-center justify-center rounded-lg transition-all group cursor-pointer hover:bg-(--surface-30)`}
+              aria-label="Search"
+              title="Search (Ctrl+K)"
+            >
+              <Search className={`text-(--wp-accent-fg) ${chromeGlyph}`} />
+            </button>
 
-          <div className={`w-[1px] bg-(--surface-30) ${windowsStyle ? 'h-5 mx-1.5' : 'h-6 mx-1.5'}`} />
+            <div className={`w-[1px] bg-(--surface-30) ${windowsStyle ? 'h-5 mx-1.5' : 'h-6 mx-1.5'}`} />
+          </div>
 
-          {/* Pinned + running apps */}
+          {/* ── Middle: pinned + running apps (scrolls when crowded) ── */}
           {allOsApps.length > 0 && (
-            <div className={`flex items-center ${windowsStyle ? 'gap-1 px-1' : 'gap-1.5 px-1.5'}`}>
-              {allOsApps.map((app) => {
-                const wins = windows.filter((w) => w.appId === app.id);
-                const isOpen = wins.length > 0;
-                const isMinimized = isOpen && wins.every((w) => w.minimized);
-                const isActive = wins.some((w) => w.id === focusedId && !w.minimized);
+            <div
+              className={`min-w-0 overflow-x-auto [scrollbar-width:none] [&::-webkit-scrollbar]:hidden ${
+                windowsStyle ? 'flex-1 mx-1' : 'max-w-[38vw] mx-1'
+              }`}
+            >
+              <div className={`flex w-max items-center ${windowsStyle ? 'gap-1 px-1' : 'gap-1.5 px-1.5'}`}>
+                {allOsApps.map((app) => {
+                  const wins = windows.filter((w) => w.appId === app.id);
+                  const isOpen = wins.length > 0;
+                  const isMinimized = isOpen && wins.every((w) => w.minimized);
+                  const isActive = wins.some((w) => w.id === focusedId && !w.minimized);
 
-                return (
-                  <button
-                    key={app.id}
-                    onClick={() => handleAppClick(app.id as AppId)}
-                    className={`${appBtnBase} ${
-                      isActive
-                        ? 'bg-(--surface-40) text-(--wp-accent-fg) shadow-[0_1px_5px_rgba(15,23,42,.14)]'
-                        : 'hover:bg-(--surface-20) text-(--wp-accent-fg)/70 hover:text-(--wp-accent-fg)'
-                    }`}
-                    title={isOpen && isMinimized ? `Restore ${app.name}` : app.name}
-                  >
-                    <span className="leading-none inline-flex">
-                      {OS_ICON_MAP[app.id] ?? <LayoutGrid className="w-5 h-5" />}
-                    </span>
-
-                    {/* Reserved dot row: fixes the indicator's slot so it
-                        never overlaps the glyph and opening an app never
-                        shifts the icon. */}
-                    <span className="flex h-2 items-center justify-center">
-                      <Indicator isOpen={isOpen} isActive={isActive} isMinimized={isMinimized} />
-                    </span>
-
-                    {/* Tooltip */}
-                    <span
-                      className={`absolute ${tooltipPos} left-1/2 -translate-x-1/2 bg-(--surface-80) text-(--text-primary) text-[12px] font-medium px-3 py-1.5 rounded-lg opacity-0 group-hover:opacity-100 transition-opacity pointer-events-none whitespace-nowrap shadow-xl border border-(--border-20)`}
-                      style={{ zIndex: Z_OVERLAY_TOP }}
+                  return (
+                    <button
+                      key={app.id}
+                      onClick={() => handleAppClick(app.id as AppId)}
+                      className={`${appBtnBase} ${
+                        isActive
+                          ? 'bg-(--surface-40) text-(--wp-accent-fg) shadow-[0_1px_5px_rgba(15,23,42,.14)]'
+                          : 'hover:bg-(--surface-20) text-(--wp-accent-fg)/70 hover:text-(--wp-accent-fg)'
+                      }`}
+                      title={isOpen && isMinimized ? `Restore ${app.name}` : app.name}
                     >
-                      {isOpen && isMinimized ? `Restore ${app.name}` : app.name}
-                    </span>
-                  </button>
-                );
-              })}
+                      <span className="leading-none inline-flex">
+                        <app.icon size={appGlyphPx} />
+                      </span>
+
+                      {/* Reserved dot row: fixes the indicator's slot so it
+                          never overlaps the glyph and opening an app never
+                          shifts the icon. */}
+                      <span className="flex h-2 items-center justify-center">
+                        <Indicator isOpen={isOpen} isActive={isActive} isMinimized={isMinimized} />
+                      </span>
+
+                      {/* Tooltip */}
+                      <span
+                        className={`absolute ${tooltipPos} left-1/2 -translate-x-1/2 bg-(--surface-80) text-(--text-primary) text-[12px] font-medium px-3 py-1.5 rounded-lg opacity-0 group-hover:opacity-100 transition-opacity pointer-events-none whitespace-nowrap shadow-xl border border-(--border-20)`}
+                        style={{ zIndex: Z_OVERLAY_TOP }}
+                      >
+                        {isOpen && isMinimized ? `Restore ${app.name}` : app.name}
+                      </span>
+                    </button>
+                  );
+                })}
+              </div>
             </div>
           )}
 
-          <div className={`flex items-center gap-1.5 ${windowsStyle ? 'px-1' : 'px-2'}`}>
-            <button
-              onClick={() => setWidgetsOpen(!widgetsOpen)}
-              className={`${windowsStyle ? 'h-9 w-9 rounded-lg' : 'h-10 w-10 rounded-lg'} flex items-center justify-center relative group transition-all cursor-pointer ${
-                widgetsOpen ? 'bg-(--surface-50) text-(--wp-accent-fg)' : 'hover:bg-(--surface-20) text-(--wp-accent-fg)/70 hover:text-(--wp-accent-fg)'
-              }`}
-              title="Toggle widgets (Ctrl+W)"
-            >
-              <Sparkles className={windowsStyle ? 'w-5 h-5' : 'w-5 h-5'} />
-            </button>
-          </div>
+          {/* ── Right: tray (widgets toggle sits with the status icons) ── */}
+          <div className={`flex items-center shrink-0 ${windowsStyle ? 'ml-auto' : ''}`}>
+            <div className={`w-[1px] bg-(--surface-30) ${windowsStyle ? 'h-5 mx-2' : 'h-6 mx-3'}`} />
 
-          <div className={`w-[1px] bg-(--surface-30) ${windowsStyle ? 'h-5 mx-2 ml-auto' : 'h-6 mx-3'}`} />
-
-          {/* System Tray Area */}
-          <div className="flex items-center gap-2.5" ref={trayRef}>
-            <ConnectionDot online={online} />
+            {/* System Tray Area */}
+            <div className="flex items-center gap-2.5" ref={trayRef}>
+              <ConnectionDot online={online} />
+              <button
+                onClick={() => setWidgetsOpen(!widgetsOpen)}
+                className={`${appBtnBox} flex items-center justify-center rounded-lg relative group transition-all cursor-pointer ${
+                  widgetsOpen ? 'bg-(--surface-50) text-(--wp-accent-fg)' : 'hover:bg-(--surface-20) text-(--wp-accent-fg)/70 hover:text-(--wp-accent-fg)'
+                }`}
+                title="Toggle widgets (Ctrl+W)"
+              >
+                <Sparkles className={chromeGlyph} />
+              </button>
             <button
               data-trigger="tray"
               onClick={onToggleTray}
@@ -438,6 +431,7 @@ const [isTrayOpen, setIsTrayOpen] = useState(false);
                 </span>
               </div>
             </button>
+          </div>
           </div>
 
           {isTrayOpen && <SystemTrayModal onClose={onToggleTray} />}

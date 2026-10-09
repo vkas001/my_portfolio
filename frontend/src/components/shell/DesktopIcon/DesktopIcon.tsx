@@ -1,5 +1,6 @@
 import { useRef, type PointerEvent as ReactPointerEvent } from 'react';
-import type { IconSize } from '@/styles/theme';
+import type { GridSize, IconSize } from '@/styles/theme';
+import { snapToGrid } from '@/lib/gridUtils';
 import type { AppDef, AppId } from '@/types';
 
 interface Props {
@@ -7,6 +8,8 @@ interface Props {
   /** Persisted drag offset from the default column slot (theme.desktopIconOffsets). */
   offset?: { x: number; y: number };
   size: IconSize;
+  /** Desktop grid step (theme.gridSize) — drags snap to it, invisibly. */
+  gridSize: GridSize;
   onMove: (appId: AppId, offset: { x: number; y: number }) => void;
   onOpen: (appId: AppId) => void;
   /** Fired once when the press turns into a drag (past the threshold). */
@@ -42,7 +45,7 @@ function clamp(v: number, min: number, max: number): number {
  * the DOM during the drag (rAF-coalesced, WindowFrame-style) and committed
  * once to the theme on release, so a drag never re-renders the shell.
  */
-export default function DesktopIcon({ app, offset, size, onMove, onOpen, onDragStart, onLiveMove }: Props) {
+export default function DesktopIcon({ app, offset, size, gridSize, onMove, onOpen, onDragStart, onLiveMove }: Props) {
   const btnRef = useRef<HTMLButtonElement>(null);
   const lastDragEndRef = useRef(0);
   const dims = ICON_SIZES[size] ?? ICON_SIZES.medium;
@@ -73,8 +76,11 @@ export default function DesktopIcon({ app, offset, size, onMove, onOpen, onDragS
     let raf = 0;
 
     const target = (moveX: number, moveY: number) => ({
-      x: clamp(start.x + moveX - sx, minX, maxX),
-      y: clamp(start.y + moveY - sy, minY, maxY),
+      // Invisible grid: quantize to the desktop grid step, then clamp — so
+      // icons always rest on vertical/horizontal grid lines with no overlay
+      // ever drawn (widgets snap the same way).
+      x: clamp(snapToGrid(start.x + moveX - sx, gridSize), minX, maxX),
+      y: clamp(snapToGrid(start.y + moveY - sy, gridSize), minY, maxY),
     });
 
     const paint = () => {

@@ -33,6 +33,7 @@ export default function AuthScreen() {
     setError(null);
     try {
       const me = await signIn(email.trim(), password);
+      toast.success(`Welcome back, ${me.name}`);
       pushNotification({
         title: 'Signed in',
         body: me.isAdmin ? `Welcome back, ${me.name}.` : `Signed in as ${me.name}.`,

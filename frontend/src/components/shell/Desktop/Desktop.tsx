@@ -36,7 +36,6 @@ export default function Desktop() {
   // Swap predicate: the dragged icon must sit squarely ABOVE the other —
   // its center inside the other's rect plus a real majority overlap — so
   // merely brushing past an icon mid-drag never yanks it out of place.
-  // MARKER v3-hyst-center-rule
   const overlapSwapTarget = (
     rD: { left: number; top: number; right: number; bottom: number; width: number; height: number },
     r: { left: number; top: number; right: number; bottom: number; width: number; height: number },
@@ -241,6 +240,7 @@ export default function Desktop() {
               app={app}
               offset={theme.desktopIconOffsets[app.id]}
               size={theme.desktopIconSize ?? 'medium'}
+              gridSize={theme.gridSize ?? 24}
               onMove={commitIconOffset}
               onOpen={launchApp}
               onDragStart={handleIconDragStart}

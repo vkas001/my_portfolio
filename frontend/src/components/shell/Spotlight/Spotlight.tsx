@@ -86,16 +86,34 @@ export default function Spotlight() {
     return () => window.removeEventListener('keydown', onKey);
   }, [spotlightOpen, results, sel, setSpotlightOpen]);
 
+  // Open above the taskbar Search button (same 8px float gap as the start
+  // menu). Falls back to the centered top overlay where there is no button
+  // (web view) or it can't be measured. Hooks stay above the early return.
+  const [anchor, setAnchor] = useState<{ left: number; bottom: number } | null>(null);
+  useEffect(() => {
+    if (!spotlightOpen) return;
+    const btn = document.querySelector('[data-os-taskbar] button[aria-label="Search"]');
+    if (!btn) {
+      setAnchor(null);
+      return;
+    }
+    const r = btn.getBoundingClientRect();
+    const w = Math.min(520, window.innerWidth - 24);
+    const left = Math.min(Math.max(12, r.left), Math.max(12, window.innerWidth - w - 12));
+    setAnchor({ left, bottom: window.innerHeight - r.top + 8 });
+  }, [spotlightOpen]);
+
   if (!spotlightOpen) return null;
 
   return (
     <div
-      className="fixed inset-0 flex items-start justify-center pt-[18vh] fade-in"
+      className={`fixed inset-0 fade-in ${anchor ? '' : 'flex items-start justify-center pt-[18vh]'}`}
       style={{ background: 'rgba(0,0,0,.35)', zIndex: Z_OVERLAY_TOP }}
       onMouseDown={() => setSpotlightOpen(false)}
     >
       <div
-        className="menu-surface !relative w-[520px] max-w-[92vw] p-0 overflow-hidden"
+        className={`menu-surface w-[520px] max-w-[92vw] p-0 overflow-hidden ${anchor ? '' : '!relative'}`}
+        style={anchor ? { position: 'absolute', left: anchor.left, bottom: anchor.bottom } : undefined}
         onMouseDown={(e) => e.stopPropagation()}
       >
         <div className="flex items-center gap-3 px-4 h-12" style={{ borderBottom: '1px solid var(--border)' }}>

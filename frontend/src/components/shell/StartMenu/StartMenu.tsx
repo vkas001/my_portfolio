@@ -37,6 +37,23 @@ export default function StartMenu() {
     }
   }, [startMenuOpen]);
 
+  // Anchor above the Start button itself (measured live so icon-size /
+  // style changes move the menu with it): left edge on the button's left,
+  // clamped on-screen, 8px above the button's top.
+  const [anchor, setAnchor] = useState<{ left: number; bottom: number } | null>(null);
+  useEffect(() => {
+    if (!startMenuOpen) return;
+    const btn = document.querySelector('[data-trigger="start"]');
+    if (!btn) {
+      setAnchor(null);
+      return;
+    }
+    const r = btn.getBoundingClientRect();
+    const w = 320; // w-80
+    const left = Math.min(Math.max(12, r.left), Math.max(12, window.innerWidth - w - 12));
+    setAnchor({ left, bottom: window.innerHeight - r.top + 8 });
+  }, [startMenuOpen, theme.taskbarStyle, theme.taskbarIconSize]);
+
   const apps = useMemo(() => {
     const visible = APP_REGISTRY.filter((a) => !a.system);
     const q = searchTerm.trim().toLowerCase();
@@ -67,9 +84,9 @@ export default function StartMenu() {
       ref={ref}
       className={`menu-surface w-80 max-w-[calc(100vw-24px)] p-3 ${
         // slide-up animates transform, which would fight -translate-x-1/2
-        macos ? 'left-1/2 -translate-x-1/2 bottom-[68px] fade-in' : 'left-3 bottom-16 slide-up'
+        anchor ? 'fade-in' : macos ? 'left-1/2 -translate-x-1/2 bottom-[68px] fade-in' : 'left-3 bottom-16 slide-up'
       }`}
-      style={{ zIndex: Z_TASKBAR }}
+      style={{ zIndex: Z_TASKBAR, ...(anchor ? { left: anchor.left, bottom: anchor.bottom } : null) }}
     >
       {/* Search — ibiz_v2 StartMenu parity */}
       <div className="relative mb-2">
