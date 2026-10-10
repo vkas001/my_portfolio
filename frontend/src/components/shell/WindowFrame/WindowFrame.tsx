@@ -149,12 +149,12 @@ export default function WindowFrame({ win, children }: Props) {
     if (win.maximized) toggleMaximize(win.id); // unmaximize before tiling
     // Tile inside the space above the taskbar so the docked editor + content
     // window never collide with the bar (drag can still go behind it).
-    const b = getWindowSpawnBounds(theme);
     const editorMin = APP_REGISTRY.find((a) => a.id === 'editor')?.minSize ?? { w: 420, h: 460 };
     const { left, right } = getDockRects(theme, editorMin);
-    const onLeft = win.x + win.w / 2 < b.width / 2;
-    const contentRect = onLeft ? left : right;
-    const editorRect = onLeft ? right : left;
+    // The editor always docks to the right half; its content window takes the
+    // left, regardless of where the content window happened to be sitting.
+    const contentRect = left;
+    const editorRect = right;
     updateWindowRect(win.id, contentRect);
     launchApp('editor', {
       rect: editorRect,

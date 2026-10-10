@@ -6,7 +6,7 @@ import { APP_REGISTRY } from '@/apps/registry';
 import { WIDGET_DEFS } from '@/modules/widgets';
 import type { AppId } from '@/types';
 import { Puzzle, Search } from 'lucide-react';
-import { Z_OVERLAY_TOP } from '@/lib/osLayout';
+import { Z_WINDOW_TOP } from '@/lib/osLayout';
 
 interface Result {
   kind: 'app' | 'widget';
@@ -23,6 +23,8 @@ export default function Spotlight() {
   const { addWidget } = useWidgets();
   const [query, setQuery] = useState('');
   const [sel, setSel] = useState(0);
+  const [position, setPosition] = useState<{ left: number; bottom: number } | null>(null);
+  const ref = useRef<HTMLDivElement>(null);
   const inputRef = useRef<HTMLInputElement>(null);
   // In Web view there are no windows/widgets: app results scroll to the
   // matching section, settings + widget results are hidden.
@@ -72,7 +74,37 @@ export default function Spotlight() {
   }, [spotlightOpen]);
 
   useEffect(() => {
+    if (!spotlightOpen) {
+      setPosition(null);
+      return;
+    }
+
+    const updatePosition = () => {
+      // Open from the same left edge as the Start menu: both flyouts anchor to
+      // the launcher button so they share a starting point (not the search
+      // button, which sits one slot to the right).
+      const trigger =
+        document.querySelector<HTMLElement>('[data-trigger="start"]') ??
+        document.querySelector<HTMLElement>('[data-trigger="search"]');
+      if (!trigger) return;
+      const rect = trigger.getBoundingClientRect();
+      const width = Math.min(320, window.innerWidth - 24);
+      setPosition({
+        left: Math.min(Math.max(12, rect.left), window.innerWidth - width - 12),
+        bottom: Math.max(12, window.innerHeight - rect.top + 8),
+      });
+    };
+
+    updatePosition();
+    window.addEventListener('resize', updatePosition);
+    return () => window.removeEventListener('resize', updatePosition);
+  }, [spotlightOpen]);
+
+  useEffect(() => {
     if (!spotlightOpen) return;
+    const onDown = (e: MouseEvent) => {
+      if (!ref.current?.contains(e.target as Node)) setSpotlightOpen(false);
+    };
     const onKey = (e: KeyboardEvent) => {
       if (e.key === 'Escape') setSpotlightOpen(false);
       if (e.key === 'ArrowDown') { e.preventDefault(); setSel((s) => Math.min(s + 1, results.length - 1)); }
@@ -82,35 +114,43 @@ export default function Spotlight() {
         setSpotlightOpen(false);
       }
     };
+    window.addEventListener('mousedown', onDown);
     window.addEventListener('keydown', onKey);
-    return () => window.removeEventListener('keydown', onKey);
+    return () => {
+      window.removeEventListener('mousedown', onDown);
+      window.removeEventListener('keydown', onKey);
+    };
   }, [spotlightOpen, results, sel, setSpotlightOpen]);
 
   if (!spotlightOpen) return null;
 
   return (
     <div
-      className="fixed inset-0 flex items-start justify-center pt-[18vh] fade-in"
-      style={{ background: 'rgba(0,0,0,.35)', zIndex: Z_OVERLAY_TOP }}
-      onMouseDown={() => setSpotlightOpen(false)}
+      ref={ref}
+      className="menu-surface !fixed w-80 max-w-[calc(100vw-24px)] p-3 slide-up"
+      style={{
+        zIndex: Z_WINDOW_TOP,
+        left: position?.left ?? 12,
+        bottom: position?.bottom ?? 68,
+      }}
     >
-      <div
-        className="menu-surface !relative w-[520px] max-w-[92vw] p-0 overflow-hidden"
-        onMouseDown={(e) => e.stopPropagation()}
-      >
-        <div className="flex items-center gap-3 px-4 h-12" style={{ borderBottom: '1px solid var(--border)' }}>
-          <Search size={15} style={{ color: 'var(--text-low)' }} />
-          <input
-            ref={inputRef}
-            value={query}
-            onChange={(e) => { setQuery(e.target.value); setSel(0); }}
-            placeholder={isWeb ? 'Search sections…' : 'Search apps, widgets…'}
-            className="flex-1 bg-transparent border-0 !p-0 text-sm focus:!shadow-none"
-            style={{ minHeight: 0 }}
-          />
-          <kbd className="text-[10px] px-1.5 py-0.5 rounded" style={{ background: 'var(--accent-soft)', color: 'var(--accent)' }}>esc</kbd>
-        </div>
-        <div className="p-1.5 max-h-72 overflow-auto">
+      <div className="relative mb-2">
+        <Search
+          size={14}
+          className="pointer-events-none absolute left-3 top-1/2 -translate-y-1/2"
+          style={{ color: 'var(--text-low)' }}
+        />
+        <input
+          ref={inputRef}
+          type="text"
+          value={query}
+          onChange={(e) => { setQuery(e.target.value); setSel(0); }}
+          placeholder={isWeb ? 'Search sections...' : 'Search apps, widgets...'}
+          className="w-full rounded-xl py-2 pl-9 pr-8 text-[13px]"
+          style={{ paddingLeft: '36px', paddingRight: '32px' }}
+        />
+      </div>
+      <div className="max-h-72 overflow-auto">
           {results.map((r, i) => (
             <button
               key={`${r.kind}-${r.id}`}
@@ -129,7 +169,6 @@ export default function Spotlight() {
           {!results.length && (
             <p className="text-xs text-center py-6" style={{ color: 'var(--text-low)' }}>No results</p>
           )}
-        </div>
       </div>
     </div>
   );

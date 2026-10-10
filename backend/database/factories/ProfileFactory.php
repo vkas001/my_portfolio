@@ -24,7 +24,10 @@ class ProfileFactory extends Factory
             'short_bio' => fake()->sentence(14),
             'bio' => fake()->paragraphs(3, true),
             'personal_note' => fake()->paragraph(),
-            'strengths' => ['Adaptable', 'Focused'],
+            'strengths' => [
+                ['text' => 'Adaptable', 'icon' => 'sparkles'],
+                ['text' => 'Focused', 'icon' => 'target'],
+            ],
             'open_to_work' => 'Open to new roles',
             'strengths_title' => 'What I bring',
             'strengths_icon' => 'zap',

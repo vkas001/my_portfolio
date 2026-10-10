@@ -3,6 +3,7 @@ export { default as EditorScreen } from './screens/EditorScreen';
 export { default as SectionEditor } from './components/SectionEditor/SectionEditor';
 export { default as Field } from './components/Field/Field';
 export { default as StringListInput } from './components/StringListInput/StringListInput';
+export { default as AvatarCropper } from './components/AvatarCropper/AvatarCropper';
 export { default as SelectInput } from './components/SelectInput/SelectInput';
 export { default as FloatingSaveButton } from './components/FloatingSaveButton/FloatingSaveButton';
 export { default as ProfileTab } from './components/ProfileTab/ProfileTab';

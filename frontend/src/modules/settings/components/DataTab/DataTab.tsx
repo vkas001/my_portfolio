@@ -1,5 +1,6 @@
 import { useRef } from 'react';
 import { Download, FileJson, RotateCcw, Upload } from 'lucide-react';
+import toast from 'react-hot-toast';
 import type { ThemeState } from '@/styles/theme';
 import SectionCard from '@/components/ui/SectionCard/SectionCard';
 import type { SetTheme } from '@/modules/settings/lib/types';
@@ -8,15 +9,20 @@ export default function DataTab({ theme, setTheme, resetTheme }: { theme: ThemeS
   const fileRef = useRef<HTMLInputElement>(null);
 
   const exportTheme = () => {
-    const blob = new Blob([JSON.stringify(theme, null, 2)], { type: 'application/json' });
-    const url = URL.createObjectURL(blob);
-    const link = document.createElement('a');
-    link.href = url;
-    link.download = 'portfolio-theme.json';
-    document.body.appendChild(link);
-    link.click();
-    document.body.removeChild(link);
-    URL.revokeObjectURL(url);
+    try {
+      const blob = new Blob([JSON.stringify(theme, null, 2)], { type: 'application/json' });
+      const url = URL.createObjectURL(blob);
+      const link = document.createElement('a');
+      link.href = url;
+      link.download = 'portfolio-theme.json';
+      document.body.appendChild(link);
+      link.click();
+      document.body.removeChild(link);
+      URL.revokeObjectURL(url);
+      toast.success('Theme exported');
+    } catch {
+      toast.error('Could not export theme');
+    }
   };
 
   const importTheme = (file: File) => {
@@ -26,9 +32,15 @@ export default function DataTab({ theme, setTheme, resetTheme }: { theme: ThemeS
         const parsed = JSON.parse(reader.result as string) as Partial<ThemeState>;
         if (parsed && typeof parsed === 'object' && 'accent' in parsed) {
           setTheme(parsed);
+          toast.success('Theme imported');
+        } else {
+          toast.error('That file is not a valid theme export');
         }
-      } catch { /* invalid file */ }
+      } catch {
+        toast.error('That file is not valid JSON');
+      }
     };
+    reader.onerror = () => toast.error('Could not read that file');
     reader.readAsText(file);
   };
 

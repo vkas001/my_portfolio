@@ -306,7 +306,10 @@ class AdminContentTest extends AdminApiTestCase
             'shortBio' => 'Short.',
             'bio' => 'Longer bio.',
             'personalNote' => 'Remote · Kathmandu. Exploring TV apps.',
-            'strengths' => ['Ship complete products', 'Own deployment and servers'],
+            'strengths' => [
+                ['text' => 'Ship complete products', 'icon' => 'rocket'],
+                ['text' => 'Own deployment and servers', 'icon' => 'shield'],
+            ],
             'avatarUrl' => null,
             'resumeUrl' => null,
             'email' => 'me@example.com',
@@ -348,7 +351,10 @@ class AdminContentTest extends AdminApiTestCase
             'name' => 'Vikas',
             'title' => 'Platform Engineer',
             'personalNote' => 'Remote · Kathmandu. Exploring TV apps.',
-            'strengths' => ['Ship complete products', 'Own deployment and servers'],
+            'strengths' => [
+                ['text' => 'Ship complete products', 'icon' => 'rocket'],
+                ['text' => 'Own deployment and servers', 'icon' => 'shield'],
+            ],
             'openToWork' => 'Open to contracts',
             'strengthsTitle' => 'Specialities',
             'strengthsIcon' => 'rocket',
@@ -369,8 +375,9 @@ class AdminContentTest extends AdminApiTestCase
 
         $this->getJson('/api/profile')->assertOk()
             ->assertJsonPath('data.personalNote', 'Remote · Kathmandu. Exploring TV apps.')
-            ->assertJsonPath('data.strengths.0', 'Ship complete products')
-            ->assertJsonPath('data.strengths.1', 'Own deployment and servers')
+            ->assertJsonPath('data.strengths.0.text', 'Ship complete products')
+            ->assertJsonPath('data.strengths.1.text', 'Own deployment and servers')
+            ->assertJsonPath('data.strengths.0.icon', 'rocket')
             ->assertJsonPath('data.openToWork', 'Open to contracts')
             ->assertJsonPath('data.strengthsIcon', 'rocket')
             ->assertJsonPath('data.personalNoteIcon', 'none');

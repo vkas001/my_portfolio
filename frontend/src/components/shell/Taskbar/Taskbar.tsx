@@ -344,6 +344,7 @@ const [isTrayOpen, setIsTrayOpen] = useState(false);
           </button>
 
           <button
+            data-trigger="search"
             onClick={() => setSpotlightOpen(true)}
             className={`flex items-center justify-center transition-all group cursor-pointer ${
               windowsStyle ? 'w-9 h-9 rounded-lg' : 'w-10 h-10 rounded-lg'

@@ -14,7 +14,30 @@ export default function StartMenu() {
   const { user } = useAuth();
   const ref = useRef<HTMLDivElement>(null);
   const inputRef = useRef<HTMLInputElement>(null);
+  const [position, setPosition] = useState<{ left: number; bottom: number } | null>(null);
   const [searchTerm, setSearchTerm] = useState('');
+
+  useEffect(() => {
+    if (!startMenuOpen) {
+      setPosition(null);
+      return;
+    }
+
+    const updatePosition = () => {
+      const trigger = document.querySelector<HTMLElement>('[data-trigger="start"]');
+      if (!trigger) return;
+      const rect = trigger.getBoundingClientRect();
+      const width = Math.min(320, window.innerWidth - 24);
+      setPosition({
+        left: Math.min(Math.max(12, rect.left), window.innerWidth - width - 12),
+        bottom: Math.max(12, window.innerHeight - rect.top + 8),
+      });
+    };
+
+    updatePosition();
+    window.addEventListener('resize', updatePosition);
+    return () => window.removeEventListener('resize', updatePosition);
+  }, [startMenuOpen]);
 
   useEffect(() => {
     if (!startMenuOpen) return;
@@ -58,18 +81,15 @@ export default function StartMenu() {
     setStartMenuOpen(false);
   };
 
-  // ibiz_v2 parity: the launcher sits above the bar in its own style —
-  // bottom-left over a Windows bar, centered over the macOS dock.
-  const macos = theme.taskbarStyle === 'macos';
-
   return (
     <div
       ref={ref}
-      className={`menu-surface w-80 max-w-[calc(100vw-24px)] p-3 ${
-        // slide-up animates transform, which would fight -translate-x-1/2
-        macos ? 'left-1/2 -translate-x-1/2 bottom-[68px] fade-in' : 'left-3 bottom-16 slide-up'
-      }`}
-      style={{ zIndex: Z_TASKBAR }}
+      className="menu-surface !fixed w-80 max-w-[calc(100vw-24px)] p-3 slide-up"
+      style={{
+        zIndex: Z_TASKBAR,
+        left: position?.left ?? 12,
+        bottom: position?.bottom ?? 68,
+      }}
     >
       {/* Search — ibiz_v2 StartMenu parity */}
       <div className="relative mb-2">

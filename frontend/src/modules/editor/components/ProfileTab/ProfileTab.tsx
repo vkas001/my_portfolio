@@ -1,13 +1,13 @@
 import { useEffect, useRef, useState } from 'react';
 import { Check, LoaderCircle, Plus, Trash2, Upload, X } from 'lucide-react';
 import { useContent } from '@/context/ContentContext';
-import type { Profile, ProfileInput } from '@shared/types';
+import type { Profile, ProfileInput, Strength } from '@shared/types';
 import { SECTION_ICONS, SECTION_ICON_LABELS, type SectionIcon } from '@/modules/about';
 import Field, { inputCls, labelCls } from '@/modules/editor/components/Field/Field';
 import Input from '@/components/ui/Input/Input';
 import TextArea from '@/components/ui/TextArea/TextArea';
 import SelectInput from '@/modules/editor/components/SelectInput/SelectInput';
-import StringListInput from '@/modules/editor/components/StringListInput/StringListInput';
+import AvatarCropper from '@/modules/editor/components/AvatarCropper/AvatarCropper';
 import { SOCIAL_ICONS, type SaveBridge } from '@/modules/editor/lib/scaffolding';
 
 export default function ProfileTab({ commitRef, reportSave }: SaveBridge) {
@@ -15,18 +15,26 @@ export default function ProfileTab({ commitRef, reportSave }: SaveBridge) {
   const [form, setForm] = useState<ProfileInput | null>(null);
   const [saving, setSaving] = useState(false);
   const [uploading, setUploading] = useState(false);
+  const [cropFile, setCropFile] = useState<File | null>(null);
   const [error, setError] = useState('');
   const [saved, setSaved] = useState(false);
   const fileRef = useRef<HTMLInputElement>(null);
 
-  const handleFile = async (e: React.ChangeEvent<HTMLInputElement>) => {
+  const handleFile = (e: React.ChangeEvent<HTMLInputElement>) => {
     const file = e.target.files?.[0];
     e.target.value = '';
-    if (!file) return;
+    if (file) {
+      setError('');
+      setCropFile(file);
+    }
+  };
+
+  const applyCrop = async (blob: Blob) => {
+    setCropFile(null);
     setUploading(true);
     setError('');
     try {
-      await uploadAvatar(file);
+      await uploadAvatar(new File([blob], 'avatar.jpg', { type: blob.type || 'image/jpeg' }));
       setSaved(true);
       window.setTimeout(() => setSaved(false), 2000);
     } catch (err) {
@@ -46,7 +54,7 @@ export default function ProfileTab({ commitRef, reportSave }: SaveBridge) {
       title: p.title,
       shortBio: p.shortBio ?? '',
       bio: p.bio ?? '',
-      strengths: p.strengths ?? [],
+      strengths: (p.strengths ?? []).map((s) => ({ text: s.text, icon: s.icon || 'star' })),
       personalNote: p.personalNote ?? '',
       openToWork: p.openToWork ?? '',
       strengthsTitle: p.strengthsTitle ?? '',
@@ -66,6 +74,8 @@ export default function ProfileTab({ commitRef, reportSave }: SaveBridge) {
   const patch = (p: Partial<ProfileInput>) => setForm((f) => (f ? { ...f, ...p } : f));
   const patchSocial = (i: number, p: Partial<ProfileInput['socials'][number]>) =>
     patch({ socials: (form?.socials ?? []).map((s, idx) => (idx === i ? { ...s, ...p } : s)) });
+  const patchStrength = (i: number, p: Partial<Strength>) =>
+    patch({ strengths: (form?.strengths ?? []).map((s, idx) => (idx === i ? { ...s, ...p } : s)) });
 
   const commit = async () => {
     if (!form) return;
@@ -75,7 +85,13 @@ export default function ProfileTab({ commitRef, reportSave }: SaveBridge) {
     }
     setSaving(true);
     setError('');
-    const ok = await saveProfile(form);
+    // Empty rows are dropped so a half-typed strength never becomes a blank card.
+    const ok = await saveProfile({
+      ...form,
+      strengths: (form.strengths ?? [])
+        .map((s) => ({ text: s.text.trim(), icon: s.icon || 'star' }))
+        .filter((s) => s.text),
+    });
     setSaving(false);
     if (ok) {
       setSaved(true);
@@ -180,16 +196,50 @@ export default function ProfileTab({ commitRef, reportSave }: SaveBridge) {
               </Field>
             </div>
           </div>
-          <Field label="Description" hint="One strength per line">
-            <StringListInput
-              value={form.strengths ?? []}
-              onChange={(strengths) => patch({ strengths })}
-              placeholder="One strength per line"
-              rows={4}
-              maxRows={10}
-              autoGrow
-            />
-          </Field>
+          <div className="space-y-1.5">
+            <span className={labelCls} style={{ color: 'var(--text-low)' }}>Strengths</span>
+            {(form.strengths ?? []).map((strength, i) => (
+              <div key={i} className="grid grid-cols-12 gap-2 items-start">
+                <div className="col-span-9">
+                  <TextArea
+                    rows={1}
+                    maxRows={4}
+                    autoGrow
+                    placeholder="e.g. Backend architecture"
+                    value={strength.text}
+                    onChange={(e) => patchStrength(i, { text: e.target.value })}
+                  />
+                </div>
+                <div className="col-span-3 flex items-center gap-2">
+                  <div className="flex-1">
+                    <SelectInput
+                      value={(strength.icon || 'star') as SectionIcon}
+                      options={[...SECTION_ICONS]}
+                      labels={SECTION_ICON_LABELS}
+                      onChange={(icon) => patchStrength(i, { icon })}
+                    />
+                  </div>
+                  <button
+                    type="button"
+                    className="icon-btn w-6 h-6 shrink-0"
+                    aria-label="Remove strength"
+                    style={{ color: 'var(--error)' }}
+                    onClick={() => patch({ strengths: (form.strengths ?? []).filter((_, idx) => idx !== i) })}
+                  >
+                    <X size={11} />
+                  </button>
+                </div>
+              </div>
+            ))}
+            <button
+              type="button"
+              className="text-[11px] font-semibold flex items-center gap-1 cursor-pointer hover:opacity-80"
+              style={{ color: 'var(--accent)' }}
+              onClick={() => patch({ strengths: [...(form.strengths ?? []), { text: '', icon: 'star' }] })}
+            >
+              <Plus size={11} /> Add strength
+            </button>
+          </div>
         </div>
         <div className="col-span-12 rounded-xl p-3 space-y-2.5" style={{ background: 'var(--bg-elev)', border: '1px solid var(--border)' }}>
           <h3 className={labelCls} style={{ color: 'var(--accent)' }}>A bit about me</h3>
@@ -225,11 +275,11 @@ export default function ProfileTab({ commitRef, reportSave }: SaveBridge) {
             <div className="col-span-5">
               <input className={inputCls} value={s.url} placeholder="https://…" onChange={(e) => patchSocial(i, { url: e.target.value })} />
             </div>
-            <div className="col-span-3">
-              <SelectInput value={s.icon} options={SOCIAL_ICONS} onChange={(v) => patchSocial(i, { icon: v })} />
-            </div>
-            <div className="col-span-1 flex justify-end">
-              <button className="icon-btn w-6 h-6" aria-label="Remove link" style={{ color: 'var(--error)' }} onClick={() => patch({ socials: form.socials.filter((_, idx) => idx !== i) })}>
+            <div className="col-span-4 flex items-center gap-2">
+              <div className="flex-1">
+                <SelectInput value={s.icon} options={SOCIAL_ICONS} onChange={(v) => patchSocial(i, { icon: v })} />
+              </div>
+              <button className="icon-btn w-6 h-6 shrink-0" aria-label="Remove link" style={{ color: 'var(--error)' }} onClick={() => patch({ socials: form.socials.filter((_, idx) => idx !== i) })}>
                 <X size={11} />
               </button>
             </div>
@@ -250,6 +300,8 @@ export default function ProfileTab({ commitRef, reportSave }: SaveBridge) {
           <Check size={12} /> Saved — every open window updated live
         </p>
       ) : null}
+
+      {cropFile ? <AvatarCropper file={cropFile} onCancel={() => setCropFile(null)} onConfirm={applyCrop} /> : null}
     </div>
   );
 }

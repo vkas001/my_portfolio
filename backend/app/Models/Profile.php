@@ -58,6 +58,26 @@ class Profile extends Model
         return (string) $this->attributes['short_bio'];
     }
 
+    /**
+     * Strengths are stored as a JSON array of `{ text, icon }`. Legacy rows
+     * (and the older seeder) stored a bare string per item, so coerce both
+     * shapes to the object form on read.
+     *
+     * @return array<int, array{text: string, icon: string}>
+     */
+    public function getStrengthsAttribute(mixed $value): array
+    {
+        $items = is_string($value) ? (json_decode($value, true) ?: []) : (array) $value;
+
+        return array_values(array_map(static function (mixed $item): array {
+            if (is_array($item)) {
+                return ['text' => (string) ($item['text'] ?? ''), 'icon' => (string) ($item['icon'] ?? 'star')];
+            }
+
+            return ['text' => (string) $item, 'icon' => 'star'];
+        }, $items));
+    }
+
     public function getPersonalNoteAttribute(): string
     {
         return (string) $this->attributes['personal_note'];

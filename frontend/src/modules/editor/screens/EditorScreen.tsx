@@ -1,7 +1,7 @@
 import { useMemo, useRef, useState } from 'react';
 import { useTheme } from '@/context/ThemeContext';
 import { useWindows } from '@/context/WindowsContext';
-import { getDockRects, getWindowSpawnBounds } from '@/lib/osLayout';
+import { getDockRects } from '@/lib/osLayout';
 import { APP_REGISTRY, EDITABLE_APPS } from '@/apps/registry';
 import type { AppId, EditorSection, WindowData } from '@/types';
 import SkillsTab from '@/modules/editor/components/SkillsTab/SkillsTab';
@@ -59,16 +59,16 @@ export default function EditorScreen({ data, windowId }: { data?: WindowData; wi
 
     // Re-tile the pair inside the space above the taskbar so the docked
     // editor + content window never collide with the bar.
-    const b = getWindowSpawnBounds(theme);
     const editorMin = APP_REGISTRY.find((a) => a.id === 'editor')?.minSize ?? { w: 420, h: 460 };
     const { left, right } = getDockRects(theme, editorMin);
     // A workspace-covering editor (opened on its own) must drop back to a
     // floating tab before it can take a half — rect writes are ignored while
     // maximized, same reason the titlebar edit flow un-maximizes first.
     const wasMaximized = my.maximized;
-    const onLeft = wasMaximized || my.x + my.w / 2 < b.width / 2;
-    const editorRect = onLeft ? left : right;
-    const contentRect = onLeft ? right : left;
+    // The editor always docks to the right half; the content app takes the left,
+    // regardless of where the editor was sitting when it was maximized/centred.
+    const editorRect = right;
+    const contentRect = left;
     if (wasMaximized) toggleMaximize(my.id);
     updateWindowRect(my.id, editorRect);
 
