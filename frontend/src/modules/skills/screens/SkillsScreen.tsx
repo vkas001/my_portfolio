@@ -1,12 +1,14 @@
 import { useMemo, useState } from 'react';
 import { BarChart2, LayoutGrid } from 'lucide-react';
-import { CATEGORY_LABELS, SkillBars, SkillCards, categoryColor, collectSkillCategories, useSkills } from '@/modules/skills';
+import { SkillBars, SkillCards, categoryColor, categoryLabel, collectSkillCategories, useSkills } from '@/modules/skills';
+import { useContent } from '@/context/ContentContext';
 import { useTheme } from '@/context/ThemeContext';
 import type { SkillCategory } from '@shared/types';
 import type { SkillDisplayMode } from '@/styles/theme';
 
 export default function SkillsScreen() {
   const skills = useSkills();
+  const { loading } = useContent();
   const { theme, setTheme } = useTheme();
   const [active, setActive] = useState<SkillCategory | 'all'>('all');
 
@@ -36,7 +38,7 @@ export default function SkillsScreen() {
               style={active === c ? { background: categoryColor(c), color: '#fff', borderColor: 'transparent' } : undefined}
               onClick={() => setActive(c)}
             >
-              {CATEGORY_LABELS[c] ?? c}
+              {categoryLabel(c)}
             </button>
           ))}
         </div>
@@ -71,7 +73,9 @@ export default function SkillsScreen() {
       </div>
 
       {theme.skillsDisplay === 'bars' ? <SkillBars skills={filtered} /> : <SkillCards skills={filtered} />}
-      {!skills.length && <p className="text-xs" style={{ color: 'var(--text-low)' }}>Loading skills…</p>}
+      {!loading && !skills.length && <p className="text-xs" style={{ color: 'var(--text-low)' }}>No skills yet - add some in the editor.</p>}
+      {!loading && !!skills.length && !filtered.length && <p className="text-xs" style={{ color: 'var(--text-low)' }}>No skills in this category.</p>}
+      {loading && !skills.length && <p className="text-xs" style={{ color: 'var(--text-low)' }}>Loading skills…</p>}
     </div>
   );
 }

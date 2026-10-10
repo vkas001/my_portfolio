@@ -1,5 +1,6 @@
 import { useMemo } from 'react';
 import { useExperience } from '@/modules/experience';
+import { useContent } from '@/context/ContentContext';
 import { Building2 } from 'lucide-react';
 
 function fmt(iso: string) {
@@ -8,10 +9,14 @@ function fmt(iso: string) {
 
 export default function ExperienceScreen() {
   const experience = useExperience();
+  const { loading } = useContent();
   const items = useMemo(() => [...experience].sort((a, b) => a.order - b.order), [experience]);
 
+  if (loading && !items.length) {
+    return <p className="text-xs" style={{ color: 'var(--text-low)' }}>Loading experience…</p>;
+  }
   if (!items.length) {
-    return <p className="text-xs" style={{ color: 'var(--text-low)' }}>No experience data — add entries in backend/data/experience.json.</p>;
+    return <p className="text-xs" style={{ color: 'var(--text-low)' }}>No experience yet — add some in the editor.</p>;
   }
 
   return (

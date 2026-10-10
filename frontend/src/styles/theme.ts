@@ -241,7 +241,7 @@ export const DEFAULT_THEME: ThemeState = {
   font: 'Inter',
   density: 'normal',
   gridSize: 24,
-  windowOpacity: 0.85,
+  windowOpacity: 0.5,
   windowSize: 'small',
   showTopBar: true,
   wallpaper: 'mint',

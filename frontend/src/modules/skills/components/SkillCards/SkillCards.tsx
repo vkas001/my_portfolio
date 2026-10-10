@@ -1,5 +1,5 @@
 import type { Skill } from '@shared/types';
-import { CATEGORY_LABELS, categoryColor } from '@/modules/skills';
+import { categoryColor, categoryLabel } from '@/modules/skills';
 
 export default function SkillCards({ skills }: { skills: Skill[] }) {
   return (
@@ -26,7 +26,7 @@ export default function SkillCards({ skills }: { skills: Skill[] }) {
             </div>
             <div className="flex items-center justify-between">
               <span className="text-[10px]" style={{ color: 'var(--text-mid)' }}>{s.yearsUsed} yrs</span>
-              <span className="text-[10px]" style={{ color: 'var(--text-low)' }}>{CATEGORY_LABELS[s.category] ?? s.category}</span>
+              <span className="text-[10px]" style={{ color: 'var(--text-low)' }}>{categoryLabel(s.category)}</span>
             </div>
           </div>
         </div>

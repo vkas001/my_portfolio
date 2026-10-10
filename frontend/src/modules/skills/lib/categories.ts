@@ -17,6 +17,11 @@ export const CATEGORY_LABELS: Record<string, string> = {
   tools: 'Tools',
 };
 
+/** Display label for a category — always upper case (data stays as-is). */
+export function categoryLabel(category: string): string {
+  return (CATEGORY_LABELS[category] ?? category).toUpperCase();
+}
+
 export const CATEGORY_COLORS: Record<string, string> = {
   languages: '#8b5cf6',
   frontend: '#06b6d4',

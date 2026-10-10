@@ -1,9 +1,11 @@
 import { useEffect, useState } from 'react';
 import { useProjects } from '@/modules/projects';
+import { useContent } from '@/context/ContentContext';
 import { ExternalLink, Github } from 'lucide-react';
 
 export default function ProjectShowcase() {
   const projects = useProjects();
+  const { loading } = useContent();
   const featured = projects.filter((p) => p.featured);
   const [idx, setIdx] = useState(0);
 
@@ -13,9 +15,9 @@ export default function ProjectShowcase() {
     return () => clearInterval(t);
   }, [featured.length]);
 
-  const p = featured[idx];
+  const p = featured.length ? featured[idx % featured.length] : undefined;
 
-  if (!p) return <p className="text-xs" style={{ color: 'var(--text-low)' }}>Loading projects…</p>;
+  if (!p) return <p className="text-xs" style={{ color: 'var(--text-low)' }}>{loading ? 'Loading projects…' : 'No featured projects yet.'}</p>;
 
   return (
     <div key={p.id} className="flex flex-col h-full gap-1.5 fade-in">

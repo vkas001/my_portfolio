@@ -12,6 +12,9 @@
 
   --bg: #0f172a;
   --bg-elev: rgba(30, 41, 59, .78);
+  /* Dropdown/menu frost — mirrors .window-frame so selects read as the same
+     glass as OS windows (mode-aware via the light override below). */
+  --menu-glass-bg: rgb(16 16 28 / .82);
   --text-hi: #e2e8f0;
   --text-mid: #cbd5e1;
   --text-low: #94a3b8;
@@ -39,9 +42,13 @@
 
   --spacing: 0.25rem;
   --grid-size: 24;
-  --window-opacity: 1;
+  --window-opacity: 0.5;
   --topbar-h: 40px;
   --taskbar-h: 56px;
+}
+
+:root[data-mode='light'] {
+  --menu-glass-bg: rgb(252 252 255 / .86);
 }
 
 /* ═══ Base ═════════════════════════════════════════════════════════════════ */
@@ -588,6 +595,20 @@ input:focus, textarea:focus, select:focus {
 :root[data-mode='light'] textarea,
 :root[data-mode='light'] select {
   background: rgba(0, 0, 0, .04);
+}
+
+/* react-select renders an inner search <input> inside its control. It inherits
+ * this file's global `input` box (border-radius) and, on focus, the global
+ * focus ring — but the control clips it down to a few px wide, so that ring
+ * paints a stray accent circle at the caret. Neutralise the box entirely. */
+.rs__input,
+.rs__input:focus {
+  background: transparent;
+  border: 0;
+  border-radius: 0;
+  padding: 0;
+  box-shadow: none;
+  outline: none;
 }
 
 /* Settings slider bars (RangeControl): opt out of the boxed input look

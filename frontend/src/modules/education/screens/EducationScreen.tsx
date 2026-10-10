@@ -1,5 +1,6 @@
 import { useMemo } from 'react';
 import { useEducation } from '@/modules/education';
+import { useContent } from '@/context/ContentContext';
 import { GraduationCap } from 'lucide-react';
 
 function fmt(iso: string) {
@@ -8,10 +9,14 @@ function fmt(iso: string) {
 
 export default function EducationScreen() {
   const education = useEducation();
+  const { loading } = useContent();
   const items = useMemo(() => [...education].sort((a, b) => a.order - b.order), [education]);
 
+  if (loading && !items.length) {
+    return <p className="text-xs" style={{ color: 'var(--text-low)' }}>Loading education…</p>;
+  }
   if (!items.length) {
-    return <p className="text-xs" style={{ color: 'var(--text-low)' }}>No education data — add entries in backend/data/education.json.</p>;
+    return <p className="text-xs" style={{ color: 'var(--text-low)' }}>No education yet — add some in the editor.</p>;
   }
 
   return (

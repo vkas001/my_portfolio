@@ -1,6 +1,6 @@
 import { useMemo } from 'react';
 import type { Skill } from '@shared/types';
-import { CATEGORY_LABELS, collectSkillCategories } from '@/modules/skills';
+import { categoryLabel, collectSkillCategories } from '@/modules/skills';
 import { useContent } from '@/context/ContentContext';
 import Input from '@/components/ui/Input/Input';
 import CategoryField from '@/modules/editor/components/CategoryField/CategoryField';
@@ -8,9 +8,11 @@ import CategoryField from '@/modules/editor/components/CategoryField/CategoryFie
 export default function SkillForm({
   d,
   set,
+  onQuickAdd,
 }: {
   d: Skill;
   set: (patch: Partial<Skill>) => void;
+  onQuickAdd?: (category: string) => void;
 }) {
   const { skills } = useContent();
   const categoryOptions = useMemo(() => collectSkillCategories(skills), [skills]);
@@ -23,8 +25,9 @@ export default function SkillForm({
         value={d.category}
         onChange={(v) => set({ category: v })}
         options={categoryOptions}
-        labelOf={(c) => CATEGORY_LABELS[c] ?? c}
-        hint="Type a new one, or pick an existing one from the list."
+        labelOf={(c) => categoryLabel(c)}
+        onQuickAdd={onQuickAdd}
+        hint="Type a new one, or pick an existing one — + on a row saves this skill and starts the next one there."
       />
       <div className="grid grid-cols-12 gap-3">
         <div className="col-span-6">

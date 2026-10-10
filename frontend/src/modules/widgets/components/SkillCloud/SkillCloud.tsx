@@ -1,7 +1,9 @@
 import { useSkills } from '@/modules/skills';
+import { useContent } from '@/context/ContentContext';
 
 export default function SkillCloud() {
   const skills = useSkills();
+  const { loading } = useContent();
 
   const top = [...skills].sort((a, b) => b.proficiency - a.proficiency).slice(0, 6);
 
@@ -17,7 +19,7 @@ export default function SkillCloud() {
           {s.name}
         </span>
       ))}
-      {!skills.length && <p className="text-xs" style={{ color: 'var(--text-low)' }}>Loading skills…</p>}
+      {!skills.length && <p className="text-xs" style={{ color: 'var(--text-low)' }}>{loading ? 'Loading skills…' : 'No skills yet.'}</p>}
     </div>
   );
 }
