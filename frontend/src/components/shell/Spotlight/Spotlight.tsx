@@ -122,6 +122,23 @@ export default function Spotlight() {
     };
   }, [spotlightOpen, results, sel, setSpotlightOpen]);
 
+  // Open above the taskbar Search button (same 8px float gap as the start
+  // menu). Falls back to the centered top overlay where there is no button
+  // (web view) or it can't be measured. Hooks stay above the early return.
+  const [anchor, setAnchor] = useState<{ left: number; bottom: number } | null>(null);
+  useEffect(() => {
+    if (!spotlightOpen) return;
+    const btn = document.querySelector('[data-os-taskbar] button[aria-label="Search"]');
+    if (!btn) {
+      setAnchor(null);
+      return;
+    }
+    const r = btn.getBoundingClientRect();
+    const w = Math.min(520, window.innerWidth - 24);
+    const left = Math.min(Math.max(12, r.left), Math.max(12, window.innerWidth - w - 12));
+    setAnchor({ left, bottom: window.innerHeight - r.top + 8 });
+  }, [spotlightOpen]);
+
   if (!spotlightOpen) return null;
 
   return (

@@ -142,8 +142,12 @@ export default function WindowFrame({ win, children }: Props) {
     [win, app, theme, focusWindow, updateWindowRect],
   );
 
-  // Admin "+"/edit: tile the current window into one half of the workspace
-  // and open the section editor docked into the other half, side by side.
+  // Admin "+"/edit: tile the current window into the left half of the
+  // workspace and open the section editor docked into the right half, side
+  // by side. The editor always goes right (new panel opens right, IDE
+  // style) — never beside-dependent: freshly spawned windows carry a cascade
+  // offset that would otherwise push their center just past the middle and
+  // land the editor on the left almost every time.
   const editContent = useCallback(() => {
     if (!section) return;
     if (win.maximized) toggleMaximize(win.id); // unmaximize before tiling

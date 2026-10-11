@@ -60,6 +60,23 @@ export default function StartMenu() {
     }
   }, [startMenuOpen]);
 
+  // Anchor above the Start button itself (measured live so icon-size /
+  // style changes move the menu with it): left edge on the button's left,
+  // clamped on-screen, 8px above the button's top.
+  const [anchor, setAnchor] = useState<{ left: number; bottom: number } | null>(null);
+  useEffect(() => {
+    if (!startMenuOpen) return;
+    const btn = document.querySelector('[data-trigger="start"]');
+    if (!btn) {
+      setAnchor(null);
+      return;
+    }
+    const r = btn.getBoundingClientRect();
+    const w = 320; // w-80
+    const left = Math.min(Math.max(12, r.left), Math.max(12, window.innerWidth - w - 12));
+    setAnchor({ left, bottom: window.innerHeight - r.top + 8 });
+  }, [startMenuOpen, theme.taskbarStyle, theme.taskbarIconSize]);
+
   const apps = useMemo(() => {
     const visible = APP_REGISTRY.filter((a) => !a.system);
     const q = searchTerm.trim().toLowerCase();

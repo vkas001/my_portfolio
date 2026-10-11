@@ -1,4 +1,5 @@
 import { RotateCcw } from 'lucide-react';
+import toast from 'react-hot-toast';
 import SectionCard from '@/components/ui/SectionCard/SectionCard';
 
 export default function ResetTab({ resetTheme }: { resetTheme: () => void }) {
@@ -10,7 +11,7 @@ export default function ResetTab({ resetTheme }: { resetTheme: () => void }) {
       <button
         className="px-4 py-2 rounded-[var(--radius-sm)] text-xs font-bold transition-all cursor-pointer"
         style={{ background: 'var(--error-soft)', color: 'var(--error)' }}
-        onClick={resetTheme}
+        onClick={() => { resetTheme(); toast.success('Theme reset to defaults'); }}
       >
         Reset theme & widgets to defaults
       </button>

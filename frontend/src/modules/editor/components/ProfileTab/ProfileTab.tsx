@@ -9,6 +9,7 @@ import TextArea from '@/components/ui/TextArea/TextArea';
 import SelectInput from '@/modules/editor/components/SelectInput/SelectInput';
 import AvatarCropper from '@/modules/editor/components/AvatarCropper/AvatarCropper';
 import { SOCIAL_ICONS, type SaveBridge } from '@/modules/editor/lib/scaffolding';
+import { assetUrl } from '@/lib/api/assets';
 
 export default function ProfileTab({ commitRef, reportSave }: SaveBridge) {
   const { profile, saveProfile, uploadAvatar } = useContent();
@@ -116,7 +117,7 @@ export default function ProfileTab({ commitRef, reportSave }: SaveBridge) {
           <div className="flex items-center gap-3">
             {form.avatarUrl ? (
               <img
-                src={form.avatarUrl}
+                src={assetUrl(form.avatarUrl)}
                 alt="Profile"
                 className="w-16 h-16 rounded-full object-cover shrink-0"
               />

@@ -2,6 +2,7 @@ import { useEffect, useState } from 'react';
 import { createPortal } from 'react-dom';
 import { X } from 'lucide-react';
 import type { Profile } from '@shared/types';
+import { assetUrl } from '@/lib/api/assets';
 import { Z_OVERLAY_TOP } from '@/lib/osLayout';
 
 /** Circular profile avatar: initial-letter fallback + img overlay when
@@ -36,7 +37,7 @@ export default function UserAvatar({
       {profile.name.charAt(0)}
       {hasImg && (
         <img
-          src={profile.avatarUrl ?? undefined}
+          src={assetUrl(profile.avatarUrl)}
           alt=""
           className="absolute inset-0 w-full h-full rounded-full object-cover"
         />
@@ -71,7 +72,7 @@ export default function UserAvatar({
             onClick={() => setZoomed(false)}
           >
             <img
-              src={profile.avatarUrl ?? undefined}
+              src={assetUrl(profile.avatarUrl)}
               alt={profile.name}
               className="rounded-lg shadow-2xl"
               style={{ maxWidth: 'min(92vw, 1400px)', maxHeight: '92vh', objectFit: 'contain' }}

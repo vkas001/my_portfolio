@@ -64,6 +64,8 @@ export default function EditorScreen({ data, windowId }: { data?: WindowData; wi
     // A workspace-covering editor (opened on its own) must drop back to a
     // floating tab before it can take a half — rect writes are ignored while
     // maximized, same reason the titlebar edit flow un-maximizes first.
+    // The editor always keeps the right half (content always left) so
+    // switching sections never flings the pair across the screen.
     const wasMaximized = my.maximized;
     // The editor always docks to the right half; the content app takes the left,
     // regardless of where the editor was sitting when it was maximized/centred.
