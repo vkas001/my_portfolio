@@ -56,8 +56,10 @@ const selectStyles = (error?: string): StylesConfig<SelectOption<string | number
   }),
   menu: (base) => ({
     ...base,
-    background: 'var(--bg-elev)',
-    border: '1px solid var(--border)',
+    background: 'var(--menu-glass-bg)',
+    backdropFilter: 'blur(var(--glass-blur)) saturate(1.5)',
+    WebkitBackdropFilter: 'blur(var(--glass-blur)) saturate(1.5)',
+    border: '1px solid var(--glass-border)',
     borderRadius: 8,
     boxShadow: '0 8px 24px rgba(0,0,0,.25)',
     overflow: 'hidden',
@@ -101,11 +103,13 @@ export default function Select<T extends string | number = string>({
       ) : null}
       <SelectR<SelectOption<string | number>, false>
         instanceId={selectId}
+        classNamePrefix="rs"
         options={flat}
         value={current}
         onChange={(o) => onChange?.((o?.value as T | null) ?? null)}
         placeholder={placeholder}
         isDisabled={disabled}
+        isSearchable={false}
         styles={selectStyles(error)}
         menuPortalTarget={document.body}
         components={{ DropdownIndicator: () => <ChevronDown size={14} style={{ color: 'var(--text-low)' }} /> }}

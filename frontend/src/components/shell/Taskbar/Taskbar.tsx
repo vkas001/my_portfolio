@@ -332,14 +332,17 @@ const [isTrayOpen, setIsTrayOpen] = useState(false);
               />
             </button>
 
-            <button
-              onClick={() => setSpotlightOpen(true)}
-              className={`${appBtnBox} flex items-center justify-center rounded-lg transition-all group cursor-pointer hover:bg-(--surface-30)`}
-              aria-label="Search"
-              title="Search (Ctrl+K)"
-            >
-              <Search className={`text-(--wp-accent-fg) ${chromeGlyph}`} />
-            </button>
+          <button
+            data-trigger="search"
+            onClick={() => setSpotlightOpen(true)}
+            className={`flex items-center justify-center transition-all group cursor-pointer ${
+              windowsStyle ? 'w-9 h-9 rounded-lg' : 'w-10 h-10 rounded-lg'
+            } hover:bg-(--surface-30)`}
+            aria-label="Search"
+            title="Search (Ctrl+K)"
+          >
+            <Search className={`text-(--wp-accent-fg) ${windowsStyle ? 'w-5 h-5' : 'w-5 h-5'}`} />
+          </button>
 
             <div className={`w-[1px] bg-(--surface-30) ${windowsStyle ? 'h-5 mx-1.5' : 'h-6 mx-1.5'}`} />
           </div>

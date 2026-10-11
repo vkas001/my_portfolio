@@ -33,7 +33,7 @@ export default function AuthScreen() {
     setError(null);
     try {
       const me = await signIn(email.trim(), password);
-      toast.success(`Welcome back, ${me.name}`);
+      toast.success(me.isAdmin ? 'Signed in as admin' : `Signed in as ${me.name}`);
       pushNotification({
         title: 'Signed in',
         body: me.isAdmin ? `Welcome back, ${me.name}.` : `Signed in as ${me.name}.`,
@@ -49,9 +49,14 @@ export default function AuthScreen() {
   };
 
   const onSignOut = async () => {
-    await signOut();
-    pushNotification({ title: 'Signed out', body: 'Browsing as guest.' });
-    closeSelf();
+    try {
+      await signOut();
+      toast.success('Signed out');
+      pushNotification({ title: 'Signed out', body: 'Browsing as guest.' });
+      closeSelf();
+    } catch (err) {
+      toast.error(err instanceof Error ? err.message : 'Sign out failed. Try again.');
+    }
   };
 
   return (

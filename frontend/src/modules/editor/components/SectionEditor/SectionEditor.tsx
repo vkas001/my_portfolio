@@ -59,8 +59,48 @@ export default function SectionEditor<T extends BaseItem>({
     setError('');
     const ok = await scaffold.save(draft, creating);
     setSaving(false);
-    if (ok) cancel();
-    else setError('Could not save — check your input and try again.');
+    if (!ok) {
+      setError('Could not save — check your input and try again.');
+      return;
+    }
+    if (creating && scaffold.repeatPreset) {
+      // Rapid entry: stay in the form with a fresh draft (e.g. same
+      // category kept) instead of closing — type the next name and save.
+      const id = newId();
+      setDraft({ ...scaffold.emptyFor(id), ...scaffold.repeatPreset(draft), id });
+      setEditingId(id);
+      setError('');
+      return;
+    }
+    cancel();
+  };
+
+  /** Per-category + quick-add (skills): stamp the draft with the picked
+   *  category, save it, and stay in the form with a fresh draft preset to
+   *  the same category — rapid entry of several items in one category. */
+  const quickAddIn = async (category: string) => {
+    if (!draft || saving) return;
+    const stamped = scaffold.setCategory ? scaffold.setCategory(draft, category) : draft;
+    setDraft(stamped);
+    const problem = scaffold.validate(stamped);
+    if (problem) {
+      setError(problem);
+      return;
+    }
+    setSaving(true);
+    setError('');
+    const ok = await scaffold.save(stamped, creating);
+    setSaving(false);
+    if (!ok) {
+      setError('Could not save — check your input and try again.');
+      return;
+    }
+    const id = newId();
+    const preset = scaffold.presetCategory ? scaffold.presetCategory(category) : {};
+    setDraft({ ...scaffold.emptyFor(id), ...preset, id });
+    setEditingId(id);
+    setCreating(true);
+    setError('');
   };
 
   useEffect(() => {
@@ -89,7 +129,7 @@ export default function SectionEditor<T extends BaseItem>({
           <div className="flex items-center justify-end">
             <button className="btn-ghost text-xs !py-1" onClick={cancel} disabled={saving}>Cancel</button>
           </div>
-          {scaffold.renderFields(draft, patch)}
+          {scaffold.renderFields(draft, patch, { quickAddIn })}
           {error && <p className="text-xs" style={{ color: 'var(--error)' }}>{error}</p>}
         </div>
       ) : (

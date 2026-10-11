@@ -155,6 +155,8 @@ export default function WindowFrame({ win, children }: Props) {
     // window never collide with the bar (drag can still go behind it).
     const editorMin = APP_REGISTRY.find((a) => a.id === 'editor')?.minSize ?? { w: 420, h: 460 };
     const { left, right } = getDockRects(theme, editorMin);
+    // The editor always docks to the right half; its content window takes the
+    // left, regardless of where the content window happened to be sitting.
     const contentRect = left;
     const editorRect = right;
     updateWindowRect(win.id, contentRect);

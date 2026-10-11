@@ -1,9 +1,11 @@
 import { useMemo, useState } from 'react';
 import { useProjects } from '@/modules/projects';
+import { useContent } from '@/context/ContentContext';
 import { ExternalLink, Github, Star } from 'lucide-react';
 
 export default function ProjectsScreen() {
   const projects = useProjects();
+  const { loading } = useContent();
   const [category, setCategory] = useState<string>('all');
   const [expanded, setExpanded] = useState<string | null>(null);
 
@@ -72,7 +74,9 @@ export default function ProjectsScreen() {
           );
         })}
       </div>
-      {!projects.length && <p className="text-xs" style={{ color: 'var(--text-low)' }}>Loading projects…</p>}
+      {!loading && !projects.length && <p className="text-xs" style={{ color: 'var(--text-low)' }}>No projects yet — add some in the editor.</p>}
+      {!loading && !!projects.length && !filtered.length && <p className="text-xs" style={{ color: 'var(--text-low)' }}>No projects in this category.</p>}
+      {loading && !projects.length && <p className="text-xs" style={{ color: 'var(--text-low)' }}>Loading projects…</p>}
     </div>
   );
 }

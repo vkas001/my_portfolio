@@ -9,16 +9,20 @@ export default function DataTab({ theme, setTheme, resetTheme }: { theme: ThemeS
   const fileRef = useRef<HTMLInputElement>(null);
 
   const exportTheme = () => {
-    const blob = new Blob([JSON.stringify(theme, null, 2)], { type: 'application/json' });
-    const url = URL.createObjectURL(blob);
-    const link = document.createElement('a');
-    link.href = url;
-    link.download = 'portfolio-theme.json';
-    document.body.appendChild(link);
-    link.click();
-    document.body.removeChild(link);
-    URL.revokeObjectURL(url);
-    toast.success('Theme exported');
+    try {
+      const blob = new Blob([JSON.stringify(theme, null, 2)], { type: 'application/json' });
+      const url = URL.createObjectURL(blob);
+      const link = document.createElement('a');
+      link.href = url;
+      link.download = 'portfolio-theme.json';
+      document.body.appendChild(link);
+      link.click();
+      document.body.removeChild(link);
+      URL.revokeObjectURL(url);
+      toast.success('Theme exported');
+    } catch {
+      toast.error('Could not export theme');
+    }
   };
 
   const importTheme = (file: File) => {
@@ -30,12 +34,13 @@ export default function DataTab({ theme, setTheme, resetTheme }: { theme: ThemeS
           setTheme(parsed);
           toast.success('Theme imported');
         } else {
-          toast.error('Not a theme file');
+          toast.error('That file is not a valid theme export');
         }
       } catch {
-        toast.error('Not a theme file');
+        toast.error('That file is not valid JSON');
       }
     };
+    reader.onerror = () => toast.error('Could not read that file');
     reader.readAsText(file);
   };
 

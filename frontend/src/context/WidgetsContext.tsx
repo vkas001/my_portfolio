@@ -12,6 +12,7 @@ import { useTheme } from '@/context/ThemeContext';
 import { fitWidgetRect, followBoundsChange, getWorkspaceBounds, nextWidgetSlot, type ViewportBounds } from '@/lib/osLayout';
 import type { WidgetMeta, WidgetPlacement, WidgetVariant } from '@/types';
 import { sound } from '@/lib/sound';
+import toast from 'react-hot-toast';
 
 interface WidgetsContextValue {
   widgetMeta: Record<string, WidgetMeta>;
@@ -66,6 +67,7 @@ export function WidgetsProvider({ children }: { children: ReactNode }) {
         if (import.meta.env.DEV) {
           console.warn(`[os] addWidget: unknown widget "${id}" (metadata not registered yet)`);
         }
+        toast.error(`Could not add widget "${id}"`);
         return;
       }
       const variant = meta.defaultVariant;
@@ -78,17 +80,20 @@ export function WidgetsProvider({ children }: { children: ReactNode }) {
       const fitted = fitWidgetRect({ ...slot, w: size.w, h: size.h }, bounds);
       setTheme((prev) => ({ widgets: [...prev.widgets, { id, instance, ...fitted, variant }] }));
       sound.click();
+      toast.success(`${meta.name} added`);
     },
     [widgetMetaMap, setTheme],
   );
 
   const removeWidget = useCallback(
     (instance: string) => {
+      const meta = themeRef.current.widgets?.find((p) => p.instance === instance);
       variantRectsRef.current.delete(instance);
       setTheme((prev) => ({ widgets: prev.widgets.filter((p) => p.instance !== instance) }));
       sound.close();
+      toast.success(meta ? `${widgetMetaMap[meta.id]?.name ?? 'Widget'} removed` : 'Widget removed');
     },
-    [setTheme],
+    [widgetMetaMap, setTheme],
   );
 
   const updateWidgetPlacement = useCallback(

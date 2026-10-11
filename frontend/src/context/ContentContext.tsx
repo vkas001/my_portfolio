@@ -75,12 +75,15 @@ export function useContent(): ContentContextValue {
 // ─── Optimistic list helpers ──────────────────────────────────────────────────
 
 /** Apply an optimistic list change; on API failure roll back to the snapshot
- *  taken before the change and surface a toast. Returns true on success. */
+ *  and surface a toast, on success surface a confirmation toast. Returns true
+ *  on success. */
 async function persistList<T extends AnyItem>(
   snapshot: T[],
   optimistic: T[],
   applyList: (l: T[] | ((cur: T[]) => T[])) => void,
   note: (msg: string) => void,
+  ok: (msg: string) => void,
+  okMsg: string,
   request: () => Promise<T>,
   successMsg?: string,
 ): Promise<boolean> {
@@ -88,7 +91,7 @@ async function persistList<T extends AnyItem>(
   try {
     const saved = await request();
     applyList((cur) => cur.map((it) => (it.id === saved.id ? { ...it, ...saved } : it)));
-    if (successMsg) toast.success(successMsg);
+    ok(okMsg);
     return true;
   } catch (err) {
     applyList(snapshot);
@@ -102,13 +105,15 @@ async function deleteFromList<T extends AnyItem>(
   optimistic: T[],
   applyList: (l: T[] | ((cur: T[]) => T[])) => void,
   note: (msg: string) => void,
+  ok: (msg: string) => void,
+  okMsg: string,
   request: () => Promise<unknown>,
   successMsg?: string,
 ): Promise<boolean> {
   applyList(optimistic);
   try {
     await request();
-    if (successMsg) toast.success(successMsg);
+    ok(okMsg);
     return true;
   } catch (err) {
     applyList(snapshot);
@@ -154,6 +159,9 @@ export function ContentProvider({ children }: { children: ReactNode }) {
     },
     [pushNotification],
   );
+  const ok = useCallback((msg: string) => {
+    toast.success(msg);
+  }, []);
 
   const [profile, setProfile] = useState<Profile | null>(null);
   const [loading, setLoading] = useState(true);
@@ -198,7 +206,7 @@ export function ContentProvider({ children }: { children: ReactNode }) {
       if (!prev) {
         try {
           setProfile(await adminService.updateProfile(input));
-          toast.success('Profile saved');
+          ok('Profile saved');
           return true;
         } catch (err) {
           note(err instanceof Error ? err.message : 'Could not save profile');
@@ -234,7 +242,7 @@ export function ContentProvider({ children }: { children: ReactNode }) {
       try {
         const saved = await adminService.updateProfile(input);
         setProfile(saved);
-        toast.success('Profile saved');
+        ok('Profile saved');
         return true;
       } catch (err) {
         setProfile(prev);
@@ -242,18 +250,27 @@ export function ContentProvider({ children }: { children: ReactNode }) {
         return false;
       }
     },
-    [profile, note],
+    [profile, note, ok],
   );
 
   // ─── Avatar upload ────────────────────────────────────────────────────────
   // Rejects on failure so the caller can surface the server's message.
   const uploadAvatar = useCallback(
     async (file: File): Promise<boolean> => {
-      setProfile(await adminService.uploadAvatar(file));
-      toast.success('Profile picture updated');
-      return true;
+      try {
+        const saved = await adminService.uploadAvatar(file);
+        invalidate('/profile');
+        setProfile(saved);
+        ok('Avatar updated');
+        return true;
+      } catch (err) {
+        // Also surfaced as an inline error by the caller; keep it as a toast so
+        // the failed action is visible even if the editor pane is scrolled away.
+        note(err instanceof Error ? err.message : 'Could not upload avatar');
+        throw err;
+      }
     },
-    [],
+    [note, ok],
   );
 
   // ─── Generic save/delete for item sections ─────────────────────────────────
@@ -271,9 +288,9 @@ export function ContentProvider({ children }: { children: ReactNode }) {
       const optimistic = isNew
         ? sortByOrder([...sorted, value])
         : sorted.map((it) => (idOf(it) === idOf(value) ? { ...it, ...value } : it));
-      return persistList(sorted, optimistic, apply, note, request, successMsg);
+      return persistList(sorted, optimistic, apply, note, ok, isNew ? 'Added' : 'Saved', request);
     },
-    [note],
+    [note, ok],
   );
 
   const deleteItem = useCallback(
@@ -286,9 +303,9 @@ export function ContentProvider({ children }: { children: ReactNode }) {
     ) => {
       const sorted = sortByOrder(items);
       const optimistic = sorted.filter((it) => it.id !== id);
-      return deleteFromList(sorted, optimistic, apply, note, request, successMsg);
+      return deleteFromList(sorted, optimistic, apply, note, ok, 'Deleted', request);
     },
-    [note],
+    [note, ok],
   );
 
   const saveSkill = useCallback(
@@ -476,10 +493,18 @@ export function ContentProvider({ children }: { children: ReactNode }) {
       next[idx] = { ...a, order: b.order };
       next[j] = { ...b, order: a.order };
       apply(next);
-      void updater(a.id, { ...a, order: b.order });
-      void updater(b.id, { ...b, order: a.order });
+      try {
+        await Promise.all([
+          updater(a.id, { ...a, order: b.order }),
+          updater(b.id, { ...b, order: a.order }),
+        ]);
+        ok('Reordered');
+      } catch (err) {
+        apply(items);
+        note(err instanceof Error ? err.message : 'Could not reorder');
+      }
     },
-    [],
+    [note, ok],
   );
 
   const moveItem = useCallback(

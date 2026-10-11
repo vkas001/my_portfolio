@@ -6,7 +6,7 @@ export interface Profile {
   bio: string;
   shortBio: string;
   /** Scannable "what I'm good at" bullets (full-ownership/focus highlights). */
-  strengths: string[];
+  strengths: Strength[];
   /** Short personal note — location, interests, what you're exploring now. */
   personalNote: string;
   /** Availability badge text shown next to location (empty = hidden). */
@@ -32,6 +32,13 @@ export interface SocialLink {
   label: string;
   url: string;
   icon: 'github' | 'linkedin' | 'twitter' | 'website' | 'email';
+}
+
+/** One "what I'm good at" bullet — free text plus a Lucide icon name
+ *  (frontend SECTION_ICONS allowlist, mirrored by the backend). */
+export interface Strength {
+  text: string;
+  icon: string;
 }
 
 // ─── Skills ─────────────────────────────────────────────────────────────────
@@ -153,7 +160,7 @@ export interface ProfileInput {
   title: string;
   shortBio: string;
   bio: string;
-  strengths?: string[];
+  strengths?: Strength[];
   personalNote?: string;
   openToWork?: string;
   strengthsTitle?: string;

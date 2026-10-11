@@ -92,6 +92,8 @@ export function WindowsProvider({ children }: { children: ReactNode }) {
   const lastSpanRef = useRef<WindowAnchorSpan>(anchorSpans(theme));
   const themeRef = useRef(theme);
   themeRef.current = theme;
+  const windowsRef = useRef(windows);
+  windowsRef.current = windows;
 
   // Window z lives in [Z_BASE, Z_TASKBAR) so tabs — maximized or not — can
   // never cover the taskbar (z-80). ibiz_v2 parity: displayZ = 40 + min(z,12).
@@ -189,25 +191,38 @@ export function WindowsProvider({ children }: { children: ReactNode }) {
   );
 
   const closeWindow = useCallback((id: string) => {
-    setWindows((ws) => {
-      const closing = ws.find((w) => w.id === id);
-      // Closing a docked editor restores the content window it was tiled
-      // alongside back to its original size/position.
-      const dock = closing?.appId === 'editor' ? closing.data?.dock : undefined;
-      const next = dock
-        ? ws.map((w) => {
-            if (w.id !== dock.contentId || w.maximized || w.isFullScreen) return w;
-            const app = APP_REGISTRY.find((a) => a.id === w.appId);
-            const fit = fitRectInBounds(dock.rect, lastBoundsRef.current, {
-              w: app?.minSize?.w ?? 0,
-              h: app?.minSize?.h ?? 0,
-            });
-            return { ...w, ...fit, clampSource: undefined };
-          })
-        : ws;
-      return next.filter((w) => w.id !== id);
-    });
-    setFocusedId((f) => (f === id ? null : f));
+    const all = windowsRef.current;
+    const closing = all.find((w) => w.id === id);
+    if (!closing) return;
+
+    // Windows removed by this close: the target itself, plus any editor docked
+    // to it. Closing the content window an editor is tiled alongside closes the
+    // editor too, so it is never left idle in an empty half.
+    const remove = new Set<string>([id]);
+    if (closing.appId !== 'editor') {
+      for (const w of all) {
+        if (w.appId === 'editor' && w.data?.dock?.contentId === id) remove.add(w.id);
+      }
+    }
+
+    // Closing a docked editor restores the content window it was tiled
+    // alongside back to its original size/position.
+    const dock = closing.appId === 'editor' ? closing.data?.dock : undefined;
+
+    setWindows((ws) =>
+      ws
+        .filter((w) => !remove.has(w.id))
+        .map((w) => {
+          if (!dock || w.id !== dock.contentId || w.maximized || w.isFullScreen) return w;
+          const app = APP_REGISTRY.find((a) => a.id === w.appId);
+          const fit = fitRectInBounds(dock.rect, lastBoundsRef.current, {
+            w: app?.minSize?.w ?? 0,
+            h: app?.minSize?.h ?? 0,
+          });
+          return { ...w, ...fit, clampSource: undefined };
+        }),
+    );
+    setFocusedId((f) => (f && remove.has(f) ? null : f));
     sound.close();
   }, []);
 

@@ -24,6 +24,7 @@ import { fitRectInBounds, getWorkspaceBounds } from '@/lib/osLayout';
 import { themeService } from '@/lib/api/themeService';
 import { sound } from '@/lib/sound';
 import { setForcedOffline } from '@/lib/network';
+import toast from 'react-hot-toast';
 
 /** Functional or partial theme patch. Widgets keep placements synced through
  *  `theme.widgets`, so the updater form lets complex consumers compute against
@@ -84,7 +85,10 @@ export function ThemeProvider({ children }: { children: ReactNode }) {
     if (!hydratedRef.current || !isAdmin) return;
     window.clearTimeout(saveTimer.current);
     saveTimer.current = window.setTimeout(() => {
-      void themeService.save(theme);
+      void themeService.save(theme).catch(() => {
+        // A stable id keeps a flapping server from stacking identical toasts.
+        toast.error('Could not sync theme to the server', { id: 'theme-sync' });
+      });
     }, 800);
     return () => window.clearTimeout(saveTimer.current);
   }, [theme, themeKey, isAdmin]);
@@ -161,7 +165,14 @@ export function ThemeProvider({ children }: { children: ReactNode }) {
   const resetTheme = useCallback(() => {
     setThemeState({ ...DEFAULT_THEME });
     // Guests reset their local theme only; only an admin clears the server row.
-    if (isAdmin) void themeService.reset();
+    if (isAdmin) {
+      themeService.reset().then(
+        () => toast.success('Theme reset to defaults'),
+        () => toast.error('Reset locally, but could not sync to the server'),
+      );
+    } else {
+      toast.success('Theme reset to defaults');
+    }
   }, [isAdmin]);
 
   const value = useMemo<ThemeContextValue>(

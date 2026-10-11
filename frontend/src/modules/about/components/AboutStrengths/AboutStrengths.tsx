@@ -1,6 +1,5 @@
 import type { Profile } from '@/modules/about';
 import { sectionIcon } from '@/modules/about';
-import { Star } from 'lucide-react';
 
 export default function AboutStrengths({ profile }: { profile: Profile }) {
   const hasStrengths = profile.strengths.length > 0;
@@ -17,18 +16,23 @@ export default function AboutStrengths({ profile }: { profile: Profile }) {
 
       {hasStrengths && (
         <div className="grid grid-cols-12 gap-2">
-          {profile.strengths.map((strength) => (
-            <div
-              key={strength}
-              className="col-span-12 @md:col-span-6 @2xl:col-span-4 flex items-start gap-2 rounded-xl p-3 @2xl:p-4"
-              style={{ background: 'var(--accent-soft)' }}
-            >
-              <Star size={13} className="shrink-0 mt-0.5 @2xl:mt-1" style={{ color: 'var(--accent)' }} />
-              <p className="text-xs leading-relaxed font-medium @2xl:text-sm" style={{ color: 'var(--text-hi)' }}>
-                {strength}
-              </p>
-            </div>
-          ))}
+          {profile.strengths.map((strength, i) => {
+            const ItemIcon = sectionIcon(strength.icon);
+            return (
+              <div
+                key={i}
+                className="col-span-12 @md:col-span-6 @2xl:col-span-4 flex items-start gap-2 rounded-xl p-3 @2xl:p-4"
+                style={{ background: 'var(--accent-soft)' }}
+              >
+                {ItemIcon ? (
+                  <ItemIcon size={13} className="shrink-0 mt-0.5 @2xl:mt-1" style={{ color: 'var(--accent)' }} />
+                ) : null}
+                <p className="text-xs leading-relaxed font-medium @2xl:text-sm" style={{ color: 'var(--text-hi)' }}>
+                  {strength.text}
+                </p>
+              </div>
+            );
+          })}
         </div>
       )}
 

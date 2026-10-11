@@ -67,6 +67,8 @@ export default function EditorScreen({ data, windowId }: { data?: WindowData; wi
     // The editor always keeps the right half (content always left) so
     // switching sections never flings the pair across the screen.
     const wasMaximized = my.maximized;
+    // The editor always docks to the right half; the content app takes the left,
+    // regardless of where the editor was sitting when it was maximized/centred.
     const editorRect = right;
     const contentRect = left;
     if (wasMaximized) toggleMaximize(my.id);

@@ -1,11 +1,16 @@
 import { useMemo } from 'react';
 import { useHobbies } from '@/modules/hobbies';
+import { useContent } from '@/context/ContentContext';
 import { hobbyIcon } from '@/modules/hobbies';
 
 export default function HobbiesScreen() {
   const hobbies = useHobbies();
+  const { loading } = useContent();
   const items = useMemo(() => [...hobbies].sort((a, b) => a.order - b.order), [hobbies]);
 
+  if (loading && !items.length) {
+    return <p className="text-xs" style={{ color: 'var(--text-low)' }}>Loading hobbies…</p>;
+  }
   if (!items.length) {
     return <p className="text-xs" style={{ color: 'var(--text-low)' }}>No hobbies yet — add some in the editor.</p>;
   }
