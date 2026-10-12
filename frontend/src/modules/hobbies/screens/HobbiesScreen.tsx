@@ -20,7 +20,7 @@ export default function HobbiesScreen() {
       {items.map((h) => {
         const Icon = hobbyIcon(h.icon);
         return (
-          <div key={h.id} className="col-span-12 p-3 rounded-[var(--radius)] border" style={{ background: 'var(--bg-elev)', borderColor: 'var(--border)' }}>
+          <div key={h.id} className="col-span-12 p-3 rounded-[var(--radius)] border transition-transform duration-150 hover:-translate-y-0.5" style={{ background: 'var(--bg-elev)', borderColor: 'var(--border)' }}>
             <div className="flex items-start gap-2.5">
               <span
                 className="w-7 h-7 rounded-lg flex items-center justify-center shrink-0"

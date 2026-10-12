@@ -1,4 +1,4 @@
-import { useMemo, useRef, useState } from 'react';
+import { useEffect, useMemo, useRef, useState } from 'react';
 import { useTheme } from '@/context/ThemeContext';
 import { useWindows } from '@/context/WindowsContext';
 import { getDockRects } from '@/lib/osLayout';
@@ -15,7 +15,7 @@ import type { SaveBridge } from '@/modules/editor/lib/scaffolding';
 
 export default function EditorScreen({ data, windowId }: { data?: WindowData; windowId?: string }) {
   const { theme } = useTheme();
-  const { windows, focusedId, launchApp, focusWindow, toggleMaximize, updateWindowRect, updateWindowData } = useWindows();
+  const { windows, focusedId, launchApp, focusWindow, restoreWindow, toggleMaximize, updateWindowRect, updateWindowData } = useWindows();
   const [section, setSection] = useState<EditorSection>(data?.section ?? 'profile');
   const commitRef = useRef<(() => void) | null>(null);
   const [saveState, setSaveState] = useState({ canSave: false, saving: false });
@@ -28,6 +28,79 @@ export default function EditorScreen({ data, windowId }: { data?: WindowData; wi
     }
   }, []);
   const bridge: SaveBridge = { commitRef, reportSave };
+  // Single-line pill strip: a mouse wheel sends vertical deltas, so translate
+  // them into horizontal scrolling. Native non-passive listener — React's
+  // onWheel is passive at the root and can't preventDefault. Trackpad
+  // horizontal gestures (deltaX-dominant) and edge overscroll are left alone.
+  const stripRef = useRef<HTMLDivElement>(null);
+  useEffect(() => {
+    const el = stripRef.current;
+    if (!el) return;
+    const onWheel = (e: WheelEvent) => {
+      if (Math.abs(e.deltaX) > Math.abs(e.deltaY)) return;
+      const max = el.scrollWidth - el.clientWidth;
+      if (max <= 0) return;
+      const atStart = el.scrollLeft <= 0;
+      const atEnd = el.scrollLeft >= max - 1;
+      if ((e.deltaY > 0 && atEnd) || (e.deltaY < 0 && atStart)) return;
+      e.preventDefault();
+      el.scrollLeft += e.deltaY;
+    };
+    el.addEventListener('wheel', onWheel, { passive: false });
+
+    // Mouse drag-to-scroll (touch/pen keep native overflow scrolling).
+    // A small threshold keeps plain clicks untouched; a real drag suppresses
+    // the click that follows so a swipe never activates a pill.
+    let down = false;
+    let dragging = false;
+    let suppressClick = false;
+    let startX = 0;
+    let startScroll = 0;
+    const onPointerDown = (e: PointerEvent) => {
+      if (e.pointerType !== 'mouse' || e.button !== 0) return;
+      down = true;
+      dragging = false;
+      startX = e.clientX;
+      startScroll = el.scrollLeft;
+    };
+    const onPointerMove = (e: PointerEvent) => {
+      if (!down || e.pointerType !== 'mouse') return;
+      if (!dragging) {
+        if (Math.abs(e.clientX - startX) <= 6) return;
+        if (el.scrollWidth - el.clientWidth <= 0) return;
+        dragging = true;
+        try { el.setPointerCapture(e.pointerId); } catch { /* noop */ }
+        el.style.cursor = 'grabbing';
+      }
+      el.scrollLeft = startScroll - (e.clientX - startX);
+    };
+    const endDrag = (e: PointerEvent) => {
+      if (e.pointerType !== 'mouse') return;
+      if (dragging) suppressClick = true;
+      down = false;
+      dragging = false;
+      el.style.cursor = '';
+    };
+    const onClickCapture = (e: MouseEvent) => {
+      if (!suppressClick) return;
+      suppressClick = false;
+      e.preventDefault();
+      e.stopPropagation();
+    };
+    el.addEventListener('pointerdown', onPointerDown);
+    el.addEventListener('pointermove', onPointerMove);
+    el.addEventListener('pointerup', endDrag);
+    el.addEventListener('pointercancel', endDrag);
+    el.addEventListener('click', onClickCapture, true);
+    return () => {
+      el.removeEventListener('wheel', onWheel);
+      el.removeEventListener('pointerdown', onPointerDown);
+      el.removeEventListener('pointermove', onPointerMove);
+      el.removeEventListener('pointerup', endDrag);
+      el.removeEventListener('pointercancel', endDrag);
+      el.removeEventListener('click', onClickCapture, true);
+    };
+  }, []);
 
   // The editor window driving this screen. Prefer the window that actually
   // mounts this instance (windowId), then the focused editor — focus is
@@ -74,11 +147,15 @@ export default function EditorScreen({ data, windowId }: { data?: WindowData; wi
     if (wasMaximized) toggleMaximize(my.id);
     updateWindowRect(my.id, editorRect);
 
-    // Open (or focus + retile) the app on the other half.
+    // Open (or focus + retile) the app on the other half. A reused window
+    // must be raised above any previously docked content windows piled in
+    // the same half — otherwise only the editor section changes while the
+    // stale window stays visible on the left.
     const existing = windows.find((w) => w.appId === appId);
     let contentId: string | undefined;
     if (existing) {
       updateWindowRect(existing.id, contentRect);
+      restoreWindow(existing.id);
       contentId = existing.id;
     } else {
       contentId = launchApp(appId, { rect: contentRect });
@@ -103,13 +180,13 @@ export default function EditorScreen({ data, windowId }: { data?: WindowData; wi
 
   return (
     <div className="relative flex flex-col h-full gap-3">
-      <div className="flex flex-wrap gap-1.5">
+      <div ref={stripRef} className="flex flex-nowrap items-center gap-1.5 overflow-x-auto no-scrollbar cursor-grab select-none">
         {selectableApps.map(({ app, section: s }) => {
           const active = s !== null && s === section;
           return (
             <button
               key={app.id}
-              className={`chip cursor-pointer !py-1.5 !px-2.5 text-[11px] flex items-center gap-1.5 ${active ? '!bg-[var(--accent)] !text-[var(--accent-text-on)]' : ''}`}
+              className={`chip cursor-pointer !py-1.5 !px-2.5 text-[11px] flex shrink-0 items-center gap-1.5 ${active ? '!bg-[var(--accent)] !text-[var(--accent-text-on)]' : ''}`}
               onClick={() => chooseApp(app.id, s)}
               title={s ? `Edit ${app.name} content` : `Open ${app.name} alongside`}
               style={active ? undefined : { color: app.color }}

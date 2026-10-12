@@ -37,6 +37,7 @@ export default function ProjectFields({
             value={d.category}
             onChange={(v) => set({ category: v })}
             options={categoryOptions}
+            labelOf={(c) => c.toUpperCase()}
             hint="Type a new one, or pick an existing one from the list."
           />
         </div>

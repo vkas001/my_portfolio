@@ -349,7 +349,10 @@ export function ContentProvider({ children }: { children: ReactNode }) {
   const saveProject = useCallback(
     (value: Project, isNew: boolean) => {
       const input: ProjectInput = {
-        ...(isNew ? { id: value.id } : {}),
+        // New rows carry the local "sort last" sentinel (Number.MAX_SAFE_INTEGER),
+        // which MySQL unsigned int can't hold — omit it on create so the
+        // backend assigns max(order)+1. Updates always carry real DB values.
+        ...(isNew ? { id: value.id } : { order: value.order }),
         title: value.title,
         description: value.description,
         longDescription: value.longDescription,
@@ -360,7 +363,6 @@ export function ContentProvider({ children }: { children: ReactNode }) {
         githubUrl: value.githubUrl,
         imageUrl: value.imageUrl,
         year: value.year,
-        order: value.order,
       };
       return saveItem(
         projects.items,
@@ -383,7 +385,7 @@ export function ContentProvider({ children }: { children: ReactNode }) {
   const saveExperience = useCallback(
     (value: Experience, isNew: boolean) => {
       const input: ExperienceInput = {
-        ...(isNew ? { id: value.id } : {}),
+        ...(isNew ? { id: value.id } : { order: value.order }),
         company: value.company,
         role: value.role,
         startDate: value.startDate,
@@ -392,7 +394,6 @@ export function ContentProvider({ children }: { children: ReactNode }) {
         employmentType: value.employmentType,
         highlights: value.highlights,
         techStack: value.techStack,
-        order: value.order,
       };
       return saveItem(
         experience.items,
@@ -418,13 +419,12 @@ export function ContentProvider({ children }: { children: ReactNode }) {
   const saveEducation = useCallback(
     (value: Education, isNew: boolean) => {
       const input: EducationInput = {
-        ...(isNew ? { id: value.id } : {}),
+        ...(isNew ? { id: value.id } : { order: value.order }),
         institution: value.institution,
         degree: value.degree,
         startDate: value.startDate,
         endDate: value.endDate,
         description: value.description,
-        order: value.order,
       };
       return saveItem(
         education.items,
@@ -450,11 +450,10 @@ export function ContentProvider({ children }: { children: ReactNode }) {
   const saveHobby = useCallback(
     (value: Hobby, isNew: boolean) => {
       const input: HobbyInput = {
-        ...(isNew ? { id: value.id } : {}),
+        ...(isNew ? { id: value.id } : { order: value.order }),
         name: value.name,
         icon: value.icon,
         description: value.description,
-        order: value.order,
       };
       return saveItem(
         hobbies.items,

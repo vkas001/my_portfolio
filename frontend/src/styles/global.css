@@ -80,6 +80,11 @@ button { font-family: inherit; }
 }
 *::-webkit-scrollbar-thumb:hover { background: rgba(var(--accent-rgb), .4); }
 
+/* Single-line scroll strips (e.g. editor section pills): scrollable but
+ * without a visible scrollbar. */
+.no-scrollbar { scrollbar-width: none; -ms-overflow-style: none; }
+.no-scrollbar::-webkit-scrollbar { display: none; }
+
 /* ═══ Glass surfaces ═══════════════════════════════════════════════════════ */
 .glass-surface {
   background: rgba(30, 41, 59, calc(var(--glass-a) + .35));
@@ -565,9 +570,9 @@ button { font-family: inherit; }
   color: var(--accent-text-on);
   font-weight: 600;
   cursor: pointer;
-  transition: filter .15s ease, transform .1s ease;
+  transition: filter .15s ease, transform .1s ease, translate .15s ease;
 }
-.btn-accent:hover { filter: brightness(1.1); }
+.btn-accent:hover { filter: brightness(1.1); translate: 0 -2px; }
 .btn-accent:active { transform: scale(.97); }
 
 .btn-ghost {
@@ -580,9 +585,9 @@ button { font-family: inherit; }
   color: var(--text-hi);
   border: 1px solid var(--border);
   cursor: pointer;
-  transition: background .15s ease;
+  transition: background .15s ease, translate .15s ease;
 }
-.btn-ghost:hover { background: rgba(var(--accent-rgb), .1); }
+.btn-ghost:hover { background: rgba(var(--accent-rgb), .1); translate: 0 -2px; }
 
 /* Base form controls live in @layer base: Tailwind v4 emits utilities in a
    higher-priority layer, so unlayered element rules here would beat utility
