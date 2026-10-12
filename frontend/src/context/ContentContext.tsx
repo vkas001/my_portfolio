@@ -74,27 +74,41 @@ export function useContent(): ContentContextValue {
 
 // ─── Optimistic list helpers ──────────────────────────────────────────────────
 
-/** Apply an optimistic list change; on API failure roll back to the snapshot
- *  and surface a toast, on success surface a confirmation toast. Returns true
- *  on success. */
+/** Apply an optimistic list change; on API failure roll back and surface a
+ *  toast, on success surface a confirmation toast. Returns true on success.
+ *  Every write is a functional upsert against CURRENT state (never a stale
+ *  wholesale replace), so back-to-back saves in one batch can't clobber each
+ *  other's rows — and a failure rolls back only its own row. */
 async function persistList<T extends AnyItem>(
   snapshot: T[],
-  optimistic: T[],
+  value: T,
+  isNew: boolean,
   applyList: (l: T[] | ((cur: T[]) => T[])) => void,
   note: (msg: string) => void,
   ok: (msg: string) => void,
   okMsg: string,
   request: () => Promise<T>,
-  successMsg?: string,
+  idOf: (v: T) => string,
 ): Promise<boolean> {
-  applyList(optimistic);
+  applyList((cur) =>
+    sortByOrder(
+      isNew
+        ? [...cur.filter((it) => idOf(it) !== idOf(value)), value]
+        : cur.map((it) => (idOf(it) === idOf(value) ? { ...it, ...value } : it)),
+    ),
+  );
   try {
     const saved = await request();
     applyList((cur) => cur.map((it) => (it.id === saved.id ? { ...it, ...saved } : it)));
     ok(okMsg);
     return true;
   } catch (err) {
-    applyList(snapshot);
+    const prev = snapshot.find((it) => idOf(it) === idOf(value));
+    applyList((cur) =>
+      isNew || !prev
+        ? cur.filter((it) => idOf(it) !== idOf(value))
+        : cur.map((it) => (idOf(it) === idOf(value) ? prev : it)),
+    );
     note(err instanceof Error ? err.message : 'Could not save');
     return false;
   }
@@ -102,21 +116,23 @@ async function persistList<T extends AnyItem>(
 
 async function deleteFromList<T extends AnyItem>(
   snapshot: T[],
-  optimistic: T[],
+  id: string,
   applyList: (l: T[] | ((cur: T[]) => T[])) => void,
   note: (msg: string) => void,
   ok: (msg: string) => void,
   okMsg: string,
   request: () => Promise<unknown>,
-  successMsg?: string,
 ): Promise<boolean> {
-  applyList(optimistic);
+  applyList((cur) => cur.filter((it) => it.id !== id));
   try {
     await request();
     ok(okMsg);
     return true;
   } catch (err) {
-    applyList(snapshot);
+    const prev = snapshot.find((it) => it.id === id);
+    applyList((cur) =>
+      prev && !cur.some((it) => it.id === id) ? sortByOrder([...cur, prev]) : cur,
+    );
     note(err instanceof Error ? err.message : 'Could not delete');
     return false;
   }
@@ -282,13 +298,9 @@ export function ContentProvider({ children }: { children: ReactNode }) {
       isNew: boolean,
       request: () => Promise<T>,
       idOf: (v: T) => string,
-      successMsg: string,
     ) => {
       const sorted = sortByOrder(items);
-      const optimistic = isNew
-        ? sortByOrder([...sorted, value])
-        : sorted.map((it) => (idOf(it) === idOf(value) ? { ...it, ...value } : it));
-      return persistList(sorted, optimistic, apply, note, ok, isNew ? 'Added' : 'Saved', request);
+      return persistList(sorted, value, isNew, apply, note, ok, isNew ? 'Added' : 'Saved', request, idOf);
     },
     [note, ok],
   );
@@ -299,11 +311,9 @@ export function ContentProvider({ children }: { children: ReactNode }) {
       apply: (l: T[] | ((cur: T[]) => T[])) => void,
       id: string,
       request: () => Promise<unknown>,
-      successMsg: string,
     ) => {
       const sorted = sortByOrder(items);
-      const optimistic = sorted.filter((it) => it.id !== id);
-      return deleteFromList(sorted, optimistic, apply, note, ok, 'Deleted', request);
+      return deleteFromList(sorted, id, apply, note, ok, 'Deleted', request);
     },
     [note, ok],
   );
@@ -325,7 +335,6 @@ export function ContentProvider({ children }: { children: ReactNode }) {
         isNew,
         () => (isNew ? adminService.storeSkill(input) : adminService.updateSkill(value.id, input)),
         (s) => s.id,
-        isNew ? 'Skill added' : 'Skill saved',
       );
     },
     [skills.items, skills.set, saveItem],
@@ -333,7 +342,7 @@ export function ContentProvider({ children }: { children: ReactNode }) {
 
   const deleteSkill = useCallback(
     (id: string) =>
-      deleteItem(skills.items, skills.set, id, () => adminService.deleteSkill(id), 'Skill deleted'),
+      deleteItem(skills.items, skills.set, id, () => adminService.deleteSkill(id)),
     [skills.items, skills.set, deleteItem],
   );
 
@@ -360,7 +369,6 @@ export function ContentProvider({ children }: { children: ReactNode }) {
         isNew,
         () => (isNew ? adminService.storeProject(input) : adminService.updateProject(value.id, input)),
         (p) => p.id,
-        isNew ? 'Project added' : 'Project saved',
       );
     },
     [projects.items, projects.set, saveItem],
@@ -368,7 +376,7 @@ export function ContentProvider({ children }: { children: ReactNode }) {
 
   const deleteProject = useCallback(
     (id: string) =>
-      deleteItem(projects.items, projects.set, id, () => adminService.deleteProject(id), 'Project deleted'),
+      deleteItem(projects.items, projects.set, id, () => adminService.deleteProject(id)),
     [projects.items, projects.set, deleteItem],
   );
 
@@ -396,7 +404,6 @@ export function ContentProvider({ children }: { children: ReactNode }) {
             ? adminService.storeExperience(input)
             : adminService.updateExperience(value.id, input),
         (x) => x.id,
-        isNew ? 'Experience added' : 'Experience saved',
       );
     },
     [experience.items, experience.set, saveItem],
@@ -404,7 +411,7 @@ export function ContentProvider({ children }: { children: ReactNode }) {
 
   const deleteExperience = useCallback(
     (id: string) =>
-      deleteItem(experience.items, experience.set, id, () => adminService.deleteExperience(id), 'Experience deleted'),
+      deleteItem(experience.items, experience.set, id, () => adminService.deleteExperience(id)),
     [experience.items, experience.set, deleteItem],
   );
 
@@ -429,7 +436,6 @@ export function ContentProvider({ children }: { children: ReactNode }) {
             ? adminService.storeEducation(input)
             : adminService.updateEducation(value.id, input),
         (x) => x.id,
-        isNew ? 'Education added' : 'Education saved',
       );
     },
     [education.items, education.set, saveItem],
@@ -437,7 +443,7 @@ export function ContentProvider({ children }: { children: ReactNode }) {
 
   const deleteEducation = useCallback(
     (id: string) =>
-      deleteItem(education.items, education.set, id, () => adminService.deleteEducation(id), 'Education deleted'),
+      deleteItem(education.items, education.set, id, () => adminService.deleteEducation(id)),
     [education.items, education.set, deleteItem],
   );
 
@@ -460,7 +466,6 @@ export function ContentProvider({ children }: { children: ReactNode }) {
             ? adminService.storeHobby(input)
             : adminService.updateHobby(value.id, input),
         (x) => x.id,
-        isNew ? 'Hobby added' : 'Hobby saved',
       );
     },
     [hobbies.items, hobbies.set, saveItem],
@@ -468,7 +473,7 @@ export function ContentProvider({ children }: { children: ReactNode }) {
 
   const deleteHobby = useCallback(
     (id: string) =>
-      deleteItem(hobbies.items, hobbies.set, id, () => adminService.deleteHobby(id), 'Hobby deleted'),
+      deleteItem(hobbies.items, hobbies.set, id, () => adminService.deleteHobby(id)),
     [hobbies.items, hobbies.set, deleteItem],
   );
 

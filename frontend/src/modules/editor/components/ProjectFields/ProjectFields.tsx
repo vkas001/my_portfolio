@@ -2,6 +2,7 @@ import { useMemo } from 'react';
 import type { Project } from '@shared/types';
 import Field from '@/modules/editor/components/Field/Field';
 import Input from '@/components/ui/Input/Input';
+import NumberInput from '@/components/ui/NumberInput/NumberInput';
 import TextArea from '@/components/ui/TextArea/TextArea';
 import StringListInput from '@/modules/editor/components/StringListInput/StringListInput';
 import CategoryField from '@/modules/editor/components/CategoryField/CategoryField';
@@ -42,7 +43,7 @@ export default function ProjectFields({
       </div>
       <div className="grid grid-cols-12 gap-3">
         <div className="col-span-6">
-          <Input label="Year" type="number" min={1990} max={2100} value={d.year} onChange={(e) => set({ year: Number(e.target.value) })} />
+          <NumberInput key={`${d.id}-year`} label="Year" min={1990} max={2100} value={d.year} placeholder="2025" onCommit={(v) => set({ year: v })} />
         </div>
         <div className="col-span-6 flex items-end pb-1">
           <label className="flex items-center gap-2 text-xs cursor-pointer" style={{ color: 'var(--text-mid)' }}>

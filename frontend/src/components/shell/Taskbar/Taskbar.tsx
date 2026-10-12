@@ -103,7 +103,7 @@ const ConnectionDot: React.FC<{ online: boolean }> = ({ online }) => {
 const Taskbar = memo(function Taskbar() {
   const { theme } = useTheme();
     const { windows, focusedId, launchApp, focusWindow, restoreWindow, minimizeWindow } = useWindows();
-    const { startMenuOpen, setStartMenuOpen, setSpotlightOpen, widgetsOpen, setWidgetsOpen, taskbarVisible, setTaskbarVisible } = useShellUI();
+    const { startMenuOpen, setStartMenuOpen, spotlightOpen, setSpotlightOpen, widgetsOpen, setWidgetsOpen, taskbarVisible, setTaskbarVisible } = useShellUI();
   const windowsStyle = theme.taskbarStyle === 'windows';
   const [currentTime, setCurrentTime] = useState<string>('');
   const [currentDate, setCurrentDate] = useState<string>('');
@@ -211,6 +211,8 @@ const Taskbar = memo(function Taskbar() {
 
 const [isTrayOpen, setIsTrayOpen] = useState(false);
   const trayRef = useRef<HTMLDivElement>(null);
+  // Press-time spotlight state for the toggle latch (see the Search button).
+  const spotWasOpenRef = useRef(false);
 
   useEffect(() => {
     if (!isTrayOpen) return;
@@ -334,14 +336,18 @@ const [isTrayOpen, setIsTrayOpen] = useState(false);
 
           <button
             data-trigger="search"
-            onClick={() => setSpotlightOpen(true)}
-            className={`flex items-center justify-center transition-all group cursor-pointer ${
-              windowsStyle ? 'w-9 h-9 rounded-lg' : 'w-10 h-10 rounded-lg'
-            } hover:bg-(--surface-30)`}
+            onClick={() => setSpotlightOpen(!spotWasOpenRef.current)}
+            // Latch open-state at press time: when open, the press lands on
+            // the dim backdrop (closing it) and the release click lands on
+            // the newly exposed button — toggling off the render-scope value
+            // would reopen it (close+open flicker). Toggling off the
+            // press-time value makes each tap do exactly one action.
+            onPointerDown={() => { spotWasOpenRef.current = spotlightOpen; }}
+            className={`${appBtnBox} flex items-center justify-center rounded-lg transition-all group cursor-pointer hover:bg-(--surface-30)`}
             aria-label="Search"
             title="Search (Ctrl+K)"
           >
-            <Search className={`text-(--wp-accent-fg) ${windowsStyle ? 'w-5 h-5' : 'w-5 h-5'}`} />
+            <Search className={`text-(--wp-accent-fg) ${chromeGlyph}`} />
           </button>
 
             <div className={`w-[1px] bg-(--surface-30) ${windowsStyle ? 'h-5 mx-1.5' : 'h-6 mx-1.5'}`} />

@@ -76,7 +76,7 @@ export default function DataTab({ theme, setTheme, resetTheme }: { theme: ThemeS
           }}
         />
         <button
-          onClick={() => { resetTheme(); toast.success('Theme reset to defaults'); }}
+          onClick={resetTheme}
           className="flex-1 flex items-center justify-center gap-2 px-4 py-3 rounded-[var(--radius-sm)] font-bold text-[12px] transition-all cursor-pointer"
           style={{ background: 'var(--accent)', color: 'var(--accent-text-on)' }}
         >

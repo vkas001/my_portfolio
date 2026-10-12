@@ -304,6 +304,13 @@ button { font-family: inherit; }
   box-shadow: 0 30px 90px rgba(0, 0, 0, .5), inset 0 1px 0 var(--glass-highlight);
 }
 
+/* Flyouts docked above the taskbar (start menu, spotlight): throw the
+ * shadow upward so it never washes over the bar below. Without this the
+ * 30px downward spread reads as a shadow cast on the taskbar. */
+.menu-surface--above-bar {
+  box-shadow: 0 -22px 60px rgba(0, 0, 0, .45), 0 4px 14px rgba(0, 0, 0, .22), inset 0 1px 0 var(--glass-highlight);
+}
+
 :root[data-mode='light'] .menu-surface {
   background: rgba(252, 252, 255, .9);
 }
@@ -577,24 +584,30 @@ button { font-family: inherit; }
 }
 .btn-ghost:hover { background: rgba(var(--accent-rgb), .1); }
 
-input, textarea, select {
-  font-family: inherit;
-  background: rgba(0, 0, 0, .18);
-  color: var(--text-hi);
-  border: 1px solid var(--border);
-  border-radius: var(--radius-sm);
-  padding: 8px 12px;
-  outline: none;
-  transition: border-color .15s ease, box-shadow .15s ease;
-}
-input:focus, textarea:focus, select:focus {
-  border-color: rgba(var(--accent-rgb), .6);
-  box-shadow: 0 0 0 3px rgba(var(--accent-rgb), .15);
-}
-:root[data-mode='light'] input,
-:root[data-mode='light'] textarea,
-:root[data-mode='light'] select {
-  background: rgba(0, 0, 0, .04);
+/* Base form controls live in @layer base: Tailwind v4 emits utilities in a
+   higher-priority layer, so unlayered element rules here would beat utility
+   overrides (e.g. `pl-9` on the start-menu search losing to `padding`) no
+   matter their specificity. Inside @layer base the cascade works as expected. */
+@layer base {
+  input, textarea, select {
+    font-family: inherit;
+    background: rgba(0, 0, 0, .18);
+    color: var(--text-hi);
+    border: 1px solid var(--border);
+    border-radius: var(--radius-sm);
+    padding: 8px 12px;
+    outline: none;
+    transition: border-color .15s ease, box-shadow .15s ease;
+  }
+  input:focus, textarea:focus, select:focus {
+    border-color: rgba(var(--accent-rgb), .6);
+    box-shadow: 0 0 0 3px rgba(var(--accent-rgb), .15);
+  }
+  :root[data-mode='light'] input,
+  :root[data-mode='light'] textarea,
+  :root[data-mode='light'] select {
+    background: rgba(0, 0, 0, .04);
+  }
 }
 
 /* react-select renders an inner search <input> inside its control. It inherits
@@ -667,6 +680,17 @@ input:focus, textarea:focus, select:focus {
   border: 2px solid var(--accent);
   box-shadow: 0 1px 4px rgba(0, 0, 0, .35);
   cursor: grab;
+}
+
+/* Start-menu search field: the icon idles in low-contrast ink and flips to
+ * the accent while the field has focus (class-driven so the inline
+ * text-low style it replaced can't fight the focus state). */
+.search-field .search-icon {
+  color: var(--text-low);
+  transition: color .15s ease;
+}
+.search-field:focus-within .search-icon {
+  color: var(--accent);
 }
 
 /* ═══ Animations ═══════════════════════════════════════════════════════════ */
