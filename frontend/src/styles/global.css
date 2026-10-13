@@ -839,85 +839,253 @@ button { font-family: inherit; }
 .web-content {
   flex: 1;
   min-width: 0;
-  display: flex;
-  justify-content: flex-start;
-  align-items: flex-start;
-  flex-wrap: wrap;
-  gap: 24px;
-  padding: 0 20px 72px;
+  padding: 0 20px 80px;
 }
-.web-main {
-  flex: 1 1 0%;
-  min-width: 0;
-  flex-basis: 0%;
-  max-width: 940px;
-  padding: 28px 0 0;
-  display: flex;
-  flex-direction: column;
-  gap: 48px;
-}
-/* Sticky right sidebar (right-most): shares the row with the main column and
- * Education sits at a fixed width; Contact (right of Education) flexes to fill
- * the remaining space. Stacks vertically below ~1350px (raised from 1100 so
- * Contact never collapses into an unusable sliver on typical laptop widths). */
-.web-edu {
-  position: sticky;
-  top: 40px;
-  flex: 1 1 0%;
-  padding-top: 28px;
-  align-self: flex-start;
-  display: flex;
-  flex-direction: row;
-  align-items: flex-start;
+
+/* ═══ Bento site grid (public website) ════════════════════════════════════
+ * A 12-column tile mosaic beside the section rail. Tiles are document-level
+ * (public site), so viewport media are fair here. Each tile is a @container
+ * anchor so reused OS screens keep their container-query ladders keyed to
+ * the tile, not the viewport. */
+.bento {
+  display: grid;
+  grid-template-columns: repeat(12, minmax(0, 1fr));
   gap: 16px;
-  max-height: calc(100vh - 56px);
-  overflow-y: auto;
+  max-width: 1120px;
+  padding: 28px 0 0;
+  /* Tiles hug their content: a short tile beside a tall one keeps its own
+   * height instead of stretching vacant to the row height. */
+  align-items: start;
 }
-.web-edu .web-section {
-  flex: 0 0 360px;
-  width: 360px;
-  padding: 18px;
-}
-.web-edu #section-contact {
-  flex: 1 1 auto;
-  width: auto;
-  min-width: 0;
-}
-.web-section-wrap { scroll-margin-top: 56px; }
-.web-section {
-  container-type: inline-size; /* anchor for reused OS app container queries */
+.b-anchor { scroll-margin-top: 56px; }
+.bento-tile {
+  container-type: inline-size;
   background: var(--bg-elev);
   border: 1px solid var(--border);
   border-radius: var(--radius-lg);
-  padding: 24px;
+  padding: 22px;
   display: flex;
   flex-direction: column;
-  gap: 16px;
+  gap: 14px;
+  min-width: 0;
 }
-.web-section-head {
+.bento-tile.lift { transition: translate .15s ease, box-shadow .15s ease; }
+.bento-tile.lift:hover {
+  translate: 0 -2px;
+  box-shadow: 0 12px 32px rgba(0, 0, 0, .3);
+}
+
+/* Tile chrome: the eyebrow names the tile, the dot carries its section color. */
+.b-tile-eyebrow {
   display: flex;
   align-items: center;
-  gap: 12px;
+  gap: 8px;
+  margin: 0 0 6px;
+  font-size: 10.5px;
+  font-weight: 800;
+  letter-spacing: .14em;
+  text-transform: uppercase;
+  color: var(--text-low);
 }
-.web-section-icon {
-  width: 44px;
-  height: 44px;
-  border-radius: var(--radius);
-  display: flex;
-  align-items: center;
-  justify-content: center;
-  font-size: 20px;
+.b-tile-eyebrow .dot {
+  width: 7px;
+  height: 7px;
+  border-radius: 99px;
+  background: var(--tile-accent, var(--accent));
   flex-shrink: 0;
 }
-.web-section-head h2 {
+.b-tile-title {
   margin: 0;
-  font-size: 18px;
-  font-weight: 700;
+  font-size: 17px;
+  font-weight: 800;
+  letter-spacing: -0.01em;
+  color: var(--text-hi);
 }
-.web-section-head p {
-  margin: 2px 0 0;
+.b-tile-blurb {
+  margin: 4px 0 0;
   font-size: 12px;
+  color: var(--text-low);
 }
+.b-sub-eyebrow {
+  margin: 0 0 10px;
+  font-size: 10px;
+  font-weight: 800;
+  letter-spacing: .14em;
+  text-transform: uppercase;
+  color: var(--text-low);
+}
+
+/* Placement map (desktop ≥1100px). */
+.b-hero { grid-column: span 8; grid-row: span 2; }
+.b-stats { grid-column: span 4; }
+.b-quick { grid-column: span 4; }
+.b-about { grid-column: span 7; }
+.b-skills { grid-column: span 5; }
+.b-projects { grid-column: span 8; }
+.b-interests { grid-column: span 4; }
+.b-journey { grid-column: span 6; }
+.b-writing { grid-column: span 6; }
+.b-contact { grid-column: span 12; }
+
+/* Hero: the one loud tile — radial accent wash, avatar medallion with a
+ * gradient ring, oversized tight name type. */
+.b-hero {
+  position: relative;
+  overflow: hidden;
+  justify-content: center;
+  gap: 16px;
+  padding: 28px;
+}
+.b-hero::before {
+  content: '';
+  position: absolute;
+  inset: 0;
+  background: radial-gradient(620px 280px at 10% 0%, rgba(var(--accent-rgb), .16), transparent 62%);
+  pointer-events: none;
+}
+.b-hero > * { position: relative; }
+.b-avatar-ring {
+  padding: 3px;
+  border-radius: 999px;
+  background: linear-gradient(135deg, rgba(var(--accent-rgb), .9), rgba(var(--accent-rgb), .12));
+  flex-shrink: 0;
+}
+.b-hero-name {
+  margin: 2px 0 0;
+  font-size: clamp(30px, 1.7rem + 2vw, 44px);
+  font-weight: 800;
+  letter-spacing: -0.03em;
+  line-height: 1.05;
+  color: var(--text-hi);
+  overflow-wrap: anywhere;
+}
+.b-hero-title {
+  margin: 4px 0 0;
+  font-size: 15px;
+  font-weight: 600;
+  color: var(--accent);
+}
+.b-hero-bio {
+  margin: 0;
+  font-size: 14px;
+  line-height: 1.65;
+  color: var(--text-mid);
+  max-width: 52ch;
+}
+.b-pill {
+  display: inline-flex;
+  align-items: center;
+  gap: 6px;
+  padding: 4px 10px;
+  border-radius: 999px;
+  border: 1px solid var(--border);
+  font-size: 12px;
+  color: var(--text-mid);
+}
+.b-pill-accent {
+  background: var(--accent-soft);
+  border-color: transparent;
+  color: var(--accent);
+  font-weight: 700;
+  font-size: 11px;
+}
+/* Availability pulse: a live dot, not a badge — it reads as "here now". */
+.b-pulse {
+  width: 7px;
+  height: 7px;
+  border-radius: 99px;
+  background: var(--success);
+  animation: b-pulse 2.2s ease-out infinite;
+}
+@keyframes b-pulse {
+  0% { box-shadow: 0 0 0 0 rgba(16, 185, 129, .45); }
+  70% { box-shadow: 0 0 0 7px rgba(16, 185, 129, 0); }
+  100% { box-shadow: 0 0 0 0 rgba(16, 185, 129, 0); }
+}
+.b-social {
+  width: 40px;
+  height: 40px;
+  border-radius: 12px;
+  border: 1px solid var(--border);
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  background: rgba(var(--accent-rgb), .06);
+  transition: translate .15s ease;
+}
+.b-social:hover { translate: 0 -2px; }
+
+/* Stats: 2×2 headline numbers. */
+.b-stats-grid {
+  display: grid;
+  grid-template-columns: 1fr 1fr;
+  gap: 12px;
+}
+.b-stat { display: flex; flex-direction: column; gap: 2px; }
+.b-stat b {
+  font-size: 26px;
+  font-weight: 800;
+  letter-spacing: -0.02em;
+  font-variant-numeric: tabular-nums;
+  color: var(--text-hi);
+}
+.b-stat span {
+  font-size: 10px;
+  font-weight: 700;
+  letter-spacing: .1em;
+  text-transform: uppercase;
+  color: var(--text-low);
+}
+
+/* Quick contact: status line, email copy row, jump link. */
+.b-quick-status {
+  margin: 0;
+  font-size: 14px;
+  font-weight: 700;
+  color: var(--text-hi);
+}
+.b-email-row {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  width: 100%;
+  min-width: 0;
+  padding: 9px 12px;
+  border-radius: var(--radius-sm);
+  border: 1px solid var(--border);
+  background: rgba(0, 0, 0, .14);
+  color: var(--text-mid);
+  font-size: 12.5px;
+  cursor: pointer;
+  transition: border-color .15s ease;
+}
+.b-email-row:hover { border-color: rgba(var(--accent-rgb), .5); }
+.b-email-row:disabled { cursor: default; }
+:root[data-mode='light'] .b-email-row { background: rgba(0, 0, 0, .04); }
+.b-quick-link {
+  display: inline-flex;
+  align-items: center;
+  gap: 6px;
+  font-size: 12.5px;
+  font-weight: 700;
+  color: var(--accent);
+  text-decoration: none;
+}
+.b-quick-link:hover { text-decoration: underline; text-underline-offset: 3px; }
+
+/* Contact band: reach-me column beside the form. */
+.b-contact-grid {
+  display: grid;
+  grid-template-columns: minmax(0, 5fr) minmax(0, 7fr);
+  gap: 24px;
+  align-items: start;
+}
+@container (max-width: 640px) {
+  .b-contact-grid { grid-template-columns: 1fr; }
+}
+/* Web view is the public, document-level site (no OS window), so viewport
+ * media are fair here — the rail always stays leftmost, phones get a
+ * horizontal rail strip under the topbar and full-width tiles. */
 .web-footer {
   text-align: center;
   font-size: 12px;
@@ -927,43 +1095,53 @@ button { font-family: inherit; }
 /* Web view is the public, document-level site (no OS window), so viewport
  * media are fair here — the rail always stays leftmost, phones just get a
  * slightly tighter shell and a narrower expanded rail. */
+/* Mid widths: 6-column grid — hero full row, stats + quick side by side,
+ * every content tile full row. */
 @media (max-width: 1100px) {
-  .web-edu {
-    position: static;
-    flex: 1 1 100%;
-    width: 100%;
-    padding-top: 0;
-    max-height: none;
-    overflow: visible;
-    flex-direction: column;
-  }
-  .web-edu .web-section,
-  .web-edu #section-contact {
-    flex: 1 1 100%;
-    width: 100%;
-    min-width: 0;
-    max-width: none;
-  }
+  .bento { grid-template-columns: repeat(6, minmax(0, 1fr)); }
+  .b-hero { grid-column: span 6; grid-row: auto; }
+  .b-about, .b-skills, .b-projects, .b-interests, .b-journey, .b-writing, .b-contact { grid-column: span 6; }
+  .b-stats, .b-quick { grid-column: span 3; }
 }
 
-@media (max-width: 639px) {
-  .web-shell { max-width: 100%; margin: 0; }
-  /* The rail is the horizontal top strip here (see the 768px block) — it
-   * stretches full width and scrolls sideways, so it has no fixed width. */
-  .web-rail,
-  .web-rail.collapsed { width: auto; }
-  .web-content { padding: 0 10px 72px; }
-  .web-main { padding: 14px 0 0; gap: 40px; }
-  .web-section { padding: 18px 14px; }
-  .web-edu .web-section { padding: 18px 14px; }
-  /* Topbar (40) + horizontal rail (~53): keep the anchored section below both. */
-  .web-section-wrap { scroll-margin-top: 100px; }
-  .web-edu { padding-bottom: 24px; }
+@media (max-width: 767px) {
+  /* Column direction + the base align-items:flex-start would collapse
+   * .web-content to content width — stretch children full width instead. */
+  .web-shell { flex-direction: column; align-items: stretch; }
+  /* The rail becomes a horizontal strip pinned under the topbar. */
+  .web-rail {
+    position: sticky;
+    top: 40px;
+    z-index: 30;
+    width: 100%;
+    flex-direction: row;
+    align-items: center;
+    gap: 4px;
+    padding: 8px 10px;
+    overflow-x: auto;
+    background: color-mix(in srgb, var(--bg) 90%, transparent);
+    backdrop-filter: blur(var(--glass-blur));
+    -webkit-backdrop-filter: blur(var(--glass-blur));
+    border-bottom: 1px solid var(--border);
+    /* Mouse-draggable strip: no text selection mid-swipe. */
+    user-select: none;
+    -webkit-user-select: none;
+    cursor: grab;
+  }
+  .web-rail-toggle { margin-bottom: 0; padding: 8px; flex-shrink: 0; }
+  .web-rail-toggle span { display: none; }
+  .web-rail-link { white-space: nowrap; flex-shrink: 0; }
+  .web-content { padding: 0 12px 72px; }
+  .bento { grid-template-columns: minmax(0, 1fr); padding-top: 16px; gap: 12px; }
+  .bento-tile { grid-column: 1 / -1; grid-row: auto; padding: 18px; }
+  .b-hero { padding: 22px 18px; }
+  /* Topbar (40) + rail strip (~52): keep anchored tiles below both. */
+  .b-anchor { scroll-margin-top: 104px; }
 }
 @media (max-width: 380px) {
-  .web-main { padding: 12px 0 0; }
-  .web-section { padding: 16px 12px; }
-  .web-edu .web-section { padding: 16px 12px; }
+  .bento-tile { padding: 16px 14px; }
+  .b-stats-grid { gap: 8px; }
+  .b-stat b { font-size: 22px; }
 }
 
 /* ─────────────────────────────────────────────────────────────

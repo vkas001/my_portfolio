@@ -82,7 +82,7 @@ export default function AboutHero() {
                 <Download size={13} /> Download résumé
               </a>
             )}
-            <a href="#section-contact" className="btn-ghost text-xs justify-center no-underline w-full @sm:w-auto">
+            <a href="#site-contact" className="btn-ghost text-xs justify-center no-underline w-full @sm:w-auto">
               <Send size={13} /> Work with me
             </a>
             <button type="button" onClick={copyEmail} className="btn-ghost text-xs justify-center w-full @sm:w-auto">

@@ -6,6 +6,7 @@ import Spotlight from '@/components/shell/Spotlight/Spotlight';
 import Toaster from '@/components/shell/Toaster/Toaster';
 import WebView from '@/components/shell/WebView/WebView';
 import { ContactModal } from '@/modules/contact';
+import { siteAnchorFor } from '@/modules/site';
 import { BootScreen } from '@/components/shell/BootScreen/BootScreen';
 import { matchShortcut } from '@/lib/shortcuts';
 import type { AppId } from '@/types';
@@ -46,7 +47,8 @@ export default function AppShell() {
           const payload = sc.payload as AppId;
           if (viewMode === 'web') {
             if (payload !== 'settings') {
-              document.getElementById(`section-${payload}`)?.scrollIntoView({ behavior: 'smooth' });
+              const anchor = siteAnchorFor(payload);
+              if (anchor) document.getElementById(anchor)?.scrollIntoView({ behavior: 'smooth' });
             }
           } else {
             launchApp(payload);

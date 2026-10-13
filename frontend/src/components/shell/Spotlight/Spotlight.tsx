@@ -3,6 +3,7 @@ import { useShellUI } from '@/context/ShellUIContext';
 import { useWindows } from '@/context/WindowsContext';
 import { useWidgets } from '@/context/WidgetsContext';
 import { APP_REGISTRY } from '@/apps/registry';
+import { siteAnchorFor } from '@/modules/site';
 import { WIDGET_DEFS } from '@/modules/widgets';
 import type { AppId } from '@/types';
 import { Puzzle, Search } from 'lucide-react';
@@ -27,13 +28,14 @@ export default function Spotlight() {
   const ref = useRef<HTMLDivElement>(null);
   const inputRef = useRef<HTMLInputElement>(null);
   // In Web view there are no windows/widgets: app results scroll to the
-  // matching section, settings + widget results are hidden.
+  // matching tile, and apps without a tile (auth, editor, settings) plus
+  // widget results are hidden so every result does something.
   const isWeb = viewMode === 'web';
 
   const results = useMemo<Result[]>(() => {
     const q = query.trim().toLowerCase();
     const apps: Result[] = APP_REGISTRY
-      .filter((a) => !isWeb || a.id !== 'settings')
+      .filter((a) => !isWeb || siteAnchorFor(a.id) !== null)
       .map((a) => ({
         kind: 'app',
         id: a.id,
@@ -46,7 +48,8 @@ export default function Spotlight() {
         ),
         run: () => {
           if (isWeb) {
-            document.getElementById(`section-${a.id}`)?.scrollIntoView({ behavior: 'smooth' });
+            const anchor = siteAnchorFor(a.id);
+            if (anchor) document.getElementById(anchor)?.scrollIntoView({ behavior: 'smooth' });
           } else {
             launchApp(a.id as AppId);
           }
