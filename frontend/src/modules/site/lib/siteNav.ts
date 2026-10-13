@@ -1,4 +1,4 @@
-import { Code2, Folder, History, Mail, Newspaper, Sparkles, User, type LucideIcon } from 'lucide-react';
+import { Briefcase, Code2, Folder, GraduationCap, Mail, Newspaper, User, type LucideIcon } from 'lucide-react';
 import type { AppId } from '@/types';
 
 export interface SiteNavItem {
@@ -7,27 +7,27 @@ export interface SiteNavItem {
   icon: LucideIcon;
 }
 
-/** Left-rail anchors for the bento site. Order mirrors the grid's reading
- *  order: identity first, contact last. */
+/** Reading-column anchors for the split-résumé site. Order mirrors the
+ *  page: identity first, contact last. */
 export const SITE_NAV: SiteNavItem[] = [
   { id: 'site-about', label: 'About', icon: User },
-  { id: 'site-skills', label: 'Skills', icon: Code2 },
+  { id: 'site-experience', label: 'Experience', icon: Briefcase },
+  { id: 'site-education', label: 'Education', icon: GraduationCap },
   { id: 'site-projects', label: 'Projects', icon: Folder },
-  { id: 'site-journey', label: 'Journey', icon: History },
+  { id: 'site-skills', label: 'Skills', icon: Code2 },
   { id: 'site-writing', label: 'Writing', icon: Newspaper },
-  { id: 'site-interests', label: 'Interests', icon: Sparkles },
   { id: 'site-contact', label: 'Contact', icon: Mail },
 ];
 
-/** Content-app → site tile anchor. Apps without a tile (auth, editor,
- *  settings) have no public section and map to null. */
+/** Content-app → site section anchor. Apps without a section (auth, editor,
+ *  settings) map to null. Hobbies fold into the About pane. */
 const APP_ANCHOR: Partial<Record<AppId, string>> = {
   about: 'site-about',
   skills: 'site-skills',
   projects: 'site-projects',
-  experience: 'site-journey',
-  education: 'site-journey',
-  hobbies: 'site-interests',
+  experience: 'site-experience',
+  education: 'site-education',
+  hobbies: 'site-about',
   blogs: 'site-writing',
   contact: 'site-contact',
 };

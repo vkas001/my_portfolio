@@ -1,7 +1,7 @@
 import TopBar from '@/components/shell/TopBar/TopBar';
 import { SiteScreen } from '@/modules/site';
 
-/** Normal scrolling website: sticky header, section rail, bento content.
+/** Normal scrolling website: sticky header plus the split-résumé site.
  *  Settings stays OS-only chrome. */
 export default function WebView() {
   return (

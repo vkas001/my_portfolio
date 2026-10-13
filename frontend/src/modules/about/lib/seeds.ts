@@ -3,7 +3,7 @@ import type { Profile } from '@shared/types';
 /** Local fallback profile (also seeded in the Laravel MySQL database). */
 export const localProfile: Profile = {
   id: 'me',
-  name: 'Vkas',
+  name: 'Bikash Limbh',
   title: 'Full-Stack Developer',
   shortBio: "I build fast, delightful web experiences — from pixel-perfect UIs to resilient APIs. I ship complete products end-to-end and I'm open to senior full-stack or platform roles.",
   bio: 'Full-stack developer focused on React, TypeScript and Node.js. I care about performance, accessibility, and building products that feel effortless. Recently I\'ve been shipping connected TV, mobile and web apps backed by a Laravel API — and running the deployment and servers myself.',

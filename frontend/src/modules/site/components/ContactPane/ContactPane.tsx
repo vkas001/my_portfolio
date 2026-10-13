@@ -4,9 +4,10 @@ import { useContactForm } from '@/modules/contact';
 import { SOCIAL_META, useProfile } from '@/modules/about';
 import Input from '@/components/ui/Input/Input';
 import TextArea from '@/components/ui/TextArea/TextArea';
+import ResumeSection from '@/modules/site/components/ResumeSection/ResumeSection';
 
-/** Full-width closing band: reach-me column beside the message form. */
-export default function ContactBand() {
+/** Closing block: reach-me column beside the message form. */
+export default function ContactPane() {
   const profile = useProfile();
   const { form, setField, status, error, submit, reset } = useContactForm();
   const [copied, setCopied] = useState(false);
@@ -23,15 +24,7 @@ export default function ContactBand() {
   };
 
   return (
-    <section id="site-contact" className="bento-tile b-anchor b-contact" aria-label="Contact">
-      <header>
-        <p className="b-tile-eyebrow">
-          <span className="dot" aria-hidden />
-          Say hello
-        </p>
-        <h2 className="b-tile-title">Let’s build something</h2>
-      </header>
-
+    <ResumeSection id="site-contact" index="07" title="Contact">
       <div className="b-contact-grid">
         <div className="flex flex-col gap-3 min-w-0">
           <button type="button" onClick={copyEmail} className="b-email-row" title="Copy email" disabled={!profile}>
@@ -89,6 +82,6 @@ export default function ContactBand() {
           </form>
         )}
       </div>
-    </section>
+    </ResumeSection>
   );
 }
