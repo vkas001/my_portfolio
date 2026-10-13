@@ -3,24 +3,18 @@
 // for the 6 portfolio apps (no auth/workspace gating — every app is visible),
 // clock without locale/BS calendar, no central-apps section. Auto-hide uses
 // the same slide/reveal mechanics with portfolio's context visibility state.
-import { memo, useCallback, useEffect, useRef, useState } from 'react';
+import { memo, useEffect, useRef, useState } from 'react';
 import {
   ChevronUp,
   LayoutGrid,
-  Plane,
   Search,
   Sparkles,
   Volume2,
   VolumeX,
-  Wifi,
-  Zap,
-  ZapOff,
 } from 'lucide-react';
 import { useTheme } from '@/context/ThemeContext';
 import { useWindows } from '@/context/WindowsContext';
 import { useShellUI } from '@/context/ShellUIContext';
-import { http } from '@/lib/api/httpClient';
-import { subscribeForcedOffline } from '@/lib/network';
 import {
   TASKBAR_H,
   Z_OVERLAY_TOP,
@@ -74,32 +68,6 @@ const MacIndicator: React.FC<{ isOpen: boolean; isActive: boolean; isMinimized: 
   );
 };
 
-// ibiz_v2 ConnectionStatus parity: live dot with hover tooltip.
-const ConnectionDot: React.FC<{ online: boolean }> = ({ online }) => {
-  const [showTooltip, setShowTooltip] = useState(false);
-  return (
-    <div
-      className="relative"
-      onMouseEnter={() => setShowTooltip(true)}
-      onMouseLeave={() => setShowTooltip(false)}
-    >
-      {online ? (
-        <Zap size={14} className="text-emerald-500" />
-      ) : (
-        <ZapOff size={14} className="text-red-500" />
-      )}
-      {showTooltip && (
-        <div
-          className="absolute bottom-full left-1/2 -translate-x-1/2 mb-2 px-2 py-1 bg-(--surface-80) border border-(--border-60) rounded-lg text-[11px] text-(--text-primary) whitespace-nowrap shadow-lg"
-          style={{ zIndex: Z_OVERLAY_TOP }}
-        >
-          {online ? 'Online' : 'Offline'}
-        </div>
-      )}
-    </div>
-  );
-};
-
 const Taskbar = memo(function Taskbar() {
   const { theme } = useTheme();
     const { windows, focusedId, launchApp, focusWindow, restoreWindow, minimizeWindow } = useWindows();
@@ -108,42 +76,6 @@ const Taskbar = memo(function Taskbar() {
   const [currentTime, setCurrentTime] = useState<string>('');
   const [currentDate, setCurrentDate] = useState<string>('');
   const [currentWeekday, setCurrentWeekday] = useState<string>('');
-  const [online, setOnline] = useState(false);
-
-  // Backend connectivity: poll the API health endpoint (green/Online when the
-  // backend answers, red/Offline otherwise). Re-probes immediately when the
-  // browser network flaps, then settles into a 15s cadence.
-  const checkBackend = useCallback(async () => {
-    try {
-      await http.get<{ status: string }>('/health');
-      setOnline(true);
-    } catch {
-      setOnline(false);
-    }
-  }, []);
-
-  useEffect(() => {
-    let cancelled = false;
-    const tick = async () => {
-      if (cancelled) return;
-      await checkBackend();
-    };
-    void tick();
-    const interval = setInterval(tick, 15000);
-    const onNet = () => void checkBackend();
-    window.addEventListener('online', onNet);
-    window.addEventListener('offline', onNet);
-    return () => {
-      cancelled = true;
-      clearInterval(interval);
-      window.removeEventListener('online', onNet);
-      window.removeEventListener('offline', onNet);
-    };
-  }, [checkBackend]);
-
-  // Flip the connectivity dot instantly when airplane mode toggles (the
-  // health probe fails fast under forced offline instead of waiting on a TTL).
-  useEffect(() => subscribeForcedOffline(() => void checkBackend()), [checkBackend]);
 
   useEffect(() => {
     const updateDateTime = () => {
@@ -409,7 +341,6 @@ const [isTrayOpen, setIsTrayOpen] = useState(false);
 
             {/* System Tray Area */}
             <div className="flex items-center gap-2.5" ref={trayRef}>
-              <ConnectionDot online={online} />
               <button
                 onClick={() => setWidgetsOpen(!widgetsOpen)}
                 className={`${appBtnBox} flex items-center justify-center rounded-lg relative group transition-all cursor-pointer ${
@@ -428,7 +359,6 @@ const [isTrayOpen, setIsTrayOpen] = useState(false);
               title="System Tray & Quick Controls"
             >
               <div className={`flex items-center gap-2.5 ${windowsStyle ? 'gap-1.5' : ''}`}>
-                {theme.airplaneMode ? <Plane className="w-4 h-4" /> : <Wifi className="w-4 h-4" />}
                 {theme.soundsEnabled && theme.volume > 0 ? <Volume2 className="w-4 h-4" /> : <VolumeX className="w-4 h-4" />}
               </div>
               <div className="flex flex-col items-end leading-none justify-center">

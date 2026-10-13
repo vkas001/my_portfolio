@@ -23,7 +23,6 @@ import { useAuth } from '@/context/AuthContext';
 import { fitRectInBounds, getWorkspaceBounds } from '@/lib/osLayout';
 import { themeService } from '@/lib/api/themeService';
 import { sound } from '@/lib/sound';
-import { setForcedOffline } from '@/lib/network';
 import toast from 'react-hot-toast';
 
 /** Functional or partial theme patch. Widgets keep placements synced through
@@ -75,10 +74,8 @@ export function ThemeProvider({ children }: { children: ReactNode }) {
   // Theme application + persistence (local + server, ibiz_v2 parity).
   useEffect(() => {
     applyTheme(theme);
-    // Plain-module mirrors: gate the WebAudio blips by sounds + volume and the
-    // API layer by airplane mode (so reads fail fast → local seeds).
+    // Plain-module mirror: gate the WebAudio blips by sounds + volume.
     sound.configure(theme.soundsEnabled, theme.volume);
-    setForcedOffline(theme.airplaneMode);
     saveTheme(theme, themeKey);
     // Guests are local-only: never push to the server, so visitor settings
     // can't overwrite the admin's live site. Skip until hydration completes.

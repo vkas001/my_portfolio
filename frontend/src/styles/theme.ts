@@ -201,7 +201,6 @@ export interface ThemeState {
   animationsEnabled: boolean;
   soundsEnabled: boolean;
   volume: number;        // 0-100 — in-OS UI audio gain (drives the WebAudio blips)
-  airplaneMode: boolean; // connectivity override: fails all API reads → local seeds
   skillsDisplay: SkillDisplayMode;
   widgets: WidgetPlacement[];
   /** Desktop icon drag offsets (px) keyed by app id — absent = default column. */
@@ -255,7 +254,6 @@ export const DEFAULT_THEME: ThemeState = {
   animationsEnabled: true,
   soundsEnabled: false,
   volume: 85,
-  airplaneMode: false,
   skillsDisplay: 'bars',
   widgets: [],
   desktopIconOffsets: {},
@@ -501,7 +499,6 @@ export function loadTheme(key: string = GUEST_THEME_KEY): ThemeState {
     if (typeof merged.showHomeIndicator !== 'boolean') merged.showHomeIndicator = false;
     if (typeof merged.volume !== 'number' || Number.isNaN(merged.volume)) merged.volume = DEFAULT_THEME.volume;
     else merged.volume = Math.min(100, Math.max(0, merged.volume));
-    if (typeof merged.airplaneMode !== 'boolean') merged.airplaneMode = false;
     if (merged.skillsDisplay !== 'bars' && merged.skillsDisplay !== 'cards') merged.skillsDisplay = 'bars';
     if (!Array.isArray(merged.taskbarApps)) merged.taskbarApps = [...DEFAULT_THEME.taskbarApps];
     if (
