@@ -2,6 +2,7 @@
 
 namespace App\Http\Controllers;
 
+use App\Models\Blog;
 use App\Models\Education;
 use App\Models\Experience;
 use App\Models\Hobby;
@@ -86,5 +87,15 @@ class PortfolioController extends Controller
             ->get();
 
         return response()->json($hobbies);
+    }
+
+    public function blogs(): JsonResponse
+    {
+        $blogs = Blog::query()
+            ->where('published', true)
+            ->orderBy('order')
+            ->get();
+
+        return response()->json($blogs);
     }
 }

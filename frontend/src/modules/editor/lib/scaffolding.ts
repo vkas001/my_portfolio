@@ -1,6 +1,6 @@
 import type { ReactNode } from 'react';
 import type { EditorSection } from '@/types';
-import type { Education, Experience, Hobby, Project, SocialLink } from '@shared/types';
+import type { Blog, Education, Experience, Hobby, Project, SocialLink } from '@shared/types';
 
 export const newId = () => crypto.randomUUID().slice(0, 8);
 
@@ -46,6 +46,7 @@ export const SECTION_LABELS: Record<EditorSection, string> = {
   experience: 'Experience',
   education: 'Education',
   hobbies: 'Hobbies',
+  blogs: 'Blogs',
 };
 
 /** "3 items" / "2 entries" — experience reads better as entries. */
@@ -67,4 +68,9 @@ export const emptyEducation = (id: string): Education => ({
 
 export const emptyHobby = (id: string): Hobby => ({
   id, name: '', icon: 'mountain', description: '', order: Number.MAX_SAFE_INTEGER,
+});
+
+export const emptyBlog = (id: string): Blog => ({
+  id, title: '', excerpt: '', body: '', tags: [], coverUrl: null,
+  published: true, publishedAt: null, order: Number.MAX_SAFE_INTEGER,
 });

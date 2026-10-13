@@ -7,7 +7,7 @@ import { PanelLeftClose, PanelLeftOpen } from 'lucide-react';
 
 /** Portfolio sections shown in Web view's main column + rail (Settings stays
  *  OS-only chrome). Education lives here with the other content sections. */
-const WEB_SECTION_IDS: AppId[] = ['about', 'skills', 'projects', 'experience', 'education'];
+const WEB_SECTION_IDS: AppId[] = ['about', 'skills', 'projects', 'experience', 'education', 'blogs'];
 
 /** Right-sidebar sections: sticky column beside the main content. Hobbies sits
  *  at a fixed width; Contact fills the remaining space (stacks below ~1350px). */

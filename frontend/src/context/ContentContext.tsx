@@ -8,6 +8,8 @@ import {
   type ReactNode,
 } from 'react';
 import type {
+  Blog,
+  BlogInput,
   Education,
   EducationInput,
   Experience,
@@ -21,7 +23,7 @@ import type {
   Skill,
   SkillInput,
 } from '@shared/types';
-import { fetchEducation, fetchExperience, fetchHobbies, fetchProfile, fetchProjects, fetchSkills } from '@/lib/api';
+import { fetchBlogs, fetchEducation, fetchExperience, fetchHobbies, fetchProfile, fetchProjects, fetchSkills } from '@/lib/api';
 import { invalidate } from '@/lib/api/httpClient';
 import { adminService } from '@/lib/api/adminService';
 import { useShellUI } from '@/context/ShellUIContext';
@@ -43,6 +45,7 @@ export interface ContentContextValue {
   experience: Experience[];
   education: Education[];
   hobbies: Hobby[];
+  blogs: Blog[];
   refresh: () => Promise<void>;
 
   saveProfile: (input: ProfileInput) => Promise<boolean>;
@@ -59,9 +62,11 @@ export interface ContentContextValue {
   deleteEducation: (id: string) => Promise<boolean>;
   saveHobby: (value: Hobby, isNew: boolean) => Promise<boolean>;
   deleteHobby: (id: string) => Promise<boolean>;
+  saveBlog: (value: Blog, isNew: boolean) => Promise<boolean>;
+  deleteBlog: (id: string) => Promise<boolean>;
   /** Swap item order in the local list and persist the new orders
-   *  (projects/experience/education/hobbies — skills have no order field). */
-  moveItem: (section: 'projects' | 'experience' | 'education' | 'hobbies', id: string, dir: -1 | 1) => Promise<void>;
+   *  (projects/experience/education/hobbies/blogs — skills have no order field). */
+  moveItem: (section: 'projects' | 'experience' | 'education' | 'hobbies' | 'blogs', id: string, dir: -1 | 1) => Promise<void>;
 }
 
 const ContentContext = createContext<ContentContextValue | null>(null);
@@ -186,6 +191,7 @@ export function ContentProvider({ children }: { children: ReactNode }) {
   const experience = useItems(fetchExperience);
   const education = useItems(fetchEducation);
   const hobbies = useItems(fetchHobbies);
+  const blogs = useItems(fetchBlogs);
   // `useItems` returns a fresh object every render, so depend on the stable
   // reload callbacks themselves — depending on the wrapper objects would make
   // `refresh` change on every render and re-trigger the boot effect forever.
@@ -194,6 +200,7 @@ export function ContentProvider({ children }: { children: ReactNode }) {
   const { reload: reloadExperience } = experience;
   const { reload: reloadEducation } = education;
   const { reload: reloadHobbies } = hobbies;
+  const { reload: reloadBlogs } = blogs;
 
   const refresh = useCallback(async () => {
     invalidate('/profile');
@@ -202,14 +209,15 @@ export function ContentProvider({ children }: { children: ReactNode }) {
     invalidate('/experience');
     invalidate('/education');
     invalidate('/hobbies');
+    invalidate('/blogs');
     try {
       setProfile(await fetchProfile());
     } catch {
       setProfile(null);
     }
-    await Promise.all([reloadSkills(), reloadProjects(), reloadExperience(), reloadEducation(), reloadHobbies()]);
+    await Promise.all([reloadSkills(), reloadProjects(), reloadExperience(), reloadEducation(), reloadHobbies(), reloadBlogs()]);
     setLoading(false);
-  }, [reloadSkills, reloadProjects, reloadExperience, reloadEducation, reloadHobbies]);
+  }, [reloadSkills, reloadProjects, reloadExperience, reloadEducation, reloadHobbies, reloadBlogs]);
 
   useEffect(() => {
     void refresh();
@@ -476,6 +484,41 @@ export function ContentProvider({ children }: { children: ReactNode }) {
     [hobbies.items, hobbies.set, deleteItem],
   );
 
+  const saveBlog = useCallback(
+    (value: Blog, isNew: boolean) => {
+      const input: BlogInput = {
+        // New rows carry the local "sort last" sentinel — omit it on create
+        // so the backend assigns max(order)+1 (order-column overflow guard).
+        ...(isNew ? { id: value.id } : { order: value.order }),
+        title: value.title,
+        excerpt: value.excerpt,
+        body: value.body,
+        tags: value.tags,
+        coverUrl: value.coverUrl,
+        published: value.published,
+        publishedAt: value.publishedAt,
+      };
+      return saveItem(
+        blogs.items,
+        blogs.set,
+        value,
+        isNew,
+        () =>
+          isNew
+            ? adminService.storeBlog(input)
+            : adminService.updateBlog(value.id, input),
+        (b) => b.id,
+      );
+    },
+    [blogs.items, blogs.set, saveItem],
+  );
+
+  const deleteBlog = useCallback(
+    (id: string) =>
+      deleteItem(blogs.items, blogs.set, id, () => adminService.deleteBlog(id)),
+    [blogs.items, blogs.set, deleteItem],
+  );
+
   // Reorder an order-backed section (projects/experience): swap orders
   // locally and persist both updated rows. Skills have no order field, so
   // the editor simply doesn't offer move buttons there.
@@ -540,6 +583,15 @@ export function ContentProvider({ children }: { children: ReactNode }) {
           (rowId, row) => adminService.updateHobby(rowId, row),
         );
       }
+      if (section === 'blogs') {
+        return commitReorder(
+          blogs.items,
+          blogs.set,
+          id,
+          dir,
+          (rowId, row) => adminService.updateBlog(rowId, row),
+        );
+      }
       return commitReorder(
         experience.items,
         experience.set,
@@ -548,7 +600,7 @@ export function ContentProvider({ children }: { children: ReactNode }) {
         (rowId, row) => adminService.updateExperience(rowId, row),
       );
     },
-    [projects.items, projects.set, experience.items, experience.set, education.items, education.set, hobbies.items, hobbies.set, commitReorder],
+    [projects.items, projects.set, experience.items, experience.set, education.items, education.set, hobbies.items, hobbies.set, blogs.items, blogs.set, commitReorder],
   );
 
   const value = useMemo<ContentContextValue>(
@@ -560,6 +612,7 @@ export function ContentProvider({ children }: { children: ReactNode }) {
       experience: experience.items,
       education: education.items,
       hobbies: hobbies.items,
+      blogs: blogs.items,
       refresh,
       saveProfile,
       uploadAvatar,
@@ -573,6 +626,8 @@ export function ContentProvider({ children }: { children: ReactNode }) {
       deleteEducation,
       saveHobby,
       deleteHobby,
+      saveBlog,
+      deleteBlog,
       moveItem,
     }),
     [
@@ -583,6 +638,7 @@ export function ContentProvider({ children }: { children: ReactNode }) {
       experience.items,
       education.items,
       hobbies.items,
+      blogs.items,
       refresh,
       saveProfile,
       uploadAvatar,
@@ -596,6 +652,8 @@ export function ContentProvider({ children }: { children: ReactNode }) {
       deleteEducation,
       saveHobby,
       deleteHobby,
+      saveBlog,
+      deleteBlog,
       moveItem,
     ],
   );

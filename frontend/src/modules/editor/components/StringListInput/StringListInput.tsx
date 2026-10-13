@@ -11,7 +11,7 @@ const splitItems = (t: string, rows: number) =>
 export default function StringListInput({
   value,
   onChange,
-  placeholder = "Separate items with a comma",
+  placeholder = "Comma or ' - ' separated",
   rows = 1,
   maxRows = 8,
   autoGrow = true,

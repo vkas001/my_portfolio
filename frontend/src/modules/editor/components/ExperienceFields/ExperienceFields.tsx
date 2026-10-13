@@ -1,7 +1,9 @@
 import { useEffect } from 'react';
+import { Plus, X } from 'lucide-react';
 import type { Experience } from '@shared/types';
 import Field from '@/modules/editor/components/Field/Field';
 import Input from '@/components/ui/Input/Input';
+import TextArea from '@/components/ui/TextArea/TextArea';
 import SelectInput from '@/modules/editor/components/SelectInput/SelectInput';
 import StringListInput from '@/modules/editor/components/StringListInput/StringListInput';
 
@@ -62,8 +64,41 @@ export default function ExperienceFields({
           </label>
         </div>
       </div>
-      <Field label="Highlights (one per line)">
-        <StringListInput rows={3} value={d.highlights} onChange={(v) => set({ highlights: v })} placeholder="Achievement or responsibility" />
+      <Field label="Highlights">
+        <div className="space-y-1.5">
+          {d.highlights.map((h, i) => (
+            <div key={i} className="flex items-start gap-2">
+              <div className="flex-1 min-w-0">
+                <TextArea
+                  rows={1}
+                  maxRows={4}
+                  autoGrow
+                  placeholder="New highlight"
+                  aria-label={`Highlight ${i + 1}`}
+                  value={h}
+                  onChange={(e) => set({ highlights: d.highlights.map((x, j) => (j === i ? e.target.value : x)) })}
+                />
+              </div>
+              <button
+                type="button"
+                className="icon-btn w-6 h-6 shrink-0 mt-1"
+                aria-label={`Remove highlight ${i + 1}`}
+                style={{ color: 'var(--error)' }}
+                onClick={() => set({ highlights: d.highlights.filter((_, j) => j !== i) })}
+              >
+                <X size={11} />
+              </button>
+            </div>
+          ))}
+          <button
+            type="button"
+            className="text-[11px] font-semibold flex items-center gap-1 cursor-pointer hover:opacity-80"
+            style={{ color: 'var(--accent)' }}
+            onClick={() => set({ highlights: [...d.highlights, ''] })}
+          >
+            <Plus size={11} /> Add highlight
+          </button>
+        </div>
       </Field>
       <Field label="Tech stack">
         <StringListInput value={d.techStack} onChange={(v) => set({ techStack: v })} />

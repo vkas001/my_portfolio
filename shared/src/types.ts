@@ -107,6 +107,20 @@ export interface Hobby {
   order: number;
 }
 
+// ─── Blogs ───────────────────────────────────────────────────────────────
+export interface Blog {
+  id: string;
+  title: string;
+  excerpt: string;
+  /** Markdown source (rendered by MarkdownBody). */
+  body: string;
+  tags: string[];
+  coverUrl: string | null;
+  published: boolean;
+  publishedAt: string | null;
+  order: number;
+}
+
 // ─── Contact ────────────────────────────────────────────────────────────────
 export interface ContactFormPayload {
   name: string;
@@ -232,6 +246,18 @@ export interface HobbyInput {
   name: string;
   icon: string; // lucide icon name
   description?: string;
+  order?: number;
+}
+
+export interface BlogInput {
+  id?: string;
+  title: string;
+  excerpt?: string;
+  body: string;
+  tags?: string[];
+  coverUrl?: string | null;
+  published?: boolean;
+  publishedAt?: string | null;
   order?: number;
 }
 

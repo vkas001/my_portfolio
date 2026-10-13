@@ -1,4 +1,6 @@
 import type {
+  Blog,
+  BlogInput,
   Education,
   EducationInput,
   Experience,
@@ -57,4 +59,8 @@ export const adminService = {
   storeHobby: (input: HobbyInput) => http.post<Hobby>('/admin/hobbies', input),
   updateHobby: (id: string, input: HobbyInput) => http.put<Hobby>(`/admin/hobbies/${id}`, input),
   deleteHobby: (id: string) => http.delete<{ id: string }>(`/admin/hobbies/${id}`),
+
+  storeBlog: (input: BlogInput) => http.post<Blog>('/admin/blogs', input),
+  updateBlog: (id: string, input: BlogInput) => http.put<Blog>(`/admin/blogs/${id}`, input),
+  deleteBlog: (id: string) => http.delete<{ id: string }>(`/admin/blogs/${id}`),
 };

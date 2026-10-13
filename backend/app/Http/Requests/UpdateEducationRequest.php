@@ -21,7 +21,7 @@ class UpdateEducationRequest extends FormRequest
             'startDate' => ['required', 'date_format:Y-m-d'],
             'endDate' => ['nullable', 'date_format:Y-m-d', 'after_or_equal:startDate'],
             'description' => ['nullable', 'string', 'max:5000'],
-            'order' => ['nullable', 'integer', 'min:0'],
+            'order' => ['nullable', 'integer', 'min:0', 'max:4294967295'],
         ];
     }
 }

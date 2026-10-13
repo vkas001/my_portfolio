@@ -5,10 +5,10 @@ import type { WidgetPlacement } from '@/styles/theme';
 export type { WidgetPlacement };
 
 export type AppId =
-  | 'about' | 'skills' | 'projects' | 'experience' | 'education' | 'hobbies' | 'contact' | 'settings' | 'auth' | 'editor';
+  | 'about' | 'skills' | 'projects' | 'experience' | 'education' | 'hobbies' | 'blogs' | 'contact' | 'settings' | 'auth' | 'editor';
 
 /** Which portfolio section an admin editor window manages. */
-export type EditorSection = 'profile' | 'skills' | 'projects' | 'experience' | 'education' | 'hobbies';
+export type EditorSection = 'profile' | 'skills' | 'projects' | 'experience' | 'education' | 'hobbies' | 'blogs';
 
 /** Per-window payload passed through launchApp into the app module. */
 export interface WindowData {
