@@ -131,7 +131,7 @@ export default function DesktopIcon({ app, offset, size, gridSize, onMove, onOpe
     <button
       ref={btnRef}
       data-app-id={app.id}
-      className={`flex flex-col items-center gap-1 ${dims.btn} p-2 rounded-xl hover:bg-white/10 transition-colors group cursor-grab active:cursor-grabbing select-none touch-none`}
+      className={`flex flex-col items-center gap-1 ${dims.btn} p-2 rounded-[var(--radius)] hover:bg-white/10 transition-colors group cursor-grab active:cursor-grabbing select-none touch-none`}
       style={{
         transform: offset ? `translate3d(${offset.x}px, ${offset.y}px, 0)` : undefined,
       }}
@@ -140,8 +140,18 @@ export default function DesktopIcon({ app, offset, size, gridSize, onMove, onOpe
       title={`${app.name} — drag to move, double-click to open`}
     >
       <span
-        className={`${dims.tile} rounded-xl flex items-center justify-center group-hover:scale-105 transition-transform`}
-        style={{ background: `${app.color}22`, border: `1px solid ${app.color}44`, color: app.color }}
+        className={`${dims.tile} rounded-[var(--radius)] flex items-center justify-center group-hover:scale-105 transition-transform`}
+        // Opaque-ish tinted fill over a blurred patch of wallpaper: the tile
+        // sits on top in every theme instead of dissolving into bright
+        // wallpapers (the old 13%-alpha tint washed out).
+        style={{
+          background: `color-mix(in srgb, ${app.color} 26%, var(--bg-elev))`,
+          border: `1px solid ${app.color}66`,
+          color: app.color,
+          backdropFilter: 'blur(8px)',
+          WebkitBackdropFilter: 'blur(8px)',
+          boxShadow: '0 4px 14px rgba(0,0,0,.28)',
+        }}
       >
         <app.icon size={dims.glyph} />
       </span>

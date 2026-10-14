@@ -2,6 +2,9 @@
 
 namespace Tests\Feature;
 
+use Illuminate\Http\UploadedFile;
+use Illuminate\Support\Facades\Storage;
+
 class ThemeSettingTest extends AdminApiTestCase
 {
     /** Theme writes are admin-gated; authenticate every write in this file. */
@@ -116,6 +119,127 @@ class ThemeSettingTest extends AdminApiTestCase
             ->assertJsonPath('data.theme.splashFooter', null);
     }
 
+    public function test_splash_background_image_rejects_off_origin_urls(): void
+    {
+        $this->putJson('/api/theme', ['splashBackgroundImage' => 'https://evil.example/bg.jpg'], $this->adminHeaders())
+            ->assertStatus(422)->assertJsonPath('ok', false);
+
+        $this->putJson('/api/theme', ['splashBackgroundImage' => '/splash/naruto-uzumaki.jpg'], $this->adminHeaders())->assertOk()
+            ->assertJsonPath('data.theme.splashBackgroundImage', '/splash/naruto-uzumaki.jpg');
+    }
+
+    public function test_splash_image_upload_stores_file_and_points_theme_at_it(): void
+    {
+        Storage::fake('public');
+
+        $this->post('/api/theme/splash-image', [
+            'image' => UploadedFile::fake()->image('custom.jpg', 1920, 1080),
+        ], $this->adminHeaders())->assertOk()->assertJsonPath('ok', true);
+
+        $url = $this->getJson('/api/theme')->json('data.theme.splashBackgroundImage');
+        $this->assertStringStartsWith('/storage/splash/', $url);
+        Storage::disk('public')->assertExists(substr($url, strlen('/storage/')));
+    }
+
+    public function test_splash_image_replace_deletes_previous_upload(): void
+    {
+        Storage::fake('public');
+
+        $post = fn (string $name) => $this->post('/api/theme/splash-image', [
+            'image' => UploadedFile::fake()->image($name, 1920, 1080),
+        ], $this->adminHeaders())->assertOk();
+
+        $post('first.jpg');
+        $first = $this->getJson('/api/theme')->json('data.theme.splashBackgroundImage');
+        $firstRel = substr($first, strlen('/storage/'));
+        Storage::disk('public')->assertExists($firstRel);
+
+        $post('second.jpg');
+        $second = $this->getJson('/api/theme')->json('data.theme.splashBackgroundImage');
+        $this->assertNotSame($first, $second);
+        Storage::disk('public')->assertMissing($firstRel);
+        Storage::disk('public')->assertExists(substr($second, strlen('/storage/')));
+    }
+
+    public function test_splash_image_upload_rejects_non_images(): void
+    {
+        Storage::fake('public');
+
+        $this->post('/api/theme/splash-image', [
+            'image' => UploadedFile::fake()->create('evil.php', 10),
+        ], $this->adminHeaders())->assertStatus(422)->assertJsonPath('ok', false);
+
+        Storage::disk('public')->assertDirectoryEmpty('splash');
+    }
+
+    public function test_splash_image_remove_clears_field_and_file(): void
+    {
+        Storage::fake('public');
+
+        $this->post('/api/theme/splash-image', [
+            'image' => UploadedFile::fake()->image('custom.jpg', 1920, 1080),
+        ], $this->adminHeaders())->assertOk();
+
+        $url = $this->getJson('/api/theme')->json('data.theme.splashBackgroundImage');
+        $rel = substr($url, strlen('/storage/'));
+
+        $this->deleteJson('/api/theme/splash-image', [], $this->adminHeaders())->assertOk()
+            ->assertJsonPath('data.theme.splashBackgroundImage', null);
+
+        Storage::disk('public')->assertMissing($rel);
+    }
+
+    public function test_unauthorized_splash_image_upload_is_rejected(): void
+    {
+        Storage::fake('public');
+
+        $this->post('/api/theme/splash-image', [
+            'image' => UploadedFile::fake()->image('custom.jpg', 1920, 1080),
+        ])->assertUnauthorized()->assertJsonPath('ok', false);
+    }
+
+    public function test_wallpaper_image_upload_replace_remove_round_trip(): void
+    {
+        Storage::fake('public');
+
+        $this->post('/api/theme/wallpaper-image', [
+            'image' => UploadedFile::fake()->image('first.jpg', 1920, 1080),
+        ], $this->adminHeaders())->assertOk()->assertJsonPath('ok', true);
+
+        $first = $this->getJson('/api/theme')->json('data.theme.wallpaperImage');
+        $this->assertStringStartsWith('/storage/wallpapers/', $first);
+        $firstRel = substr($first, strlen('/storage/'));
+        Storage::disk('public')->assertExists($firstRel);
+
+        $this->post('/api/theme/wallpaper-image', [
+            'image' => UploadedFile::fake()->image('second.jpg', 1920, 1080),
+        ], $this->adminHeaders())->assertOk();
+
+        $second = $this->getJson('/api/theme')->json('data.theme.wallpaperImage');
+        $this->assertNotSame($first, $second);
+        Storage::disk('public')->assertMissing($firstRel);
+
+        $this->deleteJson('/api/theme/wallpaper-image', [], $this->adminHeaders())->assertOk()
+            ->assertJsonPath('data.theme.wallpaperImage', null);
+        Storage::disk('public')->assertMissing(substr($second, strlen('/storage/')));
+    }
+
+    public function test_wallpaper_image_upload_rejects_non_images_and_guests(): void
+    {
+        Storage::fake('public');
+
+        $this->post('/api/theme/wallpaper-image', [
+            'image' => UploadedFile::fake()->create('evil.php', 10),
+        ], $this->adminHeaders())->assertStatus(422)->assertJsonPath('ok', false);
+
+        $this->post('/api/theme/wallpaper-image', [
+            'image' => UploadedFile::fake()->image('custom.jpg', 1920, 1080),
+        ])->assertUnauthorized()->assertJsonPath('ok', false);
+
+        $this->putJson('/api/theme', ['wallpaperImage' => 'https://evil.example/bg.jpg'], $this->adminHeaders())
+            ->assertStatus(422)->assertJsonPath('ok', false);
+    }
+
     public function test_skills_display_round_trips(): void
     {
         $this->putJson('/api/theme', ['skillsDisplay' => 'cards'], $this->adminHeaders())->assertOk()
@@ -128,5 +252,16 @@ class ThemeSettingTest extends AdminApiTestCase
     public function test_invalid_skills_display_is_rejected(): void
     {
         $this->putJson('/api/theme', ['skillsDisplay' => 'mosaic'], $this->adminHeaders())->assertStatus(422);
+    }
+
+    public function test_font_size_round_trip_and_rejects_unknown(): void
+    {
+        $this->putJson('/api/theme', ['fontSize' => 'large'], $this->adminHeaders())->assertOk()
+            ->assertJsonPath('data.theme.fontSize', 'large');
+
+        $this->getJson('/api/theme')->assertOk()
+            ->assertJsonPath('data.theme.fontSize', 'large');
+
+        $this->putJson('/api/theme', ['fontSize' => 'huge'], $this->adminHeaders())->assertStatus(422);
     }
 }

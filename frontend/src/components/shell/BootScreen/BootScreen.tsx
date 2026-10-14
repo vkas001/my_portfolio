@@ -16,6 +16,18 @@ const BOOT_STEPS: { at: number; text: string }[] = [
 
 const WORDS = ['You', 'are', 'welcomed'];
 
+/** Image backdrop layer: cover photo + fixed dark scrim so the white
+ *  wordmark stays readable on any upload. Content paints above it (see
+ *  the .boot-overlay > * rule in global.css). */
+export function BootBackdrop({ image }: { image: string }) {
+  return (
+    <div className="boot-bg" aria-hidden="true">
+      <img src={image} alt="" className="boot-bg-img" draggable={false} />
+      <div className="boot-bg-scrim" />
+    </div>
+  );
+}
+
 interface BootScreenProps {
   onDone?: () => void;
   /** Live phase message (e.g. still hydrating content) shown instead of the
@@ -35,6 +47,9 @@ interface BootScreenProps {
   footer?: string;
   /** Background preset key (theme-independent fixed gradients). */
   background?: SplashBackground;
+  /** Image backdrop URL (built-in /splash/* or uploaded /storage/*). Set =
+   *  the photo wins over the gradient preset; null/undefined = gradient. */
+  backgroundImage?: string | null;
   /** Progress-fill hex (theme-independent). */
   accent?: string;
   /** Wall-clock the boot started (overlay mount). Defaults to this
@@ -53,6 +68,7 @@ export function BootScreen({
   tagline = 'My digital workspace',
   footer = 'v1.0.0 • Portfolio OS',
   background = 'abyss',
+  backgroundImage = null,
   accent = '#ffffff',
   startedAt,
 }: BootScreenProps) {
@@ -102,29 +118,32 @@ export function BootScreen({
       className={`boot-overlay${leaving ? ' boot-overlay--leaving' : ''}`}
       style={{ background: (SPLASH_BACKGROUNDS[background] ?? SPLASH_BACKGROUNDS.abyss).css }}
     >
-      <div className="boot-wordmark" aria-hidden="true">
-        {words.map((word, i) => (
-          <span
-            key={`${word}-${i}`}
-            className="boot-word"
-            style={i === 0 ? undefined : { animationDelay: `${0.12 + i * 0.18}s` }}
-          >
-            {word}
-          </span>
-        ))}
-      </div>
-      {tagline && <div className="boot-tagline">{tagline}</div>}
-
-      <div className="boot-progress">
-        <div className="boot-progress__track">
-          <div className="boot-progress__fill" style={{ width: `${progress}%`, background: accent }} />
+      {backgroundImage && <BootBackdrop image={backgroundImage} />}
+      <div className="boot-center">
+        <div className="boot-wordmark" aria-hidden="true">
+          {words.map((word, i) => (
+            <span
+              key={`${word}-${i}`}
+              className="boot-word"
+              style={i === 0 ? undefined : { animationDelay: `${0.12 + i * 0.18}s` }}
+            >
+              {word}
+            </span>
+          ))}
         </div>
-        <div className="boot-status">
-          <span className="boot-status__line">
-            <Loader2 className="boot-spinner" />
-            {statusLine ?? stepStatus}
-          </span>
-          <span className="boot-status__pct">{Math.round(progress)}%</span>
+        {tagline && <div className="boot-tagline">{tagline}</div>}
+
+        <div className="boot-progress">
+          <div className="boot-progress__track">
+            <div className="boot-progress__fill" style={{ width: `${progress}%`, background: accent }} />
+          </div>
+          <div className="boot-status">
+            <span className="boot-status__line">
+              <Loader2 className="boot-spinner" />
+              {statusLine ?? stepStatus}
+            </span>
+            <span className="boot-status__pct">{Math.round(progress)}%</span>
+          </div>
         </div>
       </div>
 

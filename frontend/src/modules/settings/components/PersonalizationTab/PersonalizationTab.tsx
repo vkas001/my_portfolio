@@ -1,6 +1,9 @@
-import { LayoutGrid, Palette, Sparkles, Sun } from 'lucide-react';
+import { useRef, useState } from 'react';
+import { ImagePlus, LayoutGrid, LoaderCircle, Palette, Sparkles, Sun, Trash2 } from 'lucide-react';
 import { ACCENTS, WALLPAPERS, type ThemeState } from '@/styles/theme';
 import SectionCard from '@/components/ui/SectionCard/SectionCard';
+import { adminService } from '@/lib/api/adminService';
+import toast from 'react-hot-toast';
 import { RangeControl, SegmentedControl, SubLabel } from '@/modules/settings/components/primitives';
 import {
   BLUR_OPTIONS, GLASS_OPTIONS, MODE_OPTIONS, RADIUS_OPTIONS,
@@ -20,6 +23,50 @@ export default function PersonalizationTab({
   setTheme: SetTheme;
   isAdmin: boolean;
 }) {
+  const [uploading, setUploading] = useState(false);
+  const fileRef = useRef<HTMLInputElement>(null);
+  // Gradient presets vs photo backdrops (built-in /splash/* or uploads).
+  const colorWps = WALLPAPERS.filter((w) => !w.css.startsWith('url('));
+  const photoWps = WALLPAPERS.filter((w) => w.css.startsWith('url('));
+  const customPhoto = theme.wallpaperImage;
+
+  const onPickFile = async (file: File | undefined) => {
+    if (!file) return;
+    if (!['image/jpeg', 'image/png', 'image/webp'].includes(file.type)) {
+      toast.error('JPEG, PNG or WebP only');
+      return;
+    }
+    if (file.size > 5 * 1024 * 1024) {
+      toast.error('Max 5 MB');
+      return;
+    }
+    setUploading(true);
+    try {
+      const updated = await adminService.uploadWallpaperImage(file);
+      setTheme({ wallpaperImage: updated.wallpaperImage });
+      toast.success('Wallpaper uploaded');
+    } catch (err) {
+      toast.error(err instanceof Error ? err.message : 'Upload failed');
+    } finally {
+      setUploading(false);
+    }
+  };
+
+  const removeCustomPhoto = async () => {
+    try {
+      await adminService.removeWallpaperImage();
+      setTheme({ wallpaperImage: null });
+      toast.success('Custom wallpaper removed');
+    } catch (err) {
+      toast.error(err instanceof Error ? err.message : 'Remove failed');
+    }
+  };
+
+  const tileClass =
+    'col-span-6 @md:col-span-4 @2xl:col-span-3 h-16 rounded-[var(--radius-sm)] relative overflow-hidden transition-transform hover:scale-[1.03]';
+  const tileBorder = (selected: boolean) =>
+    selected ? '2px solid var(--accent)' : '1px solid var(--border)';
+
   return (
     <>
       {!isAdmin && (
@@ -116,16 +163,19 @@ export default function PersonalizationTab({
       </SectionCard>
 
       <SectionCard title="Wallpaper" icon={<LayoutGrid size={13} />}>
+        <SubLabel>Colors</SubLabel>
         <div className="grid grid-cols-12 gap-2">
-          {WALLPAPERS.map((w) => (
+          {colorWps.map((w) => (
             <button
               key={w.id}
-              className="col-span-6 @md:col-span-4 @2xl:col-span-3 h-16 rounded-[var(--radius-sm)] relative overflow-hidden transition-transform hover:scale-[1.03]"
+              className={tileClass}
               style={{
                 background: w.css.startsWith('var(') ? 'var(--wp-accent-dark)' : w.css,
-                border: theme.wallpaper === w.id ? '2px solid var(--accent)' : '1px solid var(--border)',
+                backgroundSize: 'cover',
+                backgroundPosition: 'center',
+                border: !customPhoto && theme.wallpaper === w.id ? tileBorder(true) : tileBorder(false),
               }}
-              onClick={() => setTheme({ wallpaper: w.id })}
+              onClick={() => setTheme({ wallpaper: w.id, wallpaperImage: null })}
               title={w.label}
             >
               <span
@@ -137,6 +187,78 @@ export default function PersonalizationTab({
             </button>
           ))}
         </div>
+        <div className="mt-3">
+          <SubLabel>Photos</SubLabel>
+        </div>
+        <div className="grid grid-cols-12 gap-2">
+          {photoWps.map((w) => (
+            <button
+              key={w.id}
+              className={tileClass}
+              style={{
+                background: w.css,
+                backgroundSize: 'cover',
+                backgroundPosition: 'center',
+                border: !customPhoto && theme.wallpaper === w.id ? tileBorder(true) : tileBorder(false),
+              }}
+              onClick={() => setTheme({ wallpaper: w.id, wallpaperImage: null })}
+              title={w.label}
+            >
+              <span
+                className="absolute bottom-1 left-1 right-1 text-[9px] truncate text-left"
+                style={{ color: '#fff', textShadow: '0 1px 3px rgba(0,0,0,.8)' }}
+              >
+                {w.label}
+              </span>
+            </button>
+          ))}
+          {customPhoto && (
+            <div
+              className={`${tileClass} flex items-center gap-2 p-2`}
+              style={{ border: tileBorder(true), background: 'var(--accent-soft)' }}
+            >
+              <img
+                src={customPhoto}
+                alt="Custom wallpaper"
+                loading="lazy"
+                className="w-10 h-10 rounded shrink-0 border object-cover"
+                style={{ borderColor: 'var(--border)' }}
+                draggable={false}
+              />
+              <span className="text-[12px] font-bold flex-1 text-left" style={{ color: 'var(--text-hi)' }}>
+                Custom
+              </span>
+              <button
+                className="icon-btn w-7 h-7 shrink-0"
+                onClick={removeCustomPhoto}
+                aria-label="Remove custom wallpaper"
+                title="Remove custom wallpaper"
+              >
+                <Trash2 size={13} />
+              </button>
+            </div>
+          )}
+        </div>
+        <input
+          ref={fileRef}
+          type="file"
+          accept="image/jpeg,image/png,image/webp"
+          className="hidden wallpaper-upload-input"
+          aria-hidden
+          tabIndex={-1}
+          onChange={(e) => {
+            void onPickFile(e.target.files?.[0]);
+            e.target.value = '';
+          }}
+        />
+        <button
+          className="btn-ghost text-[11px] mt-2.5 disabled:opacity-60"
+          onClick={() => fileRef.current?.click()}
+          disabled={uploading}
+        >
+          {uploading ? <LoaderCircle size={12} className="animate-spin" /> : <ImagePlus size={12} />}
+          {uploading ? 'Uploading…' : customPhoto ? 'Replace custom photo' : 'Upload custom photo'}
+        </button>
       </SectionCard>
 
       <SectionCard title="Wallpaper effects" icon={<Sparkles size={13} />}>

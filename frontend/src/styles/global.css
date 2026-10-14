@@ -115,6 +115,9 @@ button { font-family: inherit; }
   inset: 0;
   overflow: hidden;
   background: var(--wallpaper, var(--bg));
+  background-size: cover;
+  background-position: center;
+  background-repeat: no-repeat;
 }
 
 .wallpaper-layer {
@@ -1088,6 +1091,23 @@ button { font-family: inherit; }
 }
 .boot-overlay--leaving { opacity: 0; }
 
+/* Photo backdrop layer: cover image + fixed dark scrim so the white
+ * wordmark stays readable on any upload. The center wrapper + footer paint
+ * above it — note the wordmark/tagline/progress live INSIDE .boot-center,
+ * so a direct-child selector on them misses and the photo buries the
+ * splash (seen live once; this rule is the fix). */
+.boot-bg { position: absolute; inset: 0; overflow: hidden; }
+.boot-bg-img { width: 100%; height: 100%; object-fit: cover; }
+.boot-bg-scrim {
+  position: absolute;
+  inset: 0;
+  background: linear-gradient(rgba(3, 3, 10, .58), rgba(3, 3, 10, .68));
+}
+.boot-overlay > .boot-center,
+.boot-overlay > .boot-footer {
+  position: relative;
+}
+
 .boot-wordmark {
   display: flex;
   flex-wrap: wrap;
@@ -1138,9 +1158,23 @@ button { font-family: inherit; }
 .boot-status__line { display: flex; align-items: center; gap: 8px; }
 .boot-spinner { width: 14px; height: 14px; animation: bootSpin 1s linear infinite; }
 
+/* Center block takes the free height so the footer pins to the screen
+ * bottom in-flow — absolute positioning let it overlap the progress row
+ * on short viewports. */
+.boot-center {
+  flex: 1;
+  min-height: 0;
+  width: 100%;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+}
+
 .boot-footer {
-  position: absolute;
-  bottom: 24px;
+  flex-shrink: 0;
+  padding-bottom: 24px;
+  text-align: center;
   font-size: 11px;
   color: rgba(255, 255, 255, 0.4);
 }

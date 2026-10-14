@@ -254,10 +254,6 @@ const [isTrayOpen, setIsTrayOpen] = useState(false);
               onClick={onToggleStartMenu}
               className={`${appBtnBox} flex items-center justify-center rounded-lg transition-all group cursor-pointer ${
                 windowsStyle ? 'mr-1' : 'mr-2'
-              } ${
-                startMenuOpen
-                  ? 'bg-(--surface-60) scale-105 shadow-md'
-                  : 'hover:bg-(--surface-30)'
               }`}
               title="App Launcher & Start Menu"
             >
@@ -275,7 +271,7 @@ const [isTrayOpen, setIsTrayOpen] = useState(false);
             // would reopen it (close+open flicker). Toggling off the
             // press-time value makes each tap do exactly one action.
             onPointerDown={() => { spotWasOpenRef.current = spotlightOpen; }}
-            className={`${appBtnBox} flex items-center justify-center rounded-lg transition-all group cursor-pointer hover:bg-(--surface-30)`}
+            className={`${appBtnBox} flex items-center justify-center rounded-lg transition-all group cursor-pointer`}
             aria-label="Search"
             title="Search (Ctrl+K)"
           >
@@ -305,8 +301,8 @@ const [isTrayOpen, setIsTrayOpen] = useState(false);
                       onClick={() => handleAppClick(app.id as AppId)}
                       className={`${appBtnBase} ${
                         isActive
-                          ? 'bg-(--surface-40) text-(--wp-accent-fg) shadow-[0_1px_5px_rgba(15,23,42,.14)]'
-                          : 'hover:bg-(--surface-20) text-(--wp-accent-fg)/70 hover:text-(--wp-accent-fg)'
+                          ? 'text-(--wp-accent-fg)'
+                          : 'text-(--wp-accent-fg)/70 hover:text-(--wp-accent-fg)'
                       }`}
                       title={isOpen && isMinimized ? `Restore ${app.name}` : app.name}
                     >
@@ -344,7 +340,7 @@ const [isTrayOpen, setIsTrayOpen] = useState(false);
               <button
                 onClick={() => setWidgetsOpen(!widgetsOpen)}
                 className={`${appBtnBox} flex items-center justify-center rounded-lg relative group transition-all cursor-pointer ${
-                  widgetsOpen ? 'bg-(--surface-50) text-(--wp-accent-fg)' : 'hover:bg-(--surface-20) text-(--wp-accent-fg)/70 hover:text-(--wp-accent-fg)'
+                  widgetsOpen ? 'text-(--wp-accent-fg)' : 'text-(--wp-accent-fg)/70 hover:text-(--wp-accent-fg)'
                 }`}
                 title="Toggle widgets (Ctrl+W)"
               >

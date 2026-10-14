@@ -1,16 +1,20 @@
-import { useState } from 'react';
-import { Eye, Palette, Plus, RotateCcw, Timer, Type, X } from 'lucide-react';
+import { useRef, useState } from 'react';
+import { Eye, ImagePlus, LoaderCircle, Palette, Plus, RotateCcw, Timer, Trash2, Type, X } from 'lucide-react';
 import {
-  DEFAULT_THEME, SPLASH_ACCENTS, SPLASH_BACKGROUNDS,
+  DEFAULT_THEME, SPLASH_ACCENTS, SPLASH_BACKGROUNDS, SPLASH_IMAGES,
   type SplashBackground, type ThemeState,
 } from '@/styles/theme';
 import SectionCard from '@/components/ui/SectionCard/SectionCard';
 import Input from '@/components/ui/Input/Input';
 import { RangeControl } from '@/modules/settings/components/primitives';
 import { BootScreen } from '@/components/shell/BootScreen/BootScreen';
+import { adminService } from '@/lib/api/adminService';
 import type { SetTheme } from '@/modules/settings/lib/types';
+import toast from 'react-hot-toast';
 
 const MAX_WORDS = 6;
+const MAX_UPLOAD_BYTES = 5 * 1024 * 1024;
+const UPLOAD_MIMES = ['image/jpeg', 'image/png', 'image/webp'];
 
 /** Boot-splash editor: wordmark, lines, timing and theme-independent look,
  *  with a fullscreen replay of the exact splash component as preview. */
@@ -24,6 +28,43 @@ export default function SplashTab({
   isAdmin: boolean;
 }) {
   const [previewing, setPreviewing] = useState(false);
+  const [uploading, setUploading] = useState(false);
+  const fileRef = useRef<HTMLInputElement>(null);
+
+  const image = theme.splashBackgroundImage;
+  const isCustomImage = !!image && !SPLASH_IMAGES.some((g) => g.url === image);
+
+  const onPickFile = async (file: File | undefined) => {
+    if (!file) return;
+    if (!UPLOAD_MIMES.includes(file.type)) {
+      toast.error('JPEG, PNG or WebP only');
+      return;
+    }
+    if (file.size > MAX_UPLOAD_BYTES) {
+      toast.error('Max 5 MB');
+      return;
+    }
+    setUploading(true);
+    try {
+      const updated = await adminService.uploadSplashImage(file);
+      setTheme({ splashBackgroundImage: updated.splashBackgroundImage });
+      toast.success('Backdrop uploaded');
+    } catch (err) {
+      toast.error(err instanceof Error ? err.message : 'Upload failed');
+    } finally {
+      setUploading(false);
+    }
+  };
+
+  const removeCustomImage = async () => {
+    try {
+      await adminService.removeSplashImage();
+      setTheme({ splashBackgroundImage: null });
+      toast.success('Custom backdrop removed');
+    } catch (err) {
+      toast.error(err instanceof Error ? err.message : 'Remove failed');
+    }
+  };
 
   const setWord = (i: number, value: string) => {
     const next = theme.splashWords.map((w, j) => (j === i ? value : w));
@@ -44,6 +85,7 @@ export default function SplashTab({
       splashFooter: DEFAULT_THEME.splashFooter,
       splashDuration: DEFAULT_THEME.splashDuration,
       splashBackground: DEFAULT_THEME.splashBackground,
+      splashBackgroundImage: DEFAULT_THEME.splashBackgroundImage,
       splashAccent: DEFAULT_THEME.splashAccent,
     });
 
@@ -130,16 +172,17 @@ export default function SplashTab({
       <SectionCard title="Look" icon={<Palette size={13} />}>
         <p className="text-[11px] mb-2" style={{ color: 'var(--text-low)' }}>
           Fixed dark gradients — the splash renders before the theme loads.
+          A photo wins over the gradient when set.
         </p>
         <div className="grid grid-cols-12 gap-2 mb-4">
           {(Object.keys(SPLASH_BACKGROUNDS) as SplashBackground[]).map((key) => {
             const preset = SPLASH_BACKGROUNDS[key];
-            const selected = theme.splashBackground === key;
+            const selected = !image && theme.splashBackground === key;
             return (
               <button
                 key={key}
                 aria-pressed={selected}
-                onClick={() => setTheme({ splashBackground: key })}
+                onClick={() => setTheme({ splashBackground: key, splashBackgroundImage: null })}
                 className="col-span-12 @md:col-span-6 flex items-center gap-2 p-2 rounded-[var(--radius-sm)] border transition-all cursor-pointer"
                 style={
                   selected
@@ -159,6 +202,85 @@ export default function SplashTab({
             );
           })}
         </div>
+        <p className="text-[11px] mb-2" style={{ color: 'var(--text-low)' }}>
+          Backdrop photos
+        </p>
+        <div className="grid grid-cols-12 gap-2 mb-4">
+          {SPLASH_IMAGES.map((g) => {
+            const selected = image === g.url;
+            return (
+              <button
+                key={g.id}
+                aria-pressed={selected}
+                onClick={() => setTheme({ splashBackgroundImage: g.url })}
+                className="col-span-12 @md:col-span-6 flex items-center gap-2 p-2 rounded-[var(--radius-sm)] border transition-all cursor-pointer"
+                style={
+                  selected
+                    ? { borderColor: 'var(--accent)', boxShadow: '0 0 0 2px var(--accent-soft)', background: 'var(--accent-soft)' }
+                    : { borderColor: 'var(--border)' }
+                }
+              >
+                <img
+                  src={g.url}
+                  alt=""
+                  loading="lazy"
+                  className="w-10 h-7 rounded shrink-0 border object-cover"
+                  style={{ borderColor: 'var(--border)' }}
+                  draggable={false}
+                />
+                <span className="text-[12px] font-bold" style={{ color: 'var(--text-hi)' }}>
+                  {g.label}
+                </span>
+              </button>
+            );
+          })}
+          {isCustomImage && (
+            <div
+              className="col-span-12 @md:col-span-6 flex items-center gap-2 p-2 rounded-[var(--radius-sm)] border"
+              style={{ borderColor: 'var(--accent)', boxShadow: '0 0 0 2px var(--accent-soft)', background: 'var(--accent-soft)' }}
+            >
+              <img
+                src={image}
+                alt="Custom backdrop"
+                loading="lazy"
+                className="w-10 h-7 rounded shrink-0 border object-cover"
+                style={{ borderColor: 'var(--border)' }}
+                draggable={false}
+              />
+              <span className="text-[12px] font-bold flex-1" style={{ color: 'var(--text-hi)' }}>
+                Custom
+              </span>
+              <button
+                className="icon-btn w-7 h-7 shrink-0"
+                onClick={removeCustomImage}
+                aria-label="Remove custom backdrop"
+                title="Remove custom backdrop"
+              >
+                <Trash2 size={13} />
+              </button>
+            </div>
+          )}
+        </div>
+        <input
+          ref={fileRef}
+          type="file"
+          accept="image/jpeg,image/png,image/webp"
+          className="hidden"
+          aria-hidden
+          tabIndex={-1}
+          onChange={(e) => {
+            void onPickFile(e.target.files?.[0]);
+            e.target.value = '';
+          }}
+        />
+        <button
+          className="btn-ghost text-[11px] mb-4 disabled:opacity-60"
+          onClick={() => fileRef.current?.click()}
+          disabled={uploading}
+        >
+          {uploading ? <LoaderCircle size={12} className="animate-spin" /> : <ImagePlus size={12} />}
+          {uploading ? 'Uploading…' : isCustomImage ? 'Replace custom photo' : 'Upload custom photo'}
+        </button>
         <p className="text-[11px] mb-2" style={{ color: 'var(--text-low)' }}>
           Progress-fill accent
         </p>
@@ -200,6 +322,7 @@ export default function SplashTab({
           footer={theme.splashFooter}
           duration={theme.splashDuration}
           background={theme.splashBackground}
+          backgroundImage={theme.splashBackgroundImage}
           accent={theme.splashAccent}
           onDone={() => setPreviewing(false)}
         />
