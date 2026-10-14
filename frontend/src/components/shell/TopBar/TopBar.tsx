@@ -35,7 +35,7 @@ export default function TopBar() {
       {/* Left — brand */}
       <div className="flex items-center gap-2 min-w-0">
         <span className="text-xs font-semibold truncate" style={{ color: 'var(--accent)' }}>
-          Hey! this is Vkas
+          Hey! this is Bikash Limbu
         </span>
         <span className="text-xs shrink-0" style={{ color: 'var(--text-low)' }}>
           {theme.accent}

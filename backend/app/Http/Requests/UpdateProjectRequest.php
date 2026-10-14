@@ -27,7 +27,7 @@ class UpdateProjectRequest extends FormRequest
             'githubUrl' => ['nullable', 'string', 'max:511'],
             'imageUrl' => ['nullable', 'string', 'max:511'],
             'year' => ['required', 'integer', 'min:1990', 'max:2100'],
-            'order' => ['nullable', 'integer', 'min:0'],
+            'order' => ['nullable', 'integer', 'min:0', 'max:4294967295'],
         ];
     }
 }

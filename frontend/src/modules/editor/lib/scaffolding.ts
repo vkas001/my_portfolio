@@ -1,6 +1,6 @@
 import type { ReactNode } from 'react';
 import type { EditorSection } from '@/types';
-import type { Education, Experience, Hobby, Project, SocialLink } from '@shared/types';
+import type { Blog, Education, Experience, Hobby, Project, SocialLink } from '@shared/types';
 
 export const newId = () => crypto.randomUUID().slice(0, 8);
 
@@ -27,15 +27,12 @@ export interface SectionScaffold<T extends BaseItem> {
   save: (value: T, isNew: boolean) => Promise<boolean>;
   remove: (id: string) => Promise<boolean>;
   validate: (d: T) => string | null;
-  renderFields: (draft: T, set: (patch: Partial<T>) => void, actions: { quickAddIn: (category: string) => void }) => ReactNode;
+  renderFields: (draft: T, set: (patch: Partial<T>) => void, actions: object) => ReactNode;
   renderRowMeta: (t: T) => ReactNode;
   move?: (id: string, dir: -1 | 1) => void;
-  /** Stamp a category onto a draft (quick-add). Only needed when a field
-   *  offers per-category + quick-add (skills). */
-  setCategory?: (draft: T, category: string) => T;
-  /** Preset for the fresh draft opened right after a quick-add save, so the
-   *  form stays open on the same category for rapid entry. */
-  presetCategory?: (category: string) => Partial<T>;
+  /** Expand one draft into several rows on save (skills: one row per staged
+   *  name). Each row is validated and saved in order. */
+  splitDraft?: (draft: T) => T[];
   /** After a successful ADD (not edit), keep the form open with a fresh draft
    *  instead of closing — rapid entry of several items. Receives the just-
    *  saved draft so the preset can carry values over (e.g. keep category). */
@@ -49,6 +46,7 @@ export const SECTION_LABELS: Record<EditorSection, string> = {
   experience: 'Experience',
   education: 'Education',
   hobbies: 'Hobbies',
+  blogs: 'Blogs',
 };
 
 /** "3 items" / "2 entries" — experience reads better as entries. */
@@ -70,4 +68,9 @@ export const emptyEducation = (id: string): Education => ({
 
 export const emptyHobby = (id: string): Hobby => ({
   id, name: '', icon: 'mountain', description: '', order: Number.MAX_SAFE_INTEGER,
+});
+
+export const emptyBlog = (id: string): Blog => ({
+  id, title: '', excerpt: '', body: '', tags: [], coverUrl: null,
+  published: true, publishedAt: null, order: Number.MAX_SAFE_INTEGER,
 });

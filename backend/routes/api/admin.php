@@ -1,5 +1,6 @@
 <?php
 
+use App\Http\Controllers\Admin\BlogController;
 use App\Http\Controllers\Admin\EducationController;
 use App\Http\Controllers\Admin\ExperienceController;
 use App\Http\Controllers\Admin\HobbyController;
@@ -44,4 +45,11 @@ Route::middleware(['auth:api', 'permission:'.PermissionRegistry::HOBBIES_MANAGE]
     Route::post('/admin/hobbies', [HobbyController::class, 'store']);
     Route::put('/admin/hobbies/{hobby}', [HobbyController::class, 'update']);
     Route::delete('/admin/hobbies/{hobby}', [HobbyController::class, 'destroy']);
+});
+
+Route::middleware(['auth:api', 'permission:'.PermissionRegistry::BLOGS_MANAGE])->group(function () {
+    Route::get('/admin/blogs', [BlogController::class, 'index']);
+    Route::post('/admin/blogs', [BlogController::class, 'store']);
+    Route::put('/admin/blogs/{blog}', [BlogController::class, 'update']);
+    Route::delete('/admin/blogs/{blog}', [BlogController::class, 'destroy']);
 });

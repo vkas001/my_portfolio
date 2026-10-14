@@ -76,6 +76,9 @@ Stack-relevant agent skills live in `.agents/skills/` (copied from ibiz_v2):
 - API/types: `openapi-spec-generation`, `openapi-to-typescript`
 - Testing/build: `webapp-testing`, `web-artifacts-builder`
 - Workflow: `mcp-builder`, `skill-creator`, `document-project`, `doc-coauthoring`
+- Collaboration (local): `interaction-contract` — behavior-complete UI
+  contract, decision protocol, realistic-input verification. Load it on any
+  user-facing UI/interaction task, even trivial-sounding ones.
 
 Activate the matching skill when working in its domain. Pinned versions in
 `skills-lock.json`. Heavy/irrelevant packs from the ibiz_v2 library

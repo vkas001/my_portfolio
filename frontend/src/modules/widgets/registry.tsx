@@ -53,7 +53,8 @@ export const WIDGET_DEFS: WidgetMeta[] = [
     defaultVariant: 'medium',
     variants: {
       small: { w: 192, h: 168 },
-      medium: { w: 288, h: 216 },
+      medium: { w: 344, h: 320 },
+      large: { w: 448, h: 400 },
     },
   },
   {

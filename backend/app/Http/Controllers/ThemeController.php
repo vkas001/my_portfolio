@@ -3,6 +3,8 @@
 namespace App\Http\Controllers;
 
 use App\Http\Requests\UpdateThemeRequest;
+use App\Http\Requests\UploadSplashImageRequest;
+use App\Http\Requests\UploadWallpaperImageRequest;
 use App\Services\Theme\ThemeService;
 use Illuminate\Http\JsonResponse;
 
@@ -27,5 +29,25 @@ class ThemeController extends Controller
     public function reset(): JsonResponse
     {
         return response()->json($this->theme->reset());
+    }
+
+    public function uploadSplashImage(UploadSplashImageRequest $request): JsonResponse
+    {
+        return response()->json($this->theme->uploadSplashImage($request->file('image')));
+    }
+
+    public function removeSplashImage(): JsonResponse
+    {
+        return response()->json($this->theme->removeSplashImage());
+    }
+
+    public function uploadWallpaperImage(UploadWallpaperImageRequest $request): JsonResponse
+    {
+        return response()->json($this->theme->uploadWallpaperImage($request->file('image')));
+    }
+
+    public function removeWallpaperImage(): JsonResponse
+    {
+        return response()->json($this->theme->removeWallpaperImage());
     }
 }

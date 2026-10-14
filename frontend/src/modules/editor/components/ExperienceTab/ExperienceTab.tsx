@@ -23,6 +23,9 @@ export default function ExperienceTab({ commitRef, reportSave }: SaveBridge) {
         save: saveExperience,
         remove: deleteExperience,
         move: (id, dir) => { void moveItem('experience', id, dir); },
+        // Added-via-+ rows start blank; drop the still-empty ones on save so
+        // they never become blank bullets (same precedent as skill extras).
+        splitDraft: (d) => [{ ...d, highlights: d.highlights.map((h) => h.trim()).filter(Boolean) }],
         validate: (d) =>
           d.role.trim() && d.company.trim() && d.location.trim() && d.employmentType.trim() && d.startDate
             ? null

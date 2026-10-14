@@ -1,8 +1,10 @@
 import { useEffect, useMemo, useRef, useState, type ReactNode } from 'react';
+import { useAuth } from '@/context/AuthContext';
 import { useShellUI } from '@/context/ShellUIContext';
 import { useWindows } from '@/context/WindowsContext';
 import { useWidgets } from '@/context/WidgetsContext';
-import { APP_REGISTRY } from '@/apps/registry';
+import { APP_REGISTRY, isAppVisible } from '@/apps/registry';
+import { siteAnchorFor } from '@/modules/site';
 import { WIDGET_DEFS } from '@/modules/widgets';
 import type { AppId } from '@/types';
 import { Puzzle, Search } from 'lucide-react';
@@ -19,6 +21,7 @@ interface Result {
 
 export default function Spotlight() {
   const { spotlightOpen, setSpotlightOpen, viewMode } = useShellUI();
+  const { isAdmin } = useAuth();
   const { launchApp } = useWindows();
   const { addWidget } = useWidgets();
   const [query, setQuery] = useState('');
@@ -27,13 +30,14 @@ export default function Spotlight() {
   const ref = useRef<HTMLDivElement>(null);
   const inputRef = useRef<HTMLInputElement>(null);
   // In Web view there are no windows/widgets: app results scroll to the
-  // matching section, settings + widget results are hidden.
+  // matching tile, and apps without a tile (auth, editor, settings) plus
+  // widget results are hidden so every result does something.
   const isWeb = viewMode === 'web';
 
   const results = useMemo<Result[]>(() => {
     const q = query.trim().toLowerCase();
     const apps: Result[] = APP_REGISTRY
-      .filter((a) => !isWeb || a.id !== 'settings')
+      .filter((a) => (!isWeb || siteAnchorFor(a.id) !== null) && isAppVisible(a, { isAdmin }))
       .map((a) => ({
         kind: 'app',
         id: a.id,
@@ -46,7 +50,8 @@ export default function Spotlight() {
         ),
         run: () => {
           if (isWeb) {
-            document.getElementById(`section-${a.id}`)?.scrollIntoView({ behavior: 'smooth' });
+            const anchor = siteAnchorFor(a.id);
+            if (anchor) document.getElementById(anchor)?.scrollIntoView({ behavior: 'smooth' });
           } else {
             launchApp(a.id as AppId);
           }
@@ -63,7 +68,7 @@ export default function Spotlight() {
     const all = [...apps, ...widgets];
     if (!q) return all.slice(0, 6);
     return all.filter((r) => r.name.toLowerCase().includes(q) || r.sub.toLowerCase().includes(q)).slice(0, 8);
-  }, [query, launchApp, addWidget, isWeb]);
+  }, [query, launchApp, addWidget, isWeb, isAdmin]);
 
   useEffect(() => {
     if (spotlightOpen) {
@@ -89,9 +94,12 @@ export default function Spotlight() {
       if (!trigger) return;
       const rect = trigger.getBoundingClientRect();
       const width = Math.min(320, window.innerWidth - 24);
+      // Gap is measured off the BAR's top edge (the button sits ~12px inside
+      // the pill — anchoring off the button would land the panel flush on it).
+      const barTop = document.querySelector('[data-os-taskbar]')?.getBoundingClientRect().top ?? rect.top;
       setPosition({
         left: Math.min(Math.max(12, rect.left), window.innerWidth - width - 12),
-        bottom: Math.max(12, window.innerHeight - rect.top + 8),
+        bottom: Math.max(12, window.innerHeight - barTop + 12),
       });
     };
 
@@ -122,29 +130,12 @@ export default function Spotlight() {
     };
   }, [spotlightOpen, results, sel, setSpotlightOpen]);
 
-  // Open above the taskbar Search button (same 8px float gap as the start
-  // menu). Falls back to the centered top overlay where there is no button
-  // (web view) or it can't be measured. Hooks stay above the early return.
-  const [anchor, setAnchor] = useState<{ left: number; bottom: number } | null>(null);
-  useEffect(() => {
-    if (!spotlightOpen) return;
-    const btn = document.querySelector('[data-os-taskbar] button[aria-label="Search"]');
-    if (!btn) {
-      setAnchor(null);
-      return;
-    }
-    const r = btn.getBoundingClientRect();
-    const w = Math.min(520, window.innerWidth - 24);
-    const left = Math.min(Math.max(12, r.left), Math.max(12, window.innerWidth - w - 12));
-    setAnchor({ left, bottom: window.innerHeight - r.top + 8 });
-  }, [spotlightOpen]);
-
   if (!spotlightOpen) return null;
 
   return (
     <div
       ref={ref}
-      className="menu-surface !fixed w-80 max-w-[calc(100vw-24px)] p-3 slide-up"
+      className="menu-surface menu-surface--above-bar !fixed w-80 max-w-[calc(100vw-24px)] p-3 slide-up"
       style={{
         zIndex: Z_WINDOW_TOP,
         left: position?.left ?? 12,

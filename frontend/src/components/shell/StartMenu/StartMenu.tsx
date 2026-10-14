@@ -3,7 +3,7 @@ import { useShellUI } from '@/context/ShellUIContext';
 import { useWindows } from '@/context/WindowsContext';
 import { useTheme } from '@/context/ThemeContext';
 import { useAuth } from '@/context/AuthContext';
-import { APP_REGISTRY } from '@/apps/registry';
+import { APP_REGISTRY, isAppVisible } from '@/apps/registry';
 import { Moon, Sun, RotateCcw, Search, Settings, Undo2, X, LogIn, CircleUserRound } from 'lucide-react';
 import { Z_TASKBAR } from '@/lib/osLayout';
 
@@ -11,7 +11,7 @@ export default function StartMenu() {
   const { startMenuOpen, setStartMenuOpen } = useShellUI();
   const { launchApp, closeAllWindows } = useWindows();
   const { theme, setTheme, resetTheme } = useTheme();
-  const { user } = useAuth();
+  const { user, isAdmin } = useAuth();
   const ref = useRef<HTMLDivElement>(null);
   const inputRef = useRef<HTMLInputElement>(null);
   const [position, setPosition] = useState<{ left: number; bottom: number } | null>(null);
@@ -27,10 +27,13 @@ export default function StartMenu() {
       const trigger = document.querySelector<HTMLElement>('[data-trigger="start"]');
       if (!trigger) return;
       const rect = trigger.getBoundingClientRect();
+      // Gap is measured off the BAR's top edge (the button sits ~12px inside
+      // the pill — anchoring off the button would land the menu flush on it).
+      const barTop = document.querySelector('[data-os-taskbar]')?.getBoundingClientRect().top ?? rect.top;
       const width = Math.min(320, window.innerWidth - 24);
       setPosition({
         left: Math.min(Math.max(12, rect.left), window.innerWidth - width - 12),
-        bottom: Math.max(12, window.innerHeight - rect.top + 8),
+        bottom: Math.max(12, window.innerHeight - barTop + 12),
       });
     };
 
@@ -42,6 +45,11 @@ export default function StartMenu() {
   useEffect(() => {
     if (!startMenuOpen) return;
     const onDown = (e: MouseEvent) => {
+      const el = e.target as Element | null;
+      // The Start button toggles on click — a bare containment check would
+      // close the menu on the mousedown of the very press that toggles it,
+      // and the stale toggle would reopen it: one tap, close+open flicker.
+      if (el && el.closest?.('[data-trigger="start"]')) return;
       if (!ref.current?.contains(e.target as Node)) setStartMenuOpen(false);
     };
     const onKey = (e: KeyboardEvent) => e.key === 'Escape' && setStartMenuOpen(false);
@@ -60,31 +68,14 @@ export default function StartMenu() {
     }
   }, [startMenuOpen]);
 
-  // Anchor above the Start button itself (measured live so icon-size /
-  // style changes move the menu with it): left edge on the button's left,
-  // clamped on-screen, 8px above the button's top.
-  const [anchor, setAnchor] = useState<{ left: number; bottom: number } | null>(null);
-  useEffect(() => {
-    if (!startMenuOpen) return;
-    const btn = document.querySelector('[data-trigger="start"]');
-    if (!btn) {
-      setAnchor(null);
-      return;
-    }
-    const r = btn.getBoundingClientRect();
-    const w = 320; // w-80
-    const left = Math.min(Math.max(12, r.left), Math.max(12, window.innerWidth - w - 12));
-    setAnchor({ left, bottom: window.innerHeight - r.top + 8 });
-  }, [startMenuOpen, theme.taskbarStyle, theme.taskbarIconSize]);
-
   const apps = useMemo(() => {
-    const visible = APP_REGISTRY.filter((a) => !a.system);
+    const visible = APP_REGISTRY.filter((a) => isAppVisible(a, { isAdmin }));
     const q = searchTerm.trim().toLowerCase();
     if (!q) return visible;
     return visible.filter(
       (a) => a.name.toLowerCase().includes(q) || (a.description ?? '').toLowerCase().includes(q),
     );
-  }, [searchTerm]);
+  }, [searchTerm, isAdmin]);
 
   if (!startMenuOpen) return null;
 
@@ -101,7 +92,7 @@ export default function StartMenu() {
   return (
     <div
       ref={ref}
-      className="menu-surface !fixed w-80 max-w-[calc(100vw-24px)] p-3 slide-up"
+      className="menu-surface menu-surface--above-bar !fixed w-80 max-w-[calc(100vw-24px)] p-3 slide-up"
       style={{
         zIndex: Z_TASKBAR,
         left: position?.left ?? 12,
@@ -109,8 +100,8 @@ export default function StartMenu() {
       }}
     >
       {/* Search — ibiz_v2 StartMenu parity */}
-      <div className="relative mb-2">
-        <Search size={14} className="absolute left-3 top-1/2 -translate-y-1/2" style={{ color: 'var(--text-low)' }} />
+      <div className="search-field relative mb-2">
+        <Search size={14} className="search-icon absolute left-3 top-1/2 -translate-y-1/2" />
         <input
           ref={inputRef}
           type="text"

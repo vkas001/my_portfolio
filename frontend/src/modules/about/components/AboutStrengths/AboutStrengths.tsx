@@ -21,7 +21,7 @@ export default function AboutStrengths({ profile }: { profile: Profile }) {
             return (
               <div
                 key={i}
-                className="col-span-12 @md:col-span-6 @2xl:col-span-4 flex items-start gap-2 rounded-xl p-3 @2xl:p-4"
+                className="col-span-12 @md:col-span-6 @2xl:col-span-4 flex items-start gap-2 rounded-xl p-3 @2xl:p-4 transition-transform duration-150 hover:-translate-y-0.5"
                 style={{ background: 'var(--accent-soft)' }}
               >
                 {ItemIcon ? (

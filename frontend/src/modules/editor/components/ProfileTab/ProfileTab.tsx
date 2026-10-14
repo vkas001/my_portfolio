@@ -5,6 +5,7 @@ import type { Profile, ProfileInput, Strength } from '@shared/types';
 import { SECTION_ICONS, SECTION_ICON_LABELS, type SectionIcon } from '@/modules/about';
 import Field, { inputCls, labelCls } from '@/modules/editor/components/Field/Field';
 import Input from '@/components/ui/Input/Input';
+import NumberInput from '@/components/ui/NumberInput/NumberInput';
 import TextArea from '@/components/ui/TextArea/TextArea';
 import SelectInput from '@/modules/editor/components/SelectInput/SelectInput';
 import AvatarCropper from '@/modules/editor/components/AvatarCropper/AvatarCropper';
@@ -173,7 +174,7 @@ export default function ProfileTab({ commitRef, reportSave }: SaveBridge) {
           <Input label="Location" value={form.location} onChange={(e) => patch({ location: e.target.value })} />
         </div>
         <div className="col-span-12 @md:col-span-6">
-          <Input label="Years experience" type="number" min={0} max={60} value={form.yearsExperience} onChange={(e) => patch({ yearsExperience: Number(e.target.value) })} />
+          <NumberInput key={`${profile?.id ?? 'new'}-yearsExperience`} label="Years experience" min={0} max={60} value={form.yearsExperience} onCommit={(v) => patch({ yearsExperience: v })} />
         </div>
         <div className="col-span-12 rounded-xl p-3 space-y-2.5" style={{ background: 'var(--bg-elev)', border: '1px solid var(--border)' }}>
           <h3 className={labelCls} style={{ color: 'var(--accent)' }}>Opening</h3>

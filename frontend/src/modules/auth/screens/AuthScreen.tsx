@@ -91,8 +91,8 @@ export default function AuthScreen() {
         ) : (
           <SectionCard title="Admin sign in" icon={<KeyRound size={13} />}>
             <form onSubmit={onSubmit} className="grid grid-cols-12 gap-3">
-              <Input className="col-span-12" label="Email" type="text" autoComplete="username" value={email} onChange={(e) => setEmail(e.target.value)} placeholder="admin" />
-              <Input className="col-span-12" label="Password" type="password" autoComplete="current-password" value={password} onChange={(e) => setPassword(e.target.value)} placeholder="••••••••" />
+                <Input className="col-span-12" label="Email" type="text" autoComplete="username" value={email} onChange={(e) => setEmail(e.target.value)} placeholder="Your email" />
+                <Input className="col-span-12" label="Password" type="password" autoComplete="current-password" value={password} onChange={(e) => setPassword(e.target.value)} placeholder="Your password" />
               {error && (
                 <p className="col-span-12 text-[12px] font-semibold" style={{ color: 'var(--error)' }}>
                   {error}

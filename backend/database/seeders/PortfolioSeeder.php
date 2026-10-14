@@ -2,6 +2,7 @@
 
 namespace Database\Seeders;
 
+use App\Models\Blog;
 use App\Models\Education;
 use App\Models\Experience;
 use App\Models\Hobby;
@@ -17,7 +18,7 @@ class PortfolioSeeder extends Seeder
         $profile = Profile::query()->updateOrCreate(
             ['id' => 'me'],
             [
-                'name' => 'Vkas',
+                'name' => 'Bikash Limbu',
                 'title' => 'Full-Stack Developer',
                 'short_bio' => 'I build fast, delightful web experiences — from pixel-perfect UIs to resilient APIs. I ship complete products end-to-end and I\'m open to senior full-stack or platform roles.',
                 'bio' => 'Full-stack developer focused on React, TypeScript and Node.js. I care about performance, accessibility, and building products that feel effortless. Recently I\'ve been shipping connected TV, mobile and web apps backed by a Laravel API — and running the deployment and servers myself.',
@@ -247,6 +248,35 @@ class PortfolioSeeder extends Seeder
 
         foreach ($hobbies as $item) {
             Hobby::query()->updateOrCreate(['id' => $item['id']], $item);
+        }
+
+        $blogs = [
+            [
+                'id' => 'hello-world',
+                'title' => 'Hello, blog',
+                'excerpt' => 'Why this portfolio has a blog, and what I plan to write about.',
+                'body' => "This is the first post.\n\nExpect notes on **Laravel + React** builds, OS-style interfaces, and shipping solo.\n\n- Short posts\n- Real code\n- No fluff",
+                'tags' => ['meta', 'laravel', 'react'],
+                'cover_url' => null,
+                'published' => true,
+                'published_at' => '2026-10-01 09:00:00',
+                'order' => 1,
+            ],
+            [
+                'id' => 'draft-post',
+                'title' => 'Unfinished thoughts (draft)',
+                'excerpt' => 'A draft that stays hidden until published.',
+                'body' => 'Drafts live in the editor only — the public feed never sees them.',
+                'tags' => ['meta'],
+                'cover_url' => null,
+                'published' => false,
+                'published_at' => null,
+                'order' => 2,
+            ],
+        ];
+
+        foreach ($blogs as $item) {
+            Blog::query()->updateOrCreate(['id' => $item['id']], $item);
         }
     }
 }

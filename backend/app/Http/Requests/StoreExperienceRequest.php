@@ -26,7 +26,7 @@ class StoreExperienceRequest extends FormRequest
             'highlights.*' => ['string', 'max:2000'],
             'techStack' => ['nullable', 'array'],
             'techStack.*' => ['string', 'max:100'],
-            'order' => ['nullable', 'integer', 'min:0'],
+            'order' => ['nullable', 'integer', 'min:0', 'max:4294967295'],
         ];
     }
 }

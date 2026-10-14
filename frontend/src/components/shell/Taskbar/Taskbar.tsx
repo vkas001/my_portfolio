@@ -1,26 +1,21 @@
 // Taskbar — verbatim port of ibiz_v2 Taskbar (structure, classes, behavior).
 // Adapted only where portfolio lacks the supporting infra: Lucide icon map
-// for the 6 portfolio apps (no auth/workspace gating — every app is visible),
-// clock without locale/BS calendar, no central-apps section. Auto-hide uses
-// the same slide/reveal mechanics with portfolio's context visibility state.
-import { memo, useCallback, useEffect, useRef, useState } from 'react';
+// for the portfolio apps (admin-only apps hide for guests), clock without
+// locale/BS calendar, no central-apps section. Auto-hide uses the same
+// slide/reveal mechanics with portfolio's context visibility state.
+import { memo, useEffect, useRef, useState } from 'react';
 import {
   ChevronUp,
   LayoutGrid,
-  Plane,
   Search,
   Sparkles,
   Volume2,
   VolumeX,
-  Wifi,
-  Zap,
-  ZapOff,
 } from 'lucide-react';
 import { useTheme } from '@/context/ThemeContext';
+import { useAuth } from '@/context/AuthContext';
 import { useWindows } from '@/context/WindowsContext';
 import { useShellUI } from '@/context/ShellUIContext';
-import { http } from '@/lib/api/httpClient';
-import { subscribeForcedOffline } from '@/lib/network';
 import {
   TASKBAR_H,
   Z_OVERLAY_TOP,
@@ -28,7 +23,7 @@ import {
   Z_TASKBAR_REVEAL,
 } from '@/lib/osLayout';
 import { TASKBAR_HEIGHTS } from '@/styles/theme';
-import { APP_REGISTRY } from '@/apps/registry';
+import { APP_REGISTRY, isAppVisible } from '@/apps/registry';
 import type { AppId } from '@/types';
 import SystemTrayModal from '@/components/shell/SystemTrayModal/SystemTrayModal';
 
@@ -74,76 +69,15 @@ const MacIndicator: React.FC<{ isOpen: boolean; isActive: boolean; isMinimized: 
   );
 };
 
-// ibiz_v2 ConnectionStatus parity: live dot with hover tooltip.
-const ConnectionDot: React.FC<{ online: boolean }> = ({ online }) => {
-  const [showTooltip, setShowTooltip] = useState(false);
-  return (
-    <div
-      className="relative"
-      onMouseEnter={() => setShowTooltip(true)}
-      onMouseLeave={() => setShowTooltip(false)}
-    >
-      {online ? (
-        <Zap size={14} className="text-emerald-500" />
-      ) : (
-        <ZapOff size={14} className="text-red-500" />
-      )}
-      {showTooltip && (
-        <div
-          className="absolute bottom-full left-1/2 -translate-x-1/2 mb-2 px-2 py-1 bg-(--surface-80) border border-(--border-60) rounded-lg text-[11px] text-(--text-primary) whitespace-nowrap shadow-lg"
-          style={{ zIndex: Z_OVERLAY_TOP }}
-        >
-          {online ? 'Online' : 'Offline'}
-        </div>
-      )}
-    </div>
-  );
-};
-
 const Taskbar = memo(function Taskbar() {
   const { theme } = useTheme();
+  const { isAdmin } = useAuth();
     const { windows, focusedId, launchApp, focusWindow, restoreWindow, minimizeWindow } = useWindows();
-    const { startMenuOpen, setStartMenuOpen, setSpotlightOpen, widgetsOpen, setWidgetsOpen, taskbarVisible, setTaskbarVisible } = useShellUI();
+    const { startMenuOpen, setStartMenuOpen, spotlightOpen, setSpotlightOpen, widgetsOpen, setWidgetsOpen, taskbarVisible, setTaskbarVisible } = useShellUI();
   const windowsStyle = theme.taskbarStyle === 'windows';
   const [currentTime, setCurrentTime] = useState<string>('');
   const [currentDate, setCurrentDate] = useState<string>('');
   const [currentWeekday, setCurrentWeekday] = useState<string>('');
-  const [online, setOnline] = useState(false);
-
-  // Backend connectivity: poll the API health endpoint (green/Online when the
-  // backend answers, red/Offline otherwise). Re-probes immediately when the
-  // browser network flaps, then settles into a 15s cadence.
-  const checkBackend = useCallback(async () => {
-    try {
-      await http.get<{ status: string }>('/health');
-      setOnline(true);
-    } catch {
-      setOnline(false);
-    }
-  }, []);
-
-  useEffect(() => {
-    let cancelled = false;
-    const tick = async () => {
-      if (cancelled) return;
-      await checkBackend();
-    };
-    void tick();
-    const interval = setInterval(tick, 15000);
-    const onNet = () => void checkBackend();
-    window.addEventListener('online', onNet);
-    window.addEventListener('offline', onNet);
-    return () => {
-      cancelled = true;
-      clearInterval(interval);
-      window.removeEventListener('online', onNet);
-      window.removeEventListener('offline', onNet);
-    };
-  }, [checkBackend]);
-
-  // Flip the connectivity dot instantly when airplane mode toggles (the
-  // health probe fails fast under forced offline instead of waiting on a TTL).
-  useEffect(() => subscribeForcedOffline(() => void checkBackend()), [checkBackend]);
 
   useEffect(() => {
     const updateDateTime = () => {
@@ -186,9 +120,11 @@ const Taskbar = memo(function Taskbar() {
 
   // Render pinned apps in the persisted order (taskbarApps is the source of
   // truth; unknown ids are dropped so stale theme values can't crash or bloat).
+  // Admin-only apps also drop for guests (e.g. a pin left over from a session).
   const pinnedOsApps = (theme.taskbarApps ?? [])
     .map((id) => APP_REGISTRY.find((app) => app.id === id))
-    .filter((app): app is (typeof APP_REGISTRY)[number] => Boolean(app));
+    .filter((app): app is (typeof APP_REGISTRY)[number] => Boolean(app))
+    .filter((app) => isAppVisible(app, { isAdmin }));
   const runningIds = windows.map((w) => w.appId).filter((id, i, all) => all.indexOf(id) === i);
   const unpinnedRunning = runningIds
     .filter((id) => !pinnedOsApps.some((a) => a.id === id))
@@ -211,6 +147,8 @@ const Taskbar = memo(function Taskbar() {
 
 const [isTrayOpen, setIsTrayOpen] = useState(false);
   const trayRef = useRef<HTMLDivElement>(null);
+  // Press-time spotlight state for the toggle latch (see the Search button).
+  const spotWasOpenRef = useRef(false);
 
   useEffect(() => {
     if (!isTrayOpen) return;
@@ -320,10 +258,6 @@ const [isTrayOpen, setIsTrayOpen] = useState(false);
               onClick={onToggleStartMenu}
               className={`${appBtnBox} flex items-center justify-center rounded-lg transition-all group cursor-pointer ${
                 windowsStyle ? 'mr-1' : 'mr-2'
-              } ${
-                startMenuOpen
-                  ? 'bg-(--surface-60) scale-105 shadow-md'
-                  : 'hover:bg-(--surface-30)'
               }`}
               title="App Launcher & Start Menu"
             >
@@ -334,14 +268,18 @@ const [isTrayOpen, setIsTrayOpen] = useState(false);
 
           <button
             data-trigger="search"
-            onClick={() => setSpotlightOpen(true)}
-            className={`flex items-center justify-center transition-all group cursor-pointer ${
-              windowsStyle ? 'w-9 h-9 rounded-lg' : 'w-10 h-10 rounded-lg'
-            } hover:bg-(--surface-30)`}
+            onClick={() => setSpotlightOpen(!spotWasOpenRef.current)}
+            // Latch open-state at press time: when open, the press lands on
+            // the dim backdrop (closing it) and the release click lands on
+            // the newly exposed button — toggling off the render-scope value
+            // would reopen it (close+open flicker). Toggling off the
+            // press-time value makes each tap do exactly one action.
+            onPointerDown={() => { spotWasOpenRef.current = spotlightOpen; }}
+            className={`${appBtnBox} flex items-center justify-center rounded-lg transition-all group cursor-pointer`}
             aria-label="Search"
             title="Search (Ctrl+K)"
           >
-            <Search className={`text-(--wp-accent-fg) ${windowsStyle ? 'w-5 h-5' : 'w-5 h-5'}`} />
+            <Search className={`text-(--wp-accent-fg) ${chromeGlyph}`} />
           </button>
 
             <div className={`w-[1px] bg-(--surface-30) ${windowsStyle ? 'h-5 mx-1.5' : 'h-6 mx-1.5'}`} />
@@ -367,8 +305,8 @@ const [isTrayOpen, setIsTrayOpen] = useState(false);
                       onClick={() => handleAppClick(app.id as AppId)}
                       className={`${appBtnBase} ${
                         isActive
-                          ? 'bg-(--surface-40) text-(--wp-accent-fg) shadow-[0_1px_5px_rgba(15,23,42,.14)]'
-                          : 'hover:bg-(--surface-20) text-(--wp-accent-fg)/70 hover:text-(--wp-accent-fg)'
+                          ? 'text-(--wp-accent-fg)'
+                          : 'text-(--wp-accent-fg)/70 hover:text-(--wp-accent-fg)'
                       }`}
                       title={isOpen && isMinimized ? `Restore ${app.name}` : app.name}
                     >
@@ -403,11 +341,10 @@ const [isTrayOpen, setIsTrayOpen] = useState(false);
 
             {/* System Tray Area */}
             <div className="flex items-center gap-2.5" ref={trayRef}>
-              <ConnectionDot online={online} />
               <button
                 onClick={() => setWidgetsOpen(!widgetsOpen)}
                 className={`${appBtnBox} flex items-center justify-center rounded-lg relative group transition-all cursor-pointer ${
-                  widgetsOpen ? 'bg-(--surface-50) text-(--wp-accent-fg)' : 'hover:bg-(--surface-20) text-(--wp-accent-fg)/70 hover:text-(--wp-accent-fg)'
+                  widgetsOpen ? 'text-(--wp-accent-fg)' : 'text-(--wp-accent-fg)/70 hover:text-(--wp-accent-fg)'
                 }`}
                 title="Toggle widgets (Ctrl+W)"
               >
@@ -422,7 +359,6 @@ const [isTrayOpen, setIsTrayOpen] = useState(false);
               title="System Tray & Quick Controls"
             >
               <div className={`flex items-center gap-2.5 ${windowsStyle ? 'gap-1.5' : ''}`}>
-                {theme.airplaneMode ? <Plane className="w-4 h-4" /> : <Wifi className="w-4 h-4" />}
                 {theme.soundsEnabled && theme.volume > 0 ? <Volume2 className="w-4 h-4" /> : <VolumeX className="w-4 h-4" />}
               </div>
               <div className="flex flex-col items-end leading-none justify-center">

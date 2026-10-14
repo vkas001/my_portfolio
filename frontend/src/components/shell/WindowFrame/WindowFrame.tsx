@@ -229,7 +229,6 @@ export default function WindowFrame({ win, children }: Props) {
           <button
             className="tl-btn tl-max"
             aria-label={win.isFullScreen ? 'Exit full screen' : 'Full screen'}
-            title={win.isFullScreen ? 'Exit full screen' : 'Full screen'}
             onClick={(e) => {
               e.stopPropagation();
               // Measure the body's visible vs. scroll size so the zoom hugs

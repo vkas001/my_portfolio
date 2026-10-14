@@ -20,7 +20,7 @@ class UpdateHobbyRequest extends FormRequest
             'name' => ['required', 'string', 'max:255'],
             'icon' => ['required', Rule::in(Hobby::ICONS)],
             'description' => ['nullable', 'string', 'max:2000'],
-            'order' => ['nullable', 'integer', 'min:0'],
+            'order' => ['nullable', 'integer', 'min:0', 'max:4294967295'],
         ];
     }
 }

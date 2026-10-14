@@ -26,6 +26,7 @@ class AdminContentTest extends AdminApiTestCase
         $this->deleteJson('/api/admin/experience/nope')->assertStatus(401)->assertJsonPath('ok', false);
         $this->deleteJson('/api/admin/education/nope')->assertStatus(401)->assertJsonPath('ok', false);
         $this->deleteJson('/api/admin/hobbies/nope')->assertStatus(401)->assertJsonPath('ok', false);
+        $this->deleteJson('/api/admin/blogs/nope')->assertStatus(401)->assertJsonPath('ok', false);
     }
 
     // ─── Skills ──────────────────────────────────────────────────────────────
@@ -293,6 +294,53 @@ class AdminContentTest extends AdminApiTestCase
             'id' => 'hob-oops',
             'name' => 'Yodeling',
             'icon' => 'mystery-icon',
+        ], $this->adminHeaders())->assertStatus(422)->assertJsonPath('ok', false);
+    }
+
+    // ─── Blogs ──────────────────────────────────────────────────────────────
+
+    public function test_blog_round_trip(): void
+    {
+        $this->postJson('/api/admin/blogs', [
+            'id' => 'blog-new',
+            'title' => 'First post',
+            'excerpt' => 'A short teaser.',
+            'body' => 'Hello **world**.',
+            'tags' => ['meta', 'laravel'],
+            'published' => true,
+        ], $this->adminHeaders())->assertOk()
+            ->assertJsonPath('data.id', 'blog-new')
+            ->assertJsonPath('data.title', 'First post')
+            ->assertJsonPath('data.tags', ['meta', 'laravel']);
+
+        $this->getJson('/api/blogs')->assertOk()
+            ->assertJsonFragment(['id' => 'blog-new', 'title' => 'First post']);
+
+        $this->putJson('/api/admin/blogs/blog-new', [
+            'title' => 'First post (edited)',
+            'body' => 'Edited body.',
+            'published' => false,
+        ], $this->adminHeaders())->assertOk()->assertJsonPath('data.title', 'First post (edited)');
+
+        // Drafts vanish from the public feed but stay visible to the admin index.
+        $this->getJson('/api/blogs')->assertOk()
+            ->assertJsonMissing(['id' => 'blog-new']);
+        $this->getJson('/api/admin/blogs', $this->adminHeaders())->assertOk()
+            ->assertJsonFragment(['id' => 'blog-new']);
+
+        $this->assertDatabaseHas('blogs', ['id' => 'blog-new', 'order' => 1]);
+
+        $this->deleteJson('/api/admin/blogs/blog-new', [], $this->adminHeaders())->assertOk();
+        $this->assertDatabaseMissing('blogs', ['id' => 'blog-new']);
+    }
+
+    public function test_blog_rejects_out_of_range_order(): void
+    {
+        $this->postJson('/api/admin/blogs', [
+            'id' => 'blog-oops',
+            'title' => 'X',
+            'body' => 'Y',
+            'order' => 9007199254740991,
         ], $this->adminHeaders())->assertStatus(422)->assertJsonPath('ok', false);
     }
 

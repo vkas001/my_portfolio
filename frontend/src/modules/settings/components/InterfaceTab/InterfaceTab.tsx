@@ -1,5 +1,5 @@
 import { LayoutGrid, SquareChartGantt, Type } from 'lucide-react';
-import { FONTS, type FontName, type GridSize, type SkillDisplayMode, type ThemeState } from '@/styles/theme';
+import { FONTS, type FontName, type FontSize, type GridSize, type SkillDisplayMode, type ThemeState } from '@/styles/theme';
 import SectionCard from '@/components/ui/SectionCard/SectionCard';
 import { RangeControl, SegmentedControl, SettingRow, SubLabel, Toggle } from '@/modules/settings/components/primitives';
 import { DENSITY_OPTIONS, GRID_SIZE_OPTIONS } from '@/modules/settings/lib/options';
@@ -50,6 +50,21 @@ export default function InterfaceTab({ theme, setTheme }: { theme: ThemeState; s
             {f.label}
           </button>
         ))}
+      </div>
+
+      <div className="grid grid-cols-12 gap-4 mb-4">
+        <div className="col-span-12">
+          <SubLabel>Text size</SubLabel>
+          <SegmentedControl<FontSize>
+            value={theme.fontSize}
+            options={[
+              { value: 'small', label: 'Small' },
+              { value: 'medium', label: 'Medium' },
+              { value: 'large', label: 'Large' },
+            ]}
+            onChange={(v) => setTheme({ fontSize: v })}
+          />
+        </div>
       </div>
 
       <div className="divide-y" style={{ borderColor: 'var(--border)' }}>

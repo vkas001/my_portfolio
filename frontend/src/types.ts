@@ -5,10 +5,10 @@ import type { WidgetPlacement } from '@/styles/theme';
 export type { WidgetPlacement };
 
 export type AppId =
-  | 'about' | 'skills' | 'projects' | 'experience' | 'education' | 'hobbies' | 'contact' | 'settings' | 'auth' | 'editor';
+  | 'about' | 'skills' | 'projects' | 'experience' | 'education' | 'hobbies' | 'blogs' | 'contact' | 'settings' | 'widgets' | 'auth' | 'editor';
 
 /** Which portfolio section an admin editor window manages. */
-export type EditorSection = 'profile' | 'skills' | 'projects' | 'experience' | 'education' | 'hobbies';
+export type EditorSection = 'profile' | 'skills' | 'projects' | 'experience' | 'education' | 'hobbies' | 'blogs';
 
 /** Per-window payload passed through launchApp into the app module. */
 export interface WindowData {
@@ -40,6 +40,9 @@ export interface AppDef {
   /** System apps launch from shell chrome (e.g. StartMenu rows) and stay
    *  out of the app grid. */
   system?: boolean;
+  /** Admin-only apps are hidden from every launcher (desktop, menus,
+   *  spotlight, taskbar lists) for guests; the app itself also guards. */
+  adminOnly?: boolean;
 }
 
 export interface WindowState {

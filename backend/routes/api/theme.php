@@ -11,4 +11,8 @@ Route::get('/theme', [ThemeController::class, 'show']);
 Route::middleware(['auth:api', 'permission:'.PermissionRegistry::THEME_MANAGE])->group(function () {
     Route::put('/theme', [ThemeController::class, 'update']);
     Route::delete('/theme/reset', [ThemeController::class, 'reset']);
+    Route::post('/theme/splash-image', [ThemeController::class, 'uploadSplashImage']);
+    Route::delete('/theme/splash-image', [ThemeController::class, 'removeSplashImage']);
+    Route::post('/theme/wallpaper-image', [ThemeController::class, 'uploadWallpaperImage']);
+    Route::delete('/theme/wallpaper-image', [ThemeController::class, 'removeWallpaperImage']);
 });

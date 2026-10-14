@@ -1,6 +1,5 @@
 import type { ApiError } from '@shared/types';
 import { getAuthToken } from './tokenStore';
-import { isForcedOffline } from '@/lib/network';
 
 export const API_BASE = import.meta.env.VITE_API_URL ?? '/api';
 
@@ -38,13 +37,7 @@ export class HttpError extends Error {
   }
 }
 
-/** Fail fast under airplane mode so local seed fallbacks kick in. */
-function ensureOnline(): void {
-  if (isForcedOffline()) throw new HttpError(0, 'Offline mode');
-}
-
 async function request<T>(path: string, init?: RequestInit): Promise<T> {
-  ensureOnline();
   let res: Response;
   const token = getAuthToken();
   try {
@@ -71,7 +64,6 @@ async function request<T>(path: string, init?: RequestInit): Promise<T> {
 
 export const http = {
   get: <T>(path: string): Promise<T> => {
-    ensureOnline();
     const hit = getCache.get(path);
     if (hit && Date.now() - hit.at < GET_CACHE_TTL_MS) {
       return Promise.resolve(hit.data as T);

@@ -80,6 +80,21 @@ button { font-family: inherit; }
 }
 *::-webkit-scrollbar-thumb:hover { background: rgba(var(--accent-rgb), .4); }
 
+/* Contribution graph scroller: a chunkier grabbable bar (the global 8px
+ * one is too fine at this size) plus a visible keyboard-focus ring, since
+ * the graph is the widget's main content. Arrow keys scroll it natively
+ * once focused; touch keeps native gestures. */
+.gh-cal { scrollbar-width: auto; }
+.gh-cal::-webkit-scrollbar { height: 12px; }
+.gh-cal::-webkit-scrollbar-track { background: transparent; }
+.gh-cal::-webkit-scrollbar-thumb { background: rgba(var(--accent-rgb), .45); border-radius: 99px; }
+.gh-cal::-webkit-scrollbar-thumb:hover { background: rgba(var(--accent-rgb), .65); }
+
+/* Single-line scroll strips (e.g. editor section pills): scrollable but
+ * without a visible scrollbar. */
+.no-scrollbar { scrollbar-width: none; -ms-overflow-style: none; }
+.no-scrollbar::-webkit-scrollbar { display: none; }
+
 /* ═══ Glass surfaces ═══════════════════════════════════════════════════════ */
 .glass-surface {
   background: rgba(30, 41, 59, calc(var(--glass-a) + .35));
@@ -110,6 +125,9 @@ button { font-family: inherit; }
   inset: 0;
   overflow: hidden;
   background: var(--wallpaper, var(--bg));
+  background-size: cover;
+  background-position: center;
+  background-repeat: no-repeat;
 }
 
 .wallpaper-layer {
@@ -302,6 +320,13 @@ button { font-family: inherit; }
   background: rgba(14, 14, 26, .88);
   border: 1px solid var(--glass-border);
   box-shadow: 0 30px 90px rgba(0, 0, 0, .5), inset 0 1px 0 var(--glass-highlight);
+}
+
+/* Flyouts docked above the taskbar (start menu, spotlight): throw the
+ * shadow upward so it never washes over the bar below. Without this the
+ * 30px downward spread reads as a shadow cast on the taskbar. */
+.menu-surface--above-bar {
+  box-shadow: 0 -22px 60px rgba(0, 0, 0, .45), 0 4px 14px rgba(0, 0, 0, .22), inset 0 1px 0 var(--glass-highlight);
 }
 
 :root[data-mode='light'] .menu-surface {
@@ -558,9 +583,9 @@ button { font-family: inherit; }
   color: var(--accent-text-on);
   font-weight: 600;
   cursor: pointer;
-  transition: filter .15s ease, transform .1s ease;
+  transition: filter .15s ease, transform .1s ease, translate .15s ease;
 }
-.btn-accent:hover { filter: brightness(1.1); }
+.btn-accent:hover { filter: brightness(1.1); translate: 0 -2px; }
 .btn-accent:active { transform: scale(.97); }
 
 .btn-ghost {
@@ -573,28 +598,34 @@ button { font-family: inherit; }
   color: var(--text-hi);
   border: 1px solid var(--border);
   cursor: pointer;
-  transition: background .15s ease;
+  transition: background .15s ease, translate .15s ease;
 }
-.btn-ghost:hover { background: rgba(var(--accent-rgb), .1); }
+.btn-ghost:hover { background: rgba(var(--accent-rgb), .1); translate: 0 -2px; }
 
-input, textarea, select {
-  font-family: inherit;
-  background: rgba(0, 0, 0, .18);
-  color: var(--text-hi);
-  border: 1px solid var(--border);
-  border-radius: var(--radius-sm);
-  padding: 8px 12px;
-  outline: none;
-  transition: border-color .15s ease, box-shadow .15s ease;
-}
-input:focus, textarea:focus, select:focus {
-  border-color: rgba(var(--accent-rgb), .6);
-  box-shadow: 0 0 0 3px rgba(var(--accent-rgb), .15);
-}
-:root[data-mode='light'] input,
-:root[data-mode='light'] textarea,
-:root[data-mode='light'] select {
-  background: rgba(0, 0, 0, .04);
+/* Base form controls live in @layer base: Tailwind v4 emits utilities in a
+   higher-priority layer, so unlayered element rules here would beat utility
+   overrides (e.g. `pl-9` on the start-menu search losing to `padding`) no
+   matter their specificity. Inside @layer base the cascade works as expected. */
+@layer base {
+  input, textarea, select {
+    font-family: inherit;
+    background: rgba(0, 0, 0, .18);
+    color: var(--text-hi);
+    border: 1px solid var(--border);
+    border-radius: var(--radius-sm);
+    padding: 8px 12px;
+    outline: none;
+    transition: border-color .15s ease, box-shadow .15s ease;
+  }
+  input:focus, textarea:focus, select:focus {
+    border-color: rgba(var(--accent-rgb), .6);
+    box-shadow: 0 0 0 3px rgba(var(--accent-rgb), .15);
+  }
+  :root[data-mode='light'] input,
+  :root[data-mode='light'] textarea,
+  :root[data-mode='light'] select {
+    background: rgba(0, 0, 0, .04);
+  }
 }
 
 /* react-select renders an inner search <input> inside its control. It inherits
@@ -669,6 +700,17 @@ input:focus, textarea:focus, select:focus {
   cursor: grab;
 }
 
+/* Start-menu search field: the icon idles in low-contrast ink and flips to
+ * the accent while the field has focus (class-driven so the inline
+ * text-low style it replaced can't fight the focus state). */
+.search-field .search-icon {
+  color: var(--text-low);
+  transition: color .15s ease;
+}
+.search-field:focus-within .search-icon {
+  color: var(--accent);
+}
+
 /* ═══ Animations ═══════════════════════════════════════════════════════════ */
 @keyframes window-open {
   from { opacity: 0; transform: scale(.96) translateY(8px); }
@@ -718,177 +760,279 @@ input:focus, textarea:focus, select:focus {
   top: 0;
   display: flex;
 }
-/* YouTube-style left rail: sticky under the topbar, icon + label rows.
- * Collapses to icon-only on tablets and to a bottom tab bar on phones. */
+/* Split-résumé site shell: the sticky identity column + reading column
+ * share this row (replaces the old section rail). */
 .web-shell {
   display: flex;
   align-items: flex-start;
   width: 100%;
   margin: 0 auto;
 }
-.web-rail {
-  position: sticky;
-  top: 40px;
-  z-index: 20;
-  width: 216px;
-  flex-shrink: 0;
+/* ═══ Split résumé (public website) ═══════════════════════════════════════
+ * Sticky identity column + one calm reading column. Document-level
+ * (public site), so viewport media are fair here. .rs-body is a @container
+ * anchor so reused OS screens keep their container-query ladders keyed to
+ * the column, not the viewport. Type inherits --font-ui (the OS font
+ * setting); mono accents use the system mono stack (zero downloads). */
+.split {
+  display: grid;
+  grid-template-columns: 300px minmax(0, 1fr);
+  gap: 96px;
+  max-width: 1280px;
+  margin: 0 auto;
+  padding: 36px 0 0;
+  align-items: start;
+}
+.split-main {
+  min-width: 0;
   display: flex;
   flex-direction: column;
-  gap: 2px;
-  padding: 10px 8px 0;
-  transition: width .18s ease;
 }
-/* Pinned-left toggle: collapses the rail to icon-only and back. */
-.web-rail-toggle {
+.site-intro {
+  position: sticky;
+  top: 72px;
   display: flex;
-  align-items: center;
-  gap: 12px;
-  margin-bottom: 4px;
-  padding: 8px 12px;
-  border: none;
-  border-radius: var(--radius-sm);
-  background: transparent;
-  color: var(--text-mid);
-  font-size: 12px;
-  font-weight: 600;
-  cursor: pointer;
-  transition: background .12s ease, color .12s ease;
+  flex-direction: column;
+  align-items: flex-start;
+  gap: 14px;
+  min-width: 0;
+  padding-bottom: 24px;
 }
-.web-rail-toggle:hover {
-  background: rgba(var(--accent-rgb), .12);
+.si-name {
+  margin: 4px 0 0;
+  font-size: 30px;
+  font-weight: 800;
+  letter-spacing: -0.03em;
+  line-height: 1.05;
   color: var(--text-hi);
+  overflow-wrap: anywhere;
 }
-.web-rail-link {
-  display: flex;
-  align-items: center;
-  gap: 12px;
-  padding: 8px 12px;
-  border-radius: var(--radius-sm);
-  font-size: 13px;
-  font-weight: 600;
-  color: var(--text-mid);
-  text-decoration: none;
-  transition: background .12s ease, color .12s ease;
-}
-.web-rail-link:hover {
-  background: rgba(var(--accent-rgb), .12);
-  color: var(--text-hi);
-}
-.web-rail-link.active {
-  background: rgba(var(--accent-rgb), .16);
-  color: var(--text-hi);
-}
-.web-rail-link.active .web-rail-ic,
-.web-rail-link:hover .web-rail-ic {
+.si-title {
+  margin: 4px 0 0;
+  font-size: 13.5px;
+  font-weight: 700;
   color: var(--accent);
 }
-.web-rail-ic {
-  display: inline-flex;
-  color: var(--text-low);
+.si-bio {
+  margin: 0;
+  font-size: 13px;
+  line-height: 1.65;
+  color: var(--text-mid);
 }
-
-/* Collapsed (icon-only, YouTube-style mini rail). */
-.web-rail.collapsed {
-  width: 76px;
-  align-items: center;
-}
-.web-rail.collapsed .web-rail-link {
+.si-nav {
+  display: flex;
   flex-direction: column;
   gap: 2px;
-  padding: 8px 4px;
   width: 100%;
+  margin: 4px 0;
 }
-.web-rail.collapsed .web-rail-label,
-.web-rail.collapsed .web-rail-toggle span {
-  display: none;
+.si-nav-link {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  padding: 7px 0 7px 18px;
+  position: relative;
+  font-family: ui-monospace, SFMono-Regular, Menlo, Consolas, monospace;
+  font-size: 11.5px;
+  font-weight: 700;
+  letter-spacing: .12em;
+  text-transform: uppercase;
+  color: var(--text-low);
+  text-decoration: none;
+  transition: color .12s ease;
 }
-.web-rail.collapsed .web-rail-toggle {
-  padding: 10px 4px;
-  justify-content: center;
+.si-nav-link:hover { color: var(--text-hi); }
+.si-nav-line {
+  position: absolute;
+  left: 0;
+  top: 9px;
+  bottom: 9px;
+  width: 2px;
+  border-radius: 2px;
+  background: var(--border);
+  transition: background .15s ease, top .15s ease, bottom .15s ease;
 }
+.si-nav-link:hover .si-nav-line { background: var(--text-low); }
+.si-nav-link.active { color: var(--text-hi); }
+.si-nav-link.active .si-nav-line { background: var(--accent); top: 5px; bottom: 5px; }
+.si-nav-link svg { flex-shrink: 0; }
+
+/* Résumé section: mono index, title, hairline rule, body. */
+.rs-section {
+  scroll-margin-top: 72px;
+  padding: 4px 0 44px;
+  min-width: 0;
+}
+.rs-section + .rs-section {
+  border-top: 1px solid var(--border);
+  padding-top: 36px;
+}
+.rs-head {
+  display: flex;
+  align-items: baseline;
+  gap: 12px;
+  margin-bottom: 20px;
+}
+.rs-num {
+  font-family: ui-monospace, SFMono-Regular, Menlo, Consolas, monospace;
+  font-size: 12px;
+  font-weight: 700;
+  color: var(--accent);
+  flex-shrink: 0;
+}
+.rs-title {
+  margin: 0;
+  font-size: 22px;
+  font-weight: 800;
+  letter-spacing: -0.02em;
+  color: var(--text-hi);
+  flex-shrink: 0;
+}
+.rs-rule {
+  flex: 1;
+  height: 1px;
+  background: var(--border);
+  align-self: center;
+  min-width: 24px;
+}
+.rs-body {
+  container-type: inline-size;
+  min-width: 0;
+  display: flex;
+  flex-direction: column;
+  gap: 18px;
+}
+.rs-body > div { min-width: 0; }
+.rs-label {
+  margin: 0 0 10px;
+  font-family: ui-monospace, SFMono-Regular, Menlo, Consolas, monospace;
+  font-size: 10.5px;
+  font-weight: 700;
+  letter-spacing: .14em;
+  text-transform: uppercase;
+  color: var(--text-low);
+}
+.rs-hobbies { display: flex; flex-direction: column; gap: 10px; }
+/* Three-up metric strip (project totals). Doubled class beats the base
+ *  2-up rule below regardless of source order. */
+.b-stats-grid.b-stats-grid--3 { grid-template-columns: repeat(3, 1fr); }
 
 .web-content {
   flex: 1;
   min-width: 0;
-  display: flex;
-  justify-content: flex-start;
-  align-items: flex-start;
-  flex-wrap: wrap;
-  gap: 24px;
-  padding: 0 20px 72px;
+  padding: 0 20px 80px;
 }
-.web-main {
-  flex: 1 1 0%;
-  min-width: 0;
-  flex-basis: 0%;
-  max-width: 940px;
-  padding: 28px 0 0;
-  display: flex;
-  flex-direction: column;
-  gap: 48px;
-}
-/* Sticky right sidebar (right-most): shares the row with the main column and
- * Education sits at a fixed width; Contact (right of Education) flexes to fill
- * the remaining space. Stacks vertically below ~1350px (raised from 1100 so
- * Contact never collapses into an unusable sliver on typical laptop widths). */
-.web-edu {
-  position: sticky;
-  top: 40px;
-  flex: 1 1 0%;
-  padding-top: 28px;
-  align-self: flex-start;
-  display: flex;
-  flex-direction: row;
-  align-items: flex-start;
-  gap: 16px;
-  max-height: calc(100vh - 56px);
-  overflow-y: auto;
-}
-.web-edu .web-section {
-  flex: 0 0 360px;
-  width: 360px;
-  padding: 18px;
-}
-.web-edu #section-contact {
-  flex: 1 1 auto;
-  width: auto;
-  min-width: 0;
-}
-.web-section-wrap { scroll-margin-top: 56px; }
-.web-section {
-  container-type: inline-size; /* anchor for reused OS app container queries */
-  background: var(--bg-elev);
-  border: 1px solid var(--border);
-  border-radius: var(--radius-lg);
-  padding: 24px;
-  display: flex;
-  flex-direction: column;
-  gap: 16px;
-}
-.web-section-head {
-  display: flex;
-  align-items: center;
-  gap: 12px;
-}
-.web-section-icon {
-  width: 44px;
-  height: 44px;
-  border-radius: var(--radius);
-  display: flex;
-  align-items: center;
-  justify-content: center;
-  font-size: 20px;
+
+/* Reused OS screens key off .rs-body (the reading column) as their
+ * @container anchor — see the split-résumé block above. */
+
+/* Shared bits reused by the split panes: avatar ring, pills, availability
+ * pulse, social buttons, headline stats, email row, contact grid. */
+
+.b-avatar-ring {
+  padding: 3px;
+  border-radius: 999px;
+  background: linear-gradient(135deg, rgba(var(--accent-rgb), .9), rgba(var(--accent-rgb), .12));
   flex-shrink: 0;
 }
-.web-section-head h2 {
-  margin: 0;
-  font-size: 18px;
-  font-weight: 700;
-}
-.web-section-head p {
-  margin: 2px 0 0;
+.b-pill {
+  display: inline-flex;
+  align-items: center;
+  gap: 6px;
+  padding: 4px 10px;
+  border-radius: 999px;
+  border: 1px solid var(--border);
   font-size: 12px;
+  color: var(--text-mid);
 }
+.b-pill-accent {
+  background: var(--accent-soft);
+  border-color: transparent;
+  color: var(--accent);
+  font-weight: 700;
+  font-size: 11px;
+}
+/* Availability pulse: a live dot, not a badge — it reads as "here now". */
+.b-pulse {
+  width: 7px;
+  height: 7px;
+  border-radius: 99px;
+  background: var(--success);
+  animation: b-pulse 2.2s ease-out infinite;
+}
+@keyframes b-pulse {
+  0% { box-shadow: 0 0 0 0 rgba(16, 185, 129, .45); }
+  70% { box-shadow: 0 0 0 7px rgba(16, 185, 129, 0); }
+  100% { box-shadow: 0 0 0 0 rgba(16, 185, 129, 0); }
+}
+.b-social {
+  width: 40px;
+  height: 40px;
+  border-radius: 12px;
+  border: 1px solid var(--border);
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  background: rgba(var(--accent-rgb), .06);
+  transition: translate .15s ease;
+}
+.b-social:hover { translate: 0 -2px; }
+
+/* Stats: 2×2 headline numbers. */
+.b-stats-grid {
+  display: grid;
+  grid-template-columns: 1fr 1fr;
+  gap: 12px;
+}
+.b-stat { display: flex; flex-direction: column; gap: 2px; }
+.b-stat b {
+  font-size: 26px;
+  font-weight: 800;
+  letter-spacing: -0.02em;
+  font-variant-numeric: tabular-nums;
+  color: var(--text-hi);
+}
+.b-stat span {
+  font-size: 10px;
+  font-weight: 700;
+  letter-spacing: .1em;
+  text-transform: uppercase;
+  color: var(--text-low);
+}
+
+/* Contact reach-me column: status line + email copy row. */
+.b-email-row {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  width: 100%;
+  min-width: 0;
+  padding: 9px 12px;
+  border-radius: var(--radius-sm);
+  border: 1px solid var(--border);
+  background: rgba(0, 0, 0, .14);
+  color: var(--text-mid);
+  font-size: 12.5px;
+  cursor: pointer;
+  transition: border-color .15s ease;
+}
+.b-email-row:hover { border-color: rgba(var(--accent-rgb), .5); }
+.b-email-row:disabled { cursor: default; }
+:root[data-mode='light'] .b-email-row { background: rgba(0, 0, 0, .04); }
+
+/* Contact band: reach-me column beside the form. */
+.b-contact-grid {
+  display: grid;
+  grid-template-columns: minmax(0, 5fr) minmax(0, 7fr);
+  gap: 24px;
+  align-items: start;
+}
+@container (max-width: 640px) {
+  .b-contact-grid { grid-template-columns: 1fr; }
+}
+/* Web view is the public, document-level site (no OS window), so viewport
+ * media are fair here. Mid widths tighten the split; phones stack the
+ * intro above the column with a horizontal nav strip. */
 .web-footer {
   text-align: center;
   font-size: 12px;
@@ -896,45 +1040,44 @@ input:focus, textarea:focus, select:focus {
 }
 
 /* Web view is the public, document-level site (no OS window), so viewport
- * media are fair here — the rail always stays leftmost, phones just get a
- * slightly tighter shell and a narrower expanded rail. */
+ * media are fair here. */
 @media (max-width: 1100px) {
-  .web-edu {
-    position: static;
-    flex: 1 1 100%;
-    width: 100%;
-    padding-top: 0;
-    max-height: none;
-    overflow: visible;
-    flex-direction: column;
-  }
-  .web-edu .web-section,
-  .web-edu #section-contact {
-    flex: 1 1 100%;
-    width: 100%;
-    min-width: 0;
-    max-width: none;
-  }
+  .split { grid-template-columns: 270px minmax(0, 1fr); gap: 64px; }
 }
 
-@media (max-width: 639px) {
-  .web-shell { max-width: 100%; margin: 0; }
-  /* The rail is the horizontal top strip here (see the 768px block) — it
-   * stretches full width and scrolls sideways, so it has no fixed width. */
-  .web-rail,
-  .web-rail.collapsed { width: auto; }
-  .web-content { padding: 0 10px 72px; }
-  .web-main { padding: 14px 0 0; gap: 40px; }
-  .web-section { padding: 18px 14px; }
-  .web-edu .web-section { padding: 18px 14px; }
-  /* Topbar (40) + horizontal rail (~53): keep the anchored section below both. */
-  .web-section-wrap { scroll-margin-top: 100px; }
-  .web-edu { padding-bottom: 24px; }
+@media (max-width: 900px) {
+  .split { grid-template-columns: minmax(0, 1fr); gap: 0; padding-top: 24px; }
+  /* The intro scrolls away on phones; its nav becomes a horizontal strip
+   * pinned under the topbar instead. */
+  .site-intro { position: static; padding-bottom: 8px; }
+  .si-nav {
+    position: sticky;
+    top: 40px;
+    z-index: 30;
+    flex-direction: row;
+    align-items: center;
+    gap: 4px;
+    margin: 8px -12px 0;
+    padding: 8px 12px;
+    overflow-x: auto;
+    background: color-mix(in srgb, var(--bg) 90%, transparent);
+    backdrop-filter: blur(var(--glass-blur));
+    -webkit-backdrop-filter: blur(var(--glass-blur));
+    border-bottom: 1px solid var(--border);
+    /* Mouse-draggable strip: no text selection mid-swipe. */
+    user-select: none;
+    -webkit-user-select: none;
+    cursor: grab;
+  }
+  .si-nav-link { white-space: nowrap; flex-shrink: 0; padding: 7px 2px 7px 14px; }
+  .web-content { padding: 0 12px 72px; }
+  /* Topbar (40) + nav strip (~45): keep anchored sections below both. */
+  .rs-section { scroll-margin-top: 100px; }
 }
 @media (max-width: 380px) {
-  .web-main { padding: 12px 0 0; }
-  .web-section { padding: 16px 12px; }
-  .web-edu .web-section { padding: 16px 12px; }
+  .b-stats-grid { gap: 8px; }
+  .b-stat b { font-size: 22px; }
+  .si-name { font-size: 26px; }
 }
 
 /* ─────────────────────────────────────────────────────────────
@@ -951,12 +1094,29 @@ input:focus, textarea:focus, select:focus {
   flex-direction: column;
   align-items: center;
   justify-content: center;
-  background: linear-gradient(to bottom right, #0f172a, #1e293b, #0f172a);
+  background: linear-gradient(160deg, #02120e 0%, #064e3b 60%, #010b08 100%);
   color: #fff;
   user-select: none;
   transition: opacity 500ms ease;
 }
 .boot-overlay--leaving { opacity: 0; }
+
+/* Photo backdrop layer: cover image + fixed dark scrim so the white
+ * wordmark stays readable on any upload. The center wrapper + footer paint
+ * above it — note the wordmark/tagline/progress live INSIDE .boot-center,
+ * so a direct-child selector on them misses and the photo buries the
+ * splash (seen live once; this rule is the fix). */
+.boot-bg { position: absolute; inset: 0; overflow: hidden; }
+.boot-bg-img { width: 100%; height: 100%; object-fit: cover; }
+.boot-bg-scrim {
+  position: absolute;
+  inset: 0;
+  background: linear-gradient(rgba(3, 3, 10, .58), rgba(3, 3, 10, .68));
+}
+.boot-overlay > .boot-center,
+.boot-overlay > .boot-footer {
+  position: relative;
+}
 
 .boot-wordmark {
   display: flex;
@@ -1008,9 +1168,23 @@ input:focus, textarea:focus, select:focus {
 .boot-status__line { display: flex; align-items: center; gap: 8px; }
 .boot-spinner { width: 14px; height: 14px; animation: bootSpin 1s linear infinite; }
 
+/* Center block takes the free height so the footer pins to the screen
+ * bottom in-flow — absolute positioning let it overlap the progress row
+ * on short viewports. */
+.boot-center {
+  flex: 1;
+  min-height: 0;
+  width: 100%;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+}
+
 .boot-footer {
-  position: absolute;
-  bottom: 24px;
+  flex-shrink: 0;
+  padding-bottom: 24px;
+  text-align: center;
   font-size: 11px;
   color: rgba(255, 255, 255, 0.4);
 }
@@ -1027,3 +1201,31 @@ input:focus, textarea:focus, select:focus {
   .boot-word { animation: none; opacity: 1; transform: none; }
   .boot-tagline { animation: none; opacity: 1; }
 }
+
+/* ═══ Markdown body (.md-body, MarkdownBody) ═══════════════════════════════
+ * Scoped typography for rendered post markdown. Theme tokens only — no
+ * typography plugin. Density matches the app (xs/sm); raw HTML from the
+ * source is never rendered, so no untrusted-selector hardening is needed. */
+.md-body { font-size: 13px; line-height: 1.65; color: var(--text-mid); overflow-wrap: anywhere; }
+.md-body > *:first-child { margin-top: 0; }
+.md-body > *:last-child { margin-bottom: 0; }
+.md-body h1, .md-body h2, .md-body h3, .md-body h4 { color: var(--text-hi); font-weight: 700; line-height: 1.3; margin: 0.9em 0 0.4em; }
+.md-body h1 { font-size: 17px; }
+.md-body h2 { font-size: 15px; }
+.md-body h3 { font-size: 13px; }
+.md-body h4 { font-size: 12px; }
+.md-body p { margin: 0.5em 0; }
+.md-body a { color: var(--accent); text-decoration: underline; text-underline-offset: 2px; }
+.md-body strong { color: var(--text-hi); font-weight: 700; }
+.md-body ul, .md-body ol { margin: 0.5em 0; padding-left: 1.4em; }
+.md-body li { margin: 0.25em 0; }
+.md-body li::marker { color: var(--accent); }
+.md-body blockquote { margin: 0.6em 0; padding: 0.2em 0 0.2em 0.8em; border-left: 2px solid var(--accent); color: var(--text-mid); }
+.md-body code { font-family: ui-monospace, SFMono-Regular, Menlo, monospace; font-size: 11.5px; background: var(--accent-soft); color: var(--text-hi); border-radius: 4px; padding: 0.1em 0.35em; }
+.md-body pre { margin: 0.6em 0; padding: 10px 12px; border-radius: var(--radius-sm); background: var(--bg-elev); border: 1px solid var(--border); overflow-x: auto; }
+.md-body pre code { background: none; padding: 0; }
+.md-body hr { margin: 0.9em 0; border: none; border-top: 1px solid var(--border); }
+.md-body table { width: 100%; margin: 0.6em 0; border-collapse: collapse; font-size: 12px; }
+.md-body th, .md-body td { text-align: left; padding: 5px 8px; border: 1px solid var(--border); }
+.md-body th { color: var(--text-hi); background: var(--accent-soft); }
+.md-body img { max-width: 100%; border-radius: var(--radius-sm); }

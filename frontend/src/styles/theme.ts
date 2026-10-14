@@ -17,9 +17,7 @@ export type Density = 'compact' | 'normal' | 'comfortable';
 export type GridSize = 16 | 24 | 32;
 export type WindowSize = 'small' | 'medium' | 'large';
 export type IconSize = 'small' | 'medium' | 'large';
-export type FontName =
-  | 'Inter' | 'Manrope' | 'Space Grotesk' | 'Sora' | 'Outfit'
-  | 'DM Sans' | 'Plus Jakarta Sans' | 'IBM Plex Sans' | 'JetBrains Mono' | 'System UI';
+export type FontName = 'Inter' | 'Manrope' | 'Space Grotesk' | 'System UI';
 
 export interface AccentDef {
   name: AccentName;
@@ -86,24 +84,42 @@ export const ON_ACCENT: Record<ThemeMode, string> = {
 // 'Noto Sans Devanagari' appended so Nepali text keeps shape (ibiz_v2 FONT_FAMILY).
 const NOTO = "'Noto Sans Devanagari'";
 export const FONTS: FontDef[] = [
-  { name: 'Inter',            label: 'Inter',            stack: `'Inter', ${NOTO}, system-ui, sans-serif` },
-  { name: 'Manrope',          label: 'Manrope',          stack: `'Manrope', ${NOTO}, system-ui, sans-serif` },
-  { name: 'Space Grotesk',    label: 'Space Grotesk',    stack: `'Space Grotesk', ${NOTO}, system-ui, sans-serif` },
-  { name: 'Sora',             label: 'Sora',             stack: `'Sora', ${NOTO}, system-ui, sans-serif` },
-  { name: 'Outfit',           label: 'Outfit',           stack: `'Outfit', ${NOTO}, system-ui, sans-serif` },
-  { name: 'DM Sans',          label: 'DM Sans',          stack: `'DM Sans', ${NOTO}, system-ui, sans-serif` },
-  { name: 'Plus Jakarta Sans',label: 'Plus Jakarta Sans',stack: `'Plus Jakarta Sans', ${NOTO}, system-ui, sans-serif` },
-  { name: 'IBM Plex Sans',    label: 'IBM Plex Sans',    stack: `'IBM Plex Sans', ${NOTO}, system-ui, sans-serif` },
-  { name: 'JetBrains Mono',   label: 'JetBrains Mono',   stack: `'JetBrains Mono', ${NOTO}, ui-monospace, monospace` },
-  { name: 'System UI',        label: 'System UI',        stack: `system-ui, ${NOTO}, sans-serif` },
+  { name: 'Inter',         label: 'Inter',         stack: `'Inter', ${NOTO}, system-ui, sans-serif` },
+  { name: 'Manrope',       label: 'Manrope',       stack: `'Manrope', ${NOTO}, system-ui, sans-serif` },
+  { name: 'Space Grotesk', label: 'Space Grotesk', stack: `'Space Grotesk', ${NOTO}, system-ui, sans-serif` },
+  { name: 'System UI',     label: 'System UI',     stack: `system-ui, ${NOTO}, sans-serif` },
+];
+
+// ─── Splash presets (theme-independent) ───────────────────────────────────
+// Fixed dark gradients — white splash text stays readable on all of them.
+// Progress-fill swatches, same constraint.
+export const SPLASH_BACKGROUNDS: Record<SplashBackground, { label: string; css: string }> = {
+  midnight: { label: 'Midnight', css: 'linear-gradient(to bottom right, #0f172a, #1e293b, #0f172a)' },
+  onyx: { label: 'Onyx', css: 'linear-gradient(160deg, #060609 0%, #12121a 60%, #060609 100%)' },
+  indigo: { label: 'Indigo', css: 'linear-gradient(160deg, #0d0621 0%, #1e1b4b 60%, #0a0518 100%)' },
+  abyss: { label: 'Abyss', css: 'linear-gradient(160deg, #02120e 0%, #064e3b 60%, #010b08 100%)' },
+};
+
+export const SPLASH_ACCENTS: { label: string; hex: string }[] = [
+  { label: 'White', hex: '#ffffff' },
+  { label: 'Violet', hex: '#a78bfa' },
+  { label: 'Cyan', hex: '#22d3ee' },
+  { label: 'Emerald', hex: '#34d399' },
+  { label: 'Amber', hex: '#fbbf24' },
+  { label: 'Rose', hex: '#fb7185' },
+];
+
+/** Built-in splash backdrops (compressed copies in frontend/public/splash —
+ *  originals stay untouched under frontend/assets/images/splash). */
+export const SPLASH_IMAGES: { id: string; label: string; url: string }[] = [
+  { id: 'naruto', label: 'Naruto', url: '/splash/naruto-uzumaki.jpg' },
+  { id: 'odyssey', label: 'Odyssey', url: '/splash/the-odyssey.jpg' },
 ];
 
 // ─── Wallpaper presets ──────────────────────────────────────────────────────
 export const WALLPAPERS: WallpaperDef[] = [
   { id: 'violet-dream', label: 'Violet Dream', mode: 'dark',
     css: 'radial-gradient(1200px 800px at 20% 10%, rgba(139,92,246,.35), transparent 60%), radial-gradient(1000px 700px at 80% 90%, rgba(59,130,246,.25), transparent 60%), linear-gradient(160deg, #0b0616 0%, #140a2e 50%, #0a0512 100%)' },
-  { id: 'twilight', label: 'Twilight', mode: 'dark',
-    css: 'radial-gradient(1000px 700px at 75% 15%, rgba(244,63,94,.28), transparent 55%), radial-gradient(900px 700px at 15% 85%, rgba(99,102,241,.30), transparent 60%), linear-gradient(180deg, #0a0a1a 0%, #1a0f2e 60%, #0d0a1c 100%)' },
   { id: 'deep-ocean', label: 'Deep Ocean', mode: 'dark',
     css: 'radial-gradient(1100px 800px at 30% 20%, rgba(6,182,212,.25), transparent 60%), radial-gradient(900px 600px at 85% 80%, rgba(59,130,246,.20), transparent 55%), linear-gradient(170deg, #041220 0%, #062a3d 55%, #030d18 100%)' },
   { id: 'forest', label: 'Forest', mode: 'dark',
@@ -112,18 +128,18 @@ export const WALLPAPERS: WallpaperDef[] = [
     css: 'radial-gradient(1000px 700px at 70% 20%, rgba(249,115,22,.30), transparent 55%), radial-gradient(900px 600px at 20% 80%, rgba(239,68,68,.20), transparent 60%), linear-gradient(170deg, #150803 0%, #2a0f06 55%, #100502 100%)' },
   { id: 'midnight', label: 'Midnight', mode: 'dark',
     css: 'linear-gradient(180deg, #05060f 0%, #0a0d1f 50%, #04050c 100%)' },
-  { id: 'accent-dark', label: 'Accent Dark', mode: 'dark',
-    css: 'var(--wp-accent-dark)' },
   { id: 'aurora', label: 'Aurora', mode: 'dark',
     css: 'radial-gradient(900px 600px at 15% 25%, rgba(20,184,166,.30), transparent 55%), radial-gradient(1000px 700px at 85% 30%, rgba(139,92,246,.30), transparent 55%), radial-gradient(800px 600px at 50% 90%, rgba(236,72,153,.20), transparent 55%), linear-gradient(180deg, #060a12 0%, #0b1120 60%, #050810 100%)' },
   { id: 'porcelain', label: 'Porcelain', mode: 'light',
     css: 'radial-gradient(1000px 700px at 20% 15%, rgba(139,92,246,.10), transparent 55%), radial-gradient(900px 700px at 80% 85%, rgba(59,130,246,.10), transparent 55%), linear-gradient(165deg, #f6f7fb 0%, #eef0f7 60%, #f8f9fc 100%)' },
-  { id: 'sunrise', label: 'Sunrise', mode: 'light',
-    css: 'radial-gradient(900px 600px at 80% 15%, rgba(249,115,22,.18), transparent 55%), radial-gradient(900px 700px at 15% 85%, rgba(236,72,153,.14), transparent 55%), linear-gradient(170deg, #fdf6f0 0%, #fbeef0 60%, #fef9f4 100%)' },
   { id: 'mint', label: 'Mint', mode: 'light',
     css: 'radial-gradient(900px 650px at 25% 20%, rgba(16,185,129,.12), transparent 55%), radial-gradient(900px 650px at 80% 80%, rgba(6,182,212,.10), transparent 55%), linear-gradient(165deg, #f2faf7 0%, #e9f5f1 60%, #f4fbf8 100%)' },
   { id: 'paper', label: 'Paper', mode: 'light',
     css: 'linear-gradient(180deg, #fafafa 0%, #f2f2f2 60%, #fafafa 100%)' },
+  { id: 'naruto', label: 'Naruto', mode: 'both',
+    css: `url('/splash/naruto-uzumaki.jpg') center / cover no-repeat, #0b0b12` },
+  { id: 'odyssey', label: 'Odyssey', mode: 'both',
+    css: `url('/splash/the-odyssey.jpg') center / cover no-repeat, #060609` },
 ];
 
 // ─── Level option tables ────────────────────────────────────────────────────
@@ -137,6 +153,16 @@ export const BLUR_LEVELS: Record<BlurLevel, string> = {
 
 export const RADIUS_LEVELS: Record<RadiusLevel, string> = {
   sharp: '4px', rounded: '14px', pill: '24px',
+};
+
+export type FontSize = 'small' | 'medium' | 'large';
+
+/** Text-size presets as root zoom factors (0.875 ≈ 14px, 1.125 ≈ 18px
+ *  against the 16px base). Zoom scales type and chrome proportionally in
+ *  both the OS and web views — rem-only scaling would leave px-sized text
+ *  behind since the codebase mixes both. */
+export const FONT_SIZE_SCALES: Record<FontSize, number> = {
+  small: 0.875, medium: 1, large: 1.125,
 };
 
 // ─── Density & grid (ported from ibiz_v2 DENSITY_SPACING / GRID_SIZES) ───────
@@ -176,6 +202,10 @@ export type ClockFormat = '12h' | '24h';
 export type DateFormat = 'short' | 'long';
 export type SkillDisplayMode = 'bars' | 'cards'; // how the Skills window renders
 
+/** Boot-splash background preset (theme-independent: the splash renders
+ *  while the theme is still loading, so these are fixed dark gradients). */
+export type SplashBackground = 'midnight' | 'onyx' | 'indigo' | 'abyss';
+
 export interface ThemeState {
   mode: ThemeMode;
   accent: AccentName;
@@ -184,12 +214,16 @@ export interface ThemeState {
   blur: BlurLevel;
   radius: RadiusLevel;
   font: FontName;
+  fontSize: FontSize;
   density: Density;
   gridSize: GridSize;
   windowOpacity: number; // 0.5-1 (ibiz_v2 InterfacePanel)
   windowSize: WindowSize; // launch-size preset for app windows (Settings → Apps)
   showTopBar: boolean;
   wallpaper: string; // WallpaperDef.id
+  /** Custom desktop photo URL (/storage/* upload). Set = photo wins over
+   *  the preset id above; null = preset. */
+  wallpaperImage: string | null;
   wallpaperDim: number;  // 0-60 (%)
   wallpaperBlur: number; // 0-25 (px)
   dockPosition?: 'bottom';
@@ -201,8 +235,16 @@ export interface ThemeState {
   animationsEnabled: boolean;
   soundsEnabled: boolean;
   volume: number;        // 0-100 — in-OS UI audio gain (drives the WebAudio blips)
-  airplaneMode: boolean; // connectivity override: fails all API reads → local seeds
   skillsDisplay: SkillDisplayMode;
+  splashWords: string[];      // boot wordmark, animated word by word (1-6)
+  splashTagline: string;      // empty = hidden
+  splashFooter: string;
+  splashDuration: number;     // 1000-8000ms progress wall-clock
+  splashBackground: SplashBackground;
+  /** Image backdrop URL (built-in /splash/* or uploaded /storage/*). Set =
+   *  image wins over the gradient preset; null = preset gradient. */
+  splashBackgroundImage: string | null;
+  splashAccent: string;       // hex progress-fill (theme-independent)
   widgets: WidgetPlacement[];
   /** Desktop icon drag offsets (px) keyed by app id — absent = default column. */
   desktopIconOffsets: Record<string, { x: number; y: number }>;
@@ -239,12 +281,14 @@ export const DEFAULT_THEME: ThemeState = {
   blur: 'normal',
   radius: 'rounded',
   font: 'Inter',
+  fontSize: 'medium',
   density: 'normal',
   gridSize: 24,
   windowOpacity: 0.5,
   windowSize: 'small',
   showTopBar: true,
   wallpaper: 'mint',
+  wallpaperImage: null,
   wallpaperDim: 0,
   wallpaperBlur: 0,
   taskbarMode: 'always',
@@ -255,8 +299,14 @@ export const DEFAULT_THEME: ThemeState = {
   animationsEnabled: true,
   soundsEnabled: false,
   volume: 85,
-  airplaneMode: false,
   skillsDisplay: 'bars',
+  splashWords: ['You', 'are', 'welcomed'],
+  splashTagline: 'My digital workspace',
+  splashFooter: 'v1.0.0 • Portfolio OS',
+  splashDuration: 2600,
+  splashBackground: 'abyss',
+  splashBackgroundImage: null,
+  splashAccent: '#ffffff',
   widgets: [],
   desktopIconOffsets: {},
   desktopIconSize: 'medium',
@@ -392,6 +442,7 @@ export function applyTheme(theme: ThemeState): void {
 
   // Font
   set('--font-ui', font.stack);
+  root.style.zoom = String(FONT_SIZE_SCALES[theme.fontSize] ?? 1);
 
   // ibiz_v2 surface/text/border scale (themeToVars parity) so ibiz-sourced
   // markup (taskbar, tray, menus) resolves its tokens verbatim.
@@ -431,10 +482,11 @@ export function applyTheme(theme: ThemeState): void {
     `radial-gradient(900px 700px at 80% 85%, ${rgba(accent.strong, 0.09)}, transparent 55%), ` +
     `linear-gradient(165deg, #f7f7fb 0%, #f0f0f7 60%, #f9f9fc 100%)`);
 
-  // Wallpaper selection
+  // Wallpaper selection (a custom photo wins over the preset id)
   const wp = getWallpaper(theme.wallpaper);
   const fallback = isDark ? 'var(--wp-accent-dark)' : 'var(--wp-accent-light)';
-  set('--wallpaper', wp.css.startsWith('var(') ? fallback : wp.css);
+  const preset = wp.css.startsWith('var(') ? fallback : wp.css;
+  set('--wallpaper', theme.wallpaperImage ? `url('${theme.wallpaperImage}') center / cover no-repeat, ${preset}` : preset);
 
   // Wallpaper-aware ink: desktop icon names + taskbar glyphs sit directly on
   // the wallpaper, so their color flips with wallpaper lightness. A light
@@ -476,6 +528,10 @@ export function applyTheme(theme: ThemeState): void {
 /** Guest theme storage key. Signed-in identities use `portfolio.theme.u<id>`. */
 export const GUEST_THEME_KEY = 'portfolio.theme';
 
+/** Last-active identity theme key — lets the boot veil wear the right
+ *  background before auth resolves (else it can only see the guest key). */
+export const THEME_KEY_LAST = 'portfolio.theme.key.last';
+
 export function themeKeyFor(userId: number | null): string {
   return userId === null ? GUEST_THEME_KEY : `portfolio.theme.u${userId}`;
 }
@@ -493,6 +549,7 @@ export function loadTheme(key: string = GUEST_THEME_KEY): ThemeState {
     const merged = { ...DEFAULT_THEME, ...parsed };
     // Sanitize backfilled fields from older saves (ibiz_v2 parity)
     if (!['compact', 'normal', 'comfortable'].includes(merged.density as string)) merged.density = 'normal';
+    if (!FONTS.some((f) => f.name === merged.font)) merged.font = 'Inter';
     if (![16, 24, 32].includes(merged.gridSize as number)) merged.gridSize = 24;
     if (typeof merged.windowOpacity !== 'number' || Number.isNaN(merged.windowOpacity)) merged.windowOpacity = DEFAULT_THEME.windowOpacity;
     if (merged.windowSize !== 'small' && merged.windowSize !== 'medium' && merged.windowSize !== 'large') merged.windowSize = 'small';
@@ -501,8 +558,35 @@ export function loadTheme(key: string = GUEST_THEME_KEY): ThemeState {
     if (typeof merged.showHomeIndicator !== 'boolean') merged.showHomeIndicator = false;
     if (typeof merged.volume !== 'number' || Number.isNaN(merged.volume)) merged.volume = DEFAULT_THEME.volume;
     else merged.volume = Math.min(100, Math.max(0, merged.volume));
-    if (typeof merged.airplaneMode !== 'boolean') merged.airplaneMode = false;
+    // Same-origin image URLs only (/splash/* built-ins, /storage/* uploads).
+    if (typeof merged.wallpaperImage !== 'string' || !merged.wallpaperImage.startsWith('/') || merged.wallpaperImage.length > 255) {
+      merged.wallpaperImage = null;
+    }
     if (merged.skillsDisplay !== 'bars' && merged.skillsDisplay !== 'cards') merged.skillsDisplay = 'bars';
+    if (merged.fontSize !== 'small' && merged.fontSize !== 'medium' && merged.fontSize !== 'large') merged.fontSize = 'medium';
+    if (!Array.isArray(merged.splashWords)) merged.splashWords = [];
+    merged.splashWords = merged.splashWords
+      .filter((w): w is string => typeof w === 'string')
+      .map((w) => w.slice(0, 14))
+      .filter((w) => w.length > 0)
+      .slice(0, 6);
+    if (!merged.splashWords.length) merged.splashWords = [...DEFAULT_THEME.splashWords];
+    // null (explicitly cleared, incl. '' through the empty-to-null middleware)
+    // means hidden; only a never-saved key falls back to the default line.
+    if (merged.splashTagline === undefined) merged.splashTagline = DEFAULT_THEME.splashTagline;
+    else if (typeof merged.splashTagline !== 'string') merged.splashTagline = '';
+    else merged.splashTagline = merged.splashTagline.slice(0, 60);
+    if (merged.splashFooter === undefined) merged.splashFooter = DEFAULT_THEME.splashFooter;
+    else if (typeof merged.splashFooter !== 'string') merged.splashFooter = '';
+    else merged.splashFooter = merged.splashFooter.slice(0, 40);
+    if (typeof merged.splashDuration !== 'number' || Number.isNaN(merged.splashDuration)) merged.splashDuration = DEFAULT_THEME.splashDuration;
+    else merged.splashDuration = Math.min(8000, Math.max(1000, Math.round(merged.splashDuration)));
+    if (!SPLASH_BACKGROUNDS[merged.splashBackground as SplashBackground]) merged.splashBackground = 'abyss';
+    // Same-origin image URLs only (/splash/* built-ins, /storage/* uploads).
+    if (typeof merged.splashBackgroundImage !== 'string' || !merged.splashBackgroundImage.startsWith('/') || merged.splashBackgroundImage.length > 255) {
+      merged.splashBackgroundImage = null;
+    }
+    if (typeof merged.splashAccent !== 'string' || !/^#[0-9a-fA-F]{6}$/.test(merged.splashAccent)) merged.splashAccent = DEFAULT_THEME.splashAccent;
     if (!Array.isArray(merged.taskbarApps)) merged.taskbarApps = [...DEFAULT_THEME.taskbarApps];
     if (
       typeof merged.desktopIconOffsets !== 'object' ||

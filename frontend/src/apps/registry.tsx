@@ -1,5 +1,5 @@
 import { lazy } from 'react';
-import { Briefcase, Code2, Folder, GraduationCap, LogIn, Mail, PencilLine, Settings as SettingsIcon, Sparkles, User } from 'lucide-react';
+import { Briefcase, Code2, Folder, GraduationCap, LayoutDashboard, LogIn, Mail, Newspaper, PencilLine, Settings as SettingsIcon, Sparkles, User } from 'lucide-react';
 import type { AppDef, AppId, EditorSection } from '@/types';
 
 const About = lazy(() => import('@/modules/about').then((m) => ({ default: m.AboutScreen })));
@@ -8,10 +8,20 @@ const Projects = lazy(() => import('@/modules/projects').then((m) => ({ default:
 const Experience = lazy(() => import('@/modules/experience').then((m) => ({ default: m.ExperienceScreen })));
 const Education = lazy(() => import('@/modules/education').then((m) => ({ default: m.EducationScreen })));
 const Hobbies = lazy(() => import('@/modules/hobbies').then((m) => ({ default: m.HobbiesScreen })));
+const Blogs = lazy(() => import('@/modules/blogs').then((m) => ({ default: m.BlogsScreen })));
 const Contact = lazy(() => import('@/modules/contact').then((m) => ({ default: m.ContactScreen })));
 const Settings = lazy(() => import('@/modules/settings').then((m) => ({ default: m.SettingsScreen })));
 const Auth = lazy(() => import('@/modules/auth').then((m) => ({ default: m.AuthScreen })));
 const Editor = lazy(() => import('@/modules/editor').then((m) => ({ default: m.EditorScreen })));
+const WidgetsManager = lazy(() => import('@/modules/widgets').then((m) => ({ default: m.WidgetsManagerScreen })));
+
+/** Launcher visibility: system apps stay out of the app grid; admin-only
+ *  apps additionally hide from every launcher for guests. */
+export function isAppVisible(app: AppDef, opts: { isAdmin: boolean }): boolean {
+  if (app.system) return false;
+  if (app.adminOnly && !opts.isAdmin) return false;
+  return true;
+}
 
 export const APP_REGISTRY: AppDef[] = [
   {
@@ -75,6 +85,16 @@ export const APP_REGISTRY: AppDef[] = [
     description: 'Hobbies, interests and side joys',
   },
   {
+    id: 'blogs',
+    name: 'Blogs',
+    icon: Newspaper,
+    color: '#84cc16',
+    component: Blogs,
+    defaultSize: { w: 720, h: 600 },
+    minSize: { w: 480, h: 400 },
+    description: 'Notes on builds, interfaces and shipping',
+  },
+  {
     id: 'contact',
     name: 'Contact',
     icon: Mail,
@@ -93,6 +113,18 @@ export const APP_REGISTRY: AppDef[] = [
     defaultSize: { w: 720, h: 560 },
     minSize: { w: 480, h: 400 },
     description: 'Theme, wallpaper and widgets',
+  },
+  {
+    id: 'widgets',
+    name: 'Widgets',
+    icon: LayoutDashboard,
+    color: '#14b8a6',
+    component: WidgetsManager,
+    defaultSize: { w: 620, h: 560 },
+    minSize: { w: 460, h: 420 },
+    singleInstance: true,
+    adminOnly: true,
+    description: 'Arrange desktop widgets',
   },
   {
     id: 'auth',
@@ -136,5 +168,6 @@ export const EDITABLE_APPS: { appId: AppId; section: EditorSection | null }[] = 
   { appId: 'experience', section: 'experience' },
   { appId: 'education', section: 'education' },
   { appId: 'hobbies', section: 'hobbies' },
+  { appId: 'blogs', section: 'blogs' },
   { appId: 'contact', section: null },
 ];

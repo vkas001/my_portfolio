@@ -8,6 +8,8 @@ import {
   type ReactNode,
 } from 'react';
 import type {
+  Blog,
+  BlogInput,
   Education,
   EducationInput,
   Experience,
@@ -21,7 +23,7 @@ import type {
   Skill,
   SkillInput,
 } from '@shared/types';
-import { fetchEducation, fetchExperience, fetchHobbies, fetchProfile, fetchProjects, fetchSkills } from '@/lib/api';
+import { fetchBlogs, fetchEducation, fetchExperience, fetchHobbies, fetchProfile, fetchProjects, fetchSkills } from '@/lib/api';
 import { invalidate } from '@/lib/api/httpClient';
 import { adminService } from '@/lib/api/adminService';
 import { useShellUI } from '@/context/ShellUIContext';
@@ -43,6 +45,7 @@ export interface ContentContextValue {
   experience: Experience[];
   education: Education[];
   hobbies: Hobby[];
+  blogs: Blog[];
   refresh: () => Promise<void>;
 
   saveProfile: (input: ProfileInput) => Promise<boolean>;
@@ -59,9 +62,11 @@ export interface ContentContextValue {
   deleteEducation: (id: string) => Promise<boolean>;
   saveHobby: (value: Hobby, isNew: boolean) => Promise<boolean>;
   deleteHobby: (id: string) => Promise<boolean>;
+  saveBlog: (value: Blog, isNew: boolean) => Promise<boolean>;
+  deleteBlog: (id: string) => Promise<boolean>;
   /** Swap item order in the local list and persist the new orders
-   *  (projects/experience/education/hobbies — skills have no order field). */
-  moveItem: (section: 'projects' | 'experience' | 'education' | 'hobbies', id: string, dir: -1 | 1) => Promise<void>;
+   *  (projects/experience/education/hobbies/blogs — skills have no order field). */
+  moveItem: (section: 'projects' | 'experience' | 'education' | 'hobbies' | 'blogs', id: string, dir: -1 | 1) => Promise<void>;
 }
 
 const ContentContext = createContext<ContentContextValue | null>(null);
@@ -74,27 +79,41 @@ export function useContent(): ContentContextValue {
 
 // ─── Optimistic list helpers ──────────────────────────────────────────────────
 
-/** Apply an optimistic list change; on API failure roll back to the snapshot
- *  and surface a toast, on success surface a confirmation toast. Returns true
- *  on success. */
+/** Apply an optimistic list change; on API failure roll back and surface a
+ *  toast, on success surface a confirmation toast. Returns true on success.
+ *  Every write is a functional upsert against CURRENT state (never a stale
+ *  wholesale replace), so back-to-back saves in one batch can't clobber each
+ *  other's rows — and a failure rolls back only its own row. */
 async function persistList<T extends AnyItem>(
   snapshot: T[],
-  optimistic: T[],
+  value: T,
+  isNew: boolean,
   applyList: (l: T[] | ((cur: T[]) => T[])) => void,
   note: (msg: string) => void,
   ok: (msg: string) => void,
   okMsg: string,
   request: () => Promise<T>,
-  successMsg?: string,
+  idOf: (v: T) => string,
 ): Promise<boolean> {
-  applyList(optimistic);
+  applyList((cur) =>
+    sortByOrder(
+      isNew
+        ? [...cur.filter((it) => idOf(it) !== idOf(value)), value]
+        : cur.map((it) => (idOf(it) === idOf(value) ? { ...it, ...value } : it)),
+    ),
+  );
   try {
     const saved = await request();
     applyList((cur) => cur.map((it) => (it.id === saved.id ? { ...it, ...saved } : it)));
     ok(okMsg);
     return true;
   } catch (err) {
-    applyList(snapshot);
+    const prev = snapshot.find((it) => idOf(it) === idOf(value));
+    applyList((cur) =>
+      isNew || !prev
+        ? cur.filter((it) => idOf(it) !== idOf(value))
+        : cur.map((it) => (idOf(it) === idOf(value) ? prev : it)),
+    );
     note(err instanceof Error ? err.message : 'Could not save');
     return false;
   }
@@ -102,21 +121,23 @@ async function persistList<T extends AnyItem>(
 
 async function deleteFromList<T extends AnyItem>(
   snapshot: T[],
-  optimistic: T[],
+  id: string,
   applyList: (l: T[] | ((cur: T[]) => T[])) => void,
   note: (msg: string) => void,
   ok: (msg: string) => void,
   okMsg: string,
   request: () => Promise<unknown>,
-  successMsg?: string,
 ): Promise<boolean> {
-  applyList(optimistic);
+  applyList((cur) => cur.filter((it) => it.id !== id));
   try {
     await request();
     ok(okMsg);
     return true;
   } catch (err) {
-    applyList(snapshot);
+    const prev = snapshot.find((it) => it.id === id);
+    applyList((cur) =>
+      prev && !cur.some((it) => it.id === id) ? sortByOrder([...cur, prev]) : cur,
+    );
     note(err instanceof Error ? err.message : 'Could not delete');
     return false;
   }
@@ -170,6 +191,7 @@ export function ContentProvider({ children }: { children: ReactNode }) {
   const experience = useItems(fetchExperience);
   const education = useItems(fetchEducation);
   const hobbies = useItems(fetchHobbies);
+  const blogs = useItems(fetchBlogs);
   // `useItems` returns a fresh object every render, so depend on the stable
   // reload callbacks themselves — depending on the wrapper objects would make
   // `refresh` change on every render and re-trigger the boot effect forever.
@@ -178,6 +200,7 @@ export function ContentProvider({ children }: { children: ReactNode }) {
   const { reload: reloadExperience } = experience;
   const { reload: reloadEducation } = education;
   const { reload: reloadHobbies } = hobbies;
+  const { reload: reloadBlogs } = blogs;
 
   const refresh = useCallback(async () => {
     invalidate('/profile');
@@ -186,14 +209,15 @@ export function ContentProvider({ children }: { children: ReactNode }) {
     invalidate('/experience');
     invalidate('/education');
     invalidate('/hobbies');
+    invalidate('/blogs');
     try {
       setProfile(await fetchProfile());
     } catch {
       setProfile(null);
     }
-    await Promise.all([reloadSkills(), reloadProjects(), reloadExperience(), reloadEducation(), reloadHobbies()]);
+    await Promise.all([reloadSkills(), reloadProjects(), reloadExperience(), reloadEducation(), reloadHobbies(), reloadBlogs()]);
     setLoading(false);
-  }, [reloadSkills, reloadProjects, reloadExperience, reloadEducation, reloadHobbies]);
+  }, [reloadSkills, reloadProjects, reloadExperience, reloadEducation, reloadHobbies, reloadBlogs]);
 
   useEffect(() => {
     void refresh();
@@ -282,13 +306,9 @@ export function ContentProvider({ children }: { children: ReactNode }) {
       isNew: boolean,
       request: () => Promise<T>,
       idOf: (v: T) => string,
-      successMsg: string,
     ) => {
       const sorted = sortByOrder(items);
-      const optimistic = isNew
-        ? sortByOrder([...sorted, value])
-        : sorted.map((it) => (idOf(it) === idOf(value) ? { ...it, ...value } : it));
-      return persistList(sorted, optimistic, apply, note, ok, isNew ? 'Added' : 'Saved', request);
+      return persistList(sorted, value, isNew, apply, note, ok, isNew ? 'Added' : 'Saved', request, idOf);
     },
     [note, ok],
   );
@@ -299,11 +319,9 @@ export function ContentProvider({ children }: { children: ReactNode }) {
       apply: (l: T[] | ((cur: T[]) => T[])) => void,
       id: string,
       request: () => Promise<unknown>,
-      successMsg: string,
     ) => {
       const sorted = sortByOrder(items);
-      const optimistic = sorted.filter((it) => it.id !== id);
-      return deleteFromList(sorted, optimistic, apply, note, ok, 'Deleted', request);
+      return deleteFromList(sorted, id, apply, note, ok, 'Deleted', request);
     },
     [note, ok],
   );
@@ -325,7 +343,6 @@ export function ContentProvider({ children }: { children: ReactNode }) {
         isNew,
         () => (isNew ? adminService.storeSkill(input) : adminService.updateSkill(value.id, input)),
         (s) => s.id,
-        isNew ? 'Skill added' : 'Skill saved',
       );
     },
     [skills.items, skills.set, saveItem],
@@ -333,14 +350,17 @@ export function ContentProvider({ children }: { children: ReactNode }) {
 
   const deleteSkill = useCallback(
     (id: string) =>
-      deleteItem(skills.items, skills.set, id, () => adminService.deleteSkill(id), 'Skill deleted'),
+      deleteItem(skills.items, skills.set, id, () => adminService.deleteSkill(id)),
     [skills.items, skills.set, deleteItem],
   );
 
   const saveProject = useCallback(
     (value: Project, isNew: boolean) => {
       const input: ProjectInput = {
-        ...(isNew ? { id: value.id } : {}),
+        // New rows carry the local "sort last" sentinel (Number.MAX_SAFE_INTEGER),
+        // which MySQL unsigned int can't hold — omit it on create so the
+        // backend assigns max(order)+1. Updates always carry real DB values.
+        ...(isNew ? { id: value.id } : { order: value.order }),
         title: value.title,
         description: value.description,
         longDescription: value.longDescription,
@@ -351,7 +371,6 @@ export function ContentProvider({ children }: { children: ReactNode }) {
         githubUrl: value.githubUrl,
         imageUrl: value.imageUrl,
         year: value.year,
-        order: value.order,
       };
       return saveItem(
         projects.items,
@@ -360,7 +379,6 @@ export function ContentProvider({ children }: { children: ReactNode }) {
         isNew,
         () => (isNew ? adminService.storeProject(input) : adminService.updateProject(value.id, input)),
         (p) => p.id,
-        isNew ? 'Project added' : 'Project saved',
       );
     },
     [projects.items, projects.set, saveItem],
@@ -368,14 +386,14 @@ export function ContentProvider({ children }: { children: ReactNode }) {
 
   const deleteProject = useCallback(
     (id: string) =>
-      deleteItem(projects.items, projects.set, id, () => adminService.deleteProject(id), 'Project deleted'),
+      deleteItem(projects.items, projects.set, id, () => adminService.deleteProject(id)),
     [projects.items, projects.set, deleteItem],
   );
 
   const saveExperience = useCallback(
     (value: Experience, isNew: boolean) => {
       const input: ExperienceInput = {
-        ...(isNew ? { id: value.id } : {}),
+        ...(isNew ? { id: value.id } : { order: value.order }),
         company: value.company,
         role: value.role,
         startDate: value.startDate,
@@ -384,7 +402,6 @@ export function ContentProvider({ children }: { children: ReactNode }) {
         employmentType: value.employmentType,
         highlights: value.highlights,
         techStack: value.techStack,
-        order: value.order,
       };
       return saveItem(
         experience.items,
@@ -396,7 +413,6 @@ export function ContentProvider({ children }: { children: ReactNode }) {
             ? adminService.storeExperience(input)
             : adminService.updateExperience(value.id, input),
         (x) => x.id,
-        isNew ? 'Experience added' : 'Experience saved',
       );
     },
     [experience.items, experience.set, saveItem],
@@ -404,20 +420,19 @@ export function ContentProvider({ children }: { children: ReactNode }) {
 
   const deleteExperience = useCallback(
     (id: string) =>
-      deleteItem(experience.items, experience.set, id, () => adminService.deleteExperience(id), 'Experience deleted'),
+      deleteItem(experience.items, experience.set, id, () => adminService.deleteExperience(id)),
     [experience.items, experience.set, deleteItem],
   );
 
   const saveEducation = useCallback(
     (value: Education, isNew: boolean) => {
       const input: EducationInput = {
-        ...(isNew ? { id: value.id } : {}),
+        ...(isNew ? { id: value.id } : { order: value.order }),
         institution: value.institution,
         degree: value.degree,
         startDate: value.startDate,
         endDate: value.endDate,
         description: value.description,
-        order: value.order,
       };
       return saveItem(
         education.items,
@@ -429,7 +444,6 @@ export function ContentProvider({ children }: { children: ReactNode }) {
             ? adminService.storeEducation(input)
             : adminService.updateEducation(value.id, input),
         (x) => x.id,
-        isNew ? 'Education added' : 'Education saved',
       );
     },
     [education.items, education.set, saveItem],
@@ -437,18 +451,17 @@ export function ContentProvider({ children }: { children: ReactNode }) {
 
   const deleteEducation = useCallback(
     (id: string) =>
-      deleteItem(education.items, education.set, id, () => adminService.deleteEducation(id), 'Education deleted'),
+      deleteItem(education.items, education.set, id, () => adminService.deleteEducation(id)),
     [education.items, education.set, deleteItem],
   );
 
   const saveHobby = useCallback(
     (value: Hobby, isNew: boolean) => {
       const input: HobbyInput = {
-        ...(isNew ? { id: value.id } : {}),
+        ...(isNew ? { id: value.id } : { order: value.order }),
         name: value.name,
         icon: value.icon,
         description: value.description,
-        order: value.order,
       };
       return saveItem(
         hobbies.items,
@@ -460,7 +473,6 @@ export function ContentProvider({ children }: { children: ReactNode }) {
             ? adminService.storeHobby(input)
             : adminService.updateHobby(value.id, input),
         (x) => x.id,
-        isNew ? 'Hobby added' : 'Hobby saved',
       );
     },
     [hobbies.items, hobbies.set, saveItem],
@@ -468,8 +480,43 @@ export function ContentProvider({ children }: { children: ReactNode }) {
 
   const deleteHobby = useCallback(
     (id: string) =>
-      deleteItem(hobbies.items, hobbies.set, id, () => adminService.deleteHobby(id), 'Hobby deleted'),
+      deleteItem(hobbies.items, hobbies.set, id, () => adminService.deleteHobby(id)),
     [hobbies.items, hobbies.set, deleteItem],
+  );
+
+  const saveBlog = useCallback(
+    (value: Blog, isNew: boolean) => {
+      const input: BlogInput = {
+        // New rows carry the local "sort last" sentinel — omit it on create
+        // so the backend assigns max(order)+1 (order-column overflow guard).
+        ...(isNew ? { id: value.id } : { order: value.order }),
+        title: value.title,
+        excerpt: value.excerpt,
+        body: value.body,
+        tags: value.tags,
+        coverUrl: value.coverUrl,
+        published: value.published,
+        publishedAt: value.publishedAt,
+      };
+      return saveItem(
+        blogs.items,
+        blogs.set,
+        value,
+        isNew,
+        () =>
+          isNew
+            ? adminService.storeBlog(input)
+            : adminService.updateBlog(value.id, input),
+        (b) => b.id,
+      );
+    },
+    [blogs.items, blogs.set, saveItem],
+  );
+
+  const deleteBlog = useCallback(
+    (id: string) =>
+      deleteItem(blogs.items, blogs.set, id, () => adminService.deleteBlog(id)),
+    [blogs.items, blogs.set, deleteItem],
   );
 
   // Reorder an order-backed section (projects/experience): swap orders
@@ -536,6 +583,15 @@ export function ContentProvider({ children }: { children: ReactNode }) {
           (rowId, row) => adminService.updateHobby(rowId, row),
         );
       }
+      if (section === 'blogs') {
+        return commitReorder(
+          blogs.items,
+          blogs.set,
+          id,
+          dir,
+          (rowId, row) => adminService.updateBlog(rowId, row),
+        );
+      }
       return commitReorder(
         experience.items,
         experience.set,
@@ -544,7 +600,7 @@ export function ContentProvider({ children }: { children: ReactNode }) {
         (rowId, row) => adminService.updateExperience(rowId, row),
       );
     },
-    [projects.items, projects.set, experience.items, experience.set, education.items, education.set, hobbies.items, hobbies.set, commitReorder],
+    [projects.items, projects.set, experience.items, experience.set, education.items, education.set, hobbies.items, hobbies.set, blogs.items, blogs.set, commitReorder],
   );
 
   const value = useMemo<ContentContextValue>(
@@ -556,6 +612,7 @@ export function ContentProvider({ children }: { children: ReactNode }) {
       experience: experience.items,
       education: education.items,
       hobbies: hobbies.items,
+      blogs: blogs.items,
       refresh,
       saveProfile,
       uploadAvatar,
@@ -569,6 +626,8 @@ export function ContentProvider({ children }: { children: ReactNode }) {
       deleteEducation,
       saveHobby,
       deleteHobby,
+      saveBlog,
+      deleteBlog,
       moveItem,
     }),
     [
@@ -579,6 +638,7 @@ export function ContentProvider({ children }: { children: ReactNode }) {
       experience.items,
       education.items,
       hobbies.items,
+      blogs.items,
       refresh,
       saveProfile,
       uploadAvatar,
@@ -592,6 +652,8 @@ export function ContentProvider({ children }: { children: ReactNode }) {
       deleteEducation,
       saveHobby,
       deleteHobby,
+      saveBlog,
+      deleteBlog,
       moveItem,
     ],
   );
