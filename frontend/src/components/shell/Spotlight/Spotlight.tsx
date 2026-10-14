@@ -1,8 +1,9 @@
 import { useEffect, useMemo, useRef, useState, type ReactNode } from 'react';
+import { useAuth } from '@/context/AuthContext';
 import { useShellUI } from '@/context/ShellUIContext';
 import { useWindows } from '@/context/WindowsContext';
 import { useWidgets } from '@/context/WidgetsContext';
-import { APP_REGISTRY } from '@/apps/registry';
+import { APP_REGISTRY, isAppVisible } from '@/apps/registry';
 import { siteAnchorFor } from '@/modules/site';
 import { WIDGET_DEFS } from '@/modules/widgets';
 import type { AppId } from '@/types';
@@ -20,6 +21,7 @@ interface Result {
 
 export default function Spotlight() {
   const { spotlightOpen, setSpotlightOpen, viewMode } = useShellUI();
+  const { isAdmin } = useAuth();
   const { launchApp } = useWindows();
   const { addWidget } = useWidgets();
   const [query, setQuery] = useState('');
@@ -35,7 +37,7 @@ export default function Spotlight() {
   const results = useMemo<Result[]>(() => {
     const q = query.trim().toLowerCase();
     const apps: Result[] = APP_REGISTRY
-      .filter((a) => !isWeb || siteAnchorFor(a.id) !== null)
+      .filter((a) => (!isWeb || siteAnchorFor(a.id) !== null) && isAppVisible(a, { isAdmin }))
       .map((a) => ({
         kind: 'app',
         id: a.id,
@@ -66,7 +68,7 @@ export default function Spotlight() {
     const all = [...apps, ...widgets];
     if (!q) return all.slice(0, 6);
     return all.filter((r) => r.name.toLowerCase().includes(q) || r.sub.toLowerCase().includes(q)).slice(0, 8);
-  }, [query, launchApp, addWidget, isWeb]);
+  }, [query, launchApp, addWidget, isWeb, isAdmin]);
 
   useEffect(() => {
     if (spotlightOpen) {

@@ -80,6 +80,16 @@ button { font-family: inherit; }
 }
 *::-webkit-scrollbar-thumb:hover { background: rgba(var(--accent-rgb), .4); }
 
+/* Contribution graph scroller: a chunkier grabbable bar (the global 8px
+ * one is too fine at this size) plus a visible keyboard-focus ring, since
+ * the graph is the widget's main content. Arrow keys scroll it natively
+ * once focused; touch keeps native gestures. */
+.gh-cal { scrollbar-width: auto; }
+.gh-cal::-webkit-scrollbar { height: 12px; }
+.gh-cal::-webkit-scrollbar-track { background: transparent; }
+.gh-cal::-webkit-scrollbar-thumb { background: rgba(var(--accent-rgb), .45); border-radius: 99px; }
+.gh-cal::-webkit-scrollbar-thumb:hover { background: rgba(var(--accent-rgb), .65); }
+
 /* Single-line scroll strips (e.g. editor section pills): scrollable but
  * without a visible scrollbar. */
 .no-scrollbar { scrollbar-width: none; -ms-overflow-style: none; }

@@ -1,8 +1,9 @@
 import { useRef } from 'react';
+import { useAuth } from '@/context/AuthContext';
 import { useTheme } from '@/context/ThemeContext';
 import { useWindows } from '@/context/WindowsContext';
 import { useShellUI } from '@/context/ShellUIContext';
-import { APP_REGISTRY } from '@/apps/registry';
+import { APP_REGISTRY, isAppVisible } from '@/apps/registry';
 import WindowFrame from '@/components/shell/WindowFrame/WindowFrame';
 import ModuleHost from '@/components/shell/ModuleHost/ModuleHost';
 import TopBar from '@/components/shell/TopBar/TopBar';
@@ -19,6 +20,7 @@ const FORCE_OS_ON_MOBILE_KEY = 'portfolio.forceOsOnMobile';
 
 export default function Desktop() {
   const { theme, setTheme } = useTheme();
+  const { isAdmin } = useAuth();
   const { setViewMode } = useShellUI();
   const { windows, launchApp } = useWindows();
   const isMobile = useIsMobile();
@@ -234,7 +236,7 @@ export default function Desktop() {
       {/* Desktop icons — draggable; offsets persist in theme.desktopIconOffsets */}
       <div className="desktop-area">
         <div className="absolute left-4 top-4 flex flex-col gap-2">
-          {APP_REGISTRY.filter((app) => !app.system).map((app) => (
+          {APP_REGISTRY.filter((app) => isAppVisible(app, { isAdmin })).map((app) => (
             <DesktopIcon
               key={app.id}
               app={app}

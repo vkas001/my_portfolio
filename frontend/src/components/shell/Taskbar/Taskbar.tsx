@@ -1,8 +1,8 @@
 // Taskbar — verbatim port of ibiz_v2 Taskbar (structure, classes, behavior).
 // Adapted only where portfolio lacks the supporting infra: Lucide icon map
-// for the 6 portfolio apps (no auth/workspace gating — every app is visible),
-// clock without locale/BS calendar, no central-apps section. Auto-hide uses
-// the same slide/reveal mechanics with portfolio's context visibility state.
+// for the portfolio apps (admin-only apps hide for guests), clock without
+// locale/BS calendar, no central-apps section. Auto-hide uses the same
+// slide/reveal mechanics with portfolio's context visibility state.
 import { memo, useEffect, useRef, useState } from 'react';
 import {
   ChevronUp,
@@ -13,6 +13,7 @@ import {
   VolumeX,
 } from 'lucide-react';
 import { useTheme } from '@/context/ThemeContext';
+import { useAuth } from '@/context/AuthContext';
 import { useWindows } from '@/context/WindowsContext';
 import { useShellUI } from '@/context/ShellUIContext';
 import {
@@ -22,7 +23,7 @@ import {
   Z_TASKBAR_REVEAL,
 } from '@/lib/osLayout';
 import { TASKBAR_HEIGHTS } from '@/styles/theme';
-import { APP_REGISTRY } from '@/apps/registry';
+import { APP_REGISTRY, isAppVisible } from '@/apps/registry';
 import type { AppId } from '@/types';
 import SystemTrayModal from '@/components/shell/SystemTrayModal/SystemTrayModal';
 
@@ -70,6 +71,7 @@ const MacIndicator: React.FC<{ isOpen: boolean; isActive: boolean; isMinimized: 
 
 const Taskbar = memo(function Taskbar() {
   const { theme } = useTheme();
+  const { isAdmin } = useAuth();
     const { windows, focusedId, launchApp, focusWindow, restoreWindow, minimizeWindow } = useWindows();
     const { startMenuOpen, setStartMenuOpen, spotlightOpen, setSpotlightOpen, widgetsOpen, setWidgetsOpen, taskbarVisible, setTaskbarVisible } = useShellUI();
   const windowsStyle = theme.taskbarStyle === 'windows';
@@ -118,9 +120,11 @@ const Taskbar = memo(function Taskbar() {
 
   // Render pinned apps in the persisted order (taskbarApps is the source of
   // truth; unknown ids are dropped so stale theme values can't crash or bloat).
+  // Admin-only apps also drop for guests (e.g. a pin left over from a session).
   const pinnedOsApps = (theme.taskbarApps ?? [])
     .map((id) => APP_REGISTRY.find((app) => app.id === id))
-    .filter((app): app is (typeof APP_REGISTRY)[number] => Boolean(app));
+    .filter((app): app is (typeof APP_REGISTRY)[number] => Boolean(app))
+    .filter((app) => isAppVisible(app, { isAdmin }));
   const runningIds = windows.map((w) => w.appId).filter((id, i, all) => all.indexOf(id) === i);
   const unpinnedRunning = runningIds
     .filter((id) => !pinnedOsApps.some((a) => a.id === id))

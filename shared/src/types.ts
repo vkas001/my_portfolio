@@ -139,6 +139,7 @@ export interface GitHubStats {
   publicRepos: number;
   followers: number;
   starsEarned: number;
+  forksEarned: number;
   contributionsLastYear: number;
   languages: { name: string; percent: number }[];
   contributions: { date: string; count: number }[];

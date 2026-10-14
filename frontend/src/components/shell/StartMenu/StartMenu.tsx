@@ -3,7 +3,7 @@ import { useShellUI } from '@/context/ShellUIContext';
 import { useWindows } from '@/context/WindowsContext';
 import { useTheme } from '@/context/ThemeContext';
 import { useAuth } from '@/context/AuthContext';
-import { APP_REGISTRY } from '@/apps/registry';
+import { APP_REGISTRY, isAppVisible } from '@/apps/registry';
 import { Moon, Sun, RotateCcw, Search, Settings, Undo2, X, LogIn, CircleUserRound } from 'lucide-react';
 import { Z_TASKBAR } from '@/lib/osLayout';
 
@@ -11,7 +11,7 @@ export default function StartMenu() {
   const { startMenuOpen, setStartMenuOpen } = useShellUI();
   const { launchApp, closeAllWindows } = useWindows();
   const { theme, setTheme, resetTheme } = useTheme();
-  const { user } = useAuth();
+  const { user, isAdmin } = useAuth();
   const ref = useRef<HTMLDivElement>(null);
   const inputRef = useRef<HTMLInputElement>(null);
   const [position, setPosition] = useState<{ left: number; bottom: number } | null>(null);
@@ -69,13 +69,13 @@ export default function StartMenu() {
   }, [startMenuOpen]);
 
   const apps = useMemo(() => {
-    const visible = APP_REGISTRY.filter((a) => !a.system);
+    const visible = APP_REGISTRY.filter((a) => isAppVisible(a, { isAdmin }));
     const q = searchTerm.trim().toLowerCase();
     if (!q) return visible;
     return visible.filter(
       (a) => a.name.toLowerCase().includes(q) || (a.description ?? '').toLowerCase().includes(q),
     );
-  }, [searchTerm]);
+  }, [searchTerm, isAdmin]);
 
   if (!startMenuOpen) return null;
 

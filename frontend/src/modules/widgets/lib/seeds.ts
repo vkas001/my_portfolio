@@ -6,6 +6,7 @@ export const fallbackStats: GitHubStats = {
   publicRepos: 24,
   followers: 180,
   starsEarned: 320,
+  forksEarned: 86,
   contributionsLastYear: 1240,
   languages: [
     { name: 'TypeScript', percent: 58 },

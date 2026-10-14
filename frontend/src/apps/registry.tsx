@@ -1,5 +1,5 @@
 import { lazy } from 'react';
-import { Briefcase, Code2, Folder, GraduationCap, LogIn, Mail, Newspaper, PencilLine, Settings as SettingsIcon, Sparkles, User } from 'lucide-react';
+import { Briefcase, Code2, Folder, GraduationCap, LayoutDashboard, LogIn, Mail, Newspaper, PencilLine, Settings as SettingsIcon, Sparkles, User } from 'lucide-react';
 import type { AppDef, AppId, EditorSection } from '@/types';
 
 const About = lazy(() => import('@/modules/about').then((m) => ({ default: m.AboutScreen })));
@@ -13,6 +13,15 @@ const Contact = lazy(() => import('@/modules/contact').then((m) => ({ default: m
 const Settings = lazy(() => import('@/modules/settings').then((m) => ({ default: m.SettingsScreen })));
 const Auth = lazy(() => import('@/modules/auth').then((m) => ({ default: m.AuthScreen })));
 const Editor = lazy(() => import('@/modules/editor').then((m) => ({ default: m.EditorScreen })));
+const WidgetsManager = lazy(() => import('@/modules/widgets').then((m) => ({ default: m.WidgetsManagerScreen })));
+
+/** Launcher visibility: system apps stay out of the app grid; admin-only
+ *  apps additionally hide from every launcher for guests. */
+export function isAppVisible(app: AppDef, opts: { isAdmin: boolean }): boolean {
+  if (app.system) return false;
+  if (app.adminOnly && !opts.isAdmin) return false;
+  return true;
+}
 
 export const APP_REGISTRY: AppDef[] = [
   {
@@ -104,6 +113,18 @@ export const APP_REGISTRY: AppDef[] = [
     defaultSize: { w: 720, h: 560 },
     minSize: { w: 480, h: 400 },
     description: 'Theme, wallpaper and widgets',
+  },
+  {
+    id: 'widgets',
+    name: 'Widgets',
+    icon: LayoutDashboard,
+    color: '#14b8a6',
+    component: WidgetsManager,
+    defaultSize: { w: 620, h: 560 },
+    minSize: { w: 460, h: 420 },
+    singleInstance: true,
+    adminOnly: true,
+    description: 'Arrange desktop widgets',
   },
   {
     id: 'auth',

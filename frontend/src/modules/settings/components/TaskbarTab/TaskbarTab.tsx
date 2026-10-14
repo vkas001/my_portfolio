@@ -1,14 +1,16 @@
 import { AppWindow, ChevronDown, ChevronUp, LayoutGrid, Monitor, Plus, Rocket, Trash2 } from 'lucide-react';
+import { useAuth } from '@/context/AuthContext';
 import type { IconSize, ThemeState } from '@/styles/theme';
-import { APP_REGISTRY } from '@/apps/registry';
+import { APP_REGISTRY, isAppVisible } from '@/apps/registry';
 import SectionCard from '@/components/ui/SectionCard/SectionCard';
 import { SegmentedControl, SettingRow, SubLabel, Toggle } from '@/modules/settings/components/primitives';
 import { ICON_SIZE_OPTIONS, TASKBAR_MODE_OPTIONS, TASKBAR_STYLE_OPTIONS } from '@/modules/settings/lib/options';
 import type { SetTheme } from '@/modules/settings/lib/types';
 
 export default function TaskbarTab({ theme, setTheme }: { theme: ThemeState; setTheme: SetTheme }) {
+  const { isAdmin } = useAuth();
   const pinned = theme.taskbarApps;
-  const available = APP_REGISTRY.filter((a) => !a.system && !pinned.includes(a.id));
+  const available = APP_REGISTRY.filter((a) => isAppVisible(a, { isAdmin }) && !pinned.includes(a.id));
 
   const add = (id: string) => setTheme({ taskbarApps: [...pinned, id] });
   const remove = (id: string) => setTheme({ taskbarApps: pinned.filter((x) => x !== id) });
@@ -139,7 +141,7 @@ export default function TaskbarTab({ theme, setTheme }: { theme: ThemeState; set
           Apps that open automatically when the desktop loads.
         </p>
         <div className="grid grid-cols-12 gap-x-4">
-          {APP_REGISTRY.filter((app) => !app.system).map((app) => (
+          {APP_REGISTRY.filter((app) => isAppVisible(app, { isAdmin })).map((app) => (
             <div key={app.id} className="col-span-12 @2xl:col-span-6">
             <SettingRow label={app.name}>
               <Toggle
