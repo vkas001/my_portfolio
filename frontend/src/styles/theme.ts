@@ -98,6 +98,25 @@ export const FONTS: FontDef[] = [
   { name: 'System UI',        label: 'System UI',        stack: `system-ui, ${NOTO}, sans-serif` },
 ];
 
+// ─── Splash presets (theme-independent) ───────────────────────────────────
+// Fixed dark gradients — white splash text stays readable on all of them.
+// Progress-fill swatches, same constraint.
+export const SPLASH_BACKGROUNDS: Record<SplashBackground, { label: string; css: string }> = {
+  midnight: { label: 'Midnight', css: 'linear-gradient(to bottom right, #0f172a, #1e293b, #0f172a)' },
+  onyx: { label: 'Onyx', css: 'linear-gradient(160deg, #060609 0%, #12121a 60%, #060609 100%)' },
+  indigo: { label: 'Indigo', css: 'linear-gradient(160deg, #0d0621 0%, #1e1b4b 60%, #0a0518 100%)' },
+  abyss: { label: 'Abyss', css: 'linear-gradient(160deg, #02120e 0%, #064e3b 60%, #010b08 100%)' },
+};
+
+export const SPLASH_ACCENTS: { label: string; hex: string }[] = [
+  { label: 'White', hex: '#ffffff' },
+  { label: 'Violet', hex: '#a78bfa' },
+  { label: 'Cyan', hex: '#22d3ee' },
+  { label: 'Emerald', hex: '#34d399' },
+  { label: 'Amber', hex: '#fbbf24' },
+  { label: 'Rose', hex: '#fb7185' },
+];
+
 // ─── Wallpaper presets ──────────────────────────────────────────────────────
 export const WALLPAPERS: WallpaperDef[] = [
   { id: 'violet-dream', label: 'Violet Dream', mode: 'dark',
@@ -176,6 +195,10 @@ export type ClockFormat = '12h' | '24h';
 export type DateFormat = 'short' | 'long';
 export type SkillDisplayMode = 'bars' | 'cards'; // how the Skills window renders
 
+/** Boot-splash background preset (theme-independent: the splash renders
+ *  while the theme is still loading, so these are fixed dark gradients). */
+export type SplashBackground = 'midnight' | 'onyx' | 'indigo' | 'abyss';
+
 export interface ThemeState {
   mode: ThemeMode;
   accent: AccentName;
@@ -202,6 +225,12 @@ export interface ThemeState {
   soundsEnabled: boolean;
   volume: number;        // 0-100 — in-OS UI audio gain (drives the WebAudio blips)
   skillsDisplay: SkillDisplayMode;
+  splashWords: string[];      // boot wordmark, animated word by word (1-6)
+  splashTagline: string;      // empty = hidden
+  splashFooter: string;
+  splashDuration: number;     // 1000-8000ms progress wall-clock
+  splashBackground: SplashBackground;
+  splashAccent: string;       // hex progress-fill (theme-independent)
   widgets: WidgetPlacement[];
   /** Desktop icon drag offsets (px) keyed by app id — absent = default column. */
   desktopIconOffsets: Record<string, { x: number; y: number }>;
@@ -255,6 +284,12 @@ export const DEFAULT_THEME: ThemeState = {
   soundsEnabled: false,
   volume: 85,
   skillsDisplay: 'bars',
+  splashWords: ['You', 'are', 'welcomed'],
+  splashTagline: 'My digital workspace',
+  splashFooter: 'v1.0.0 • Portfolio OS',
+  splashDuration: 2600,
+  splashBackground: 'abyss',
+  splashAccent: '#ffffff',
   widgets: [],
   desktopIconOffsets: {},
   desktopIconSize: 'medium',
@@ -474,6 +509,10 @@ export function applyTheme(theme: ThemeState): void {
 /** Guest theme storage key. Signed-in identities use `portfolio.theme.u<id>`. */
 export const GUEST_THEME_KEY = 'portfolio.theme';
 
+/** Last-active identity theme key — lets the boot veil wear the right
+ *  background before auth resolves (else it can only see the guest key). */
+export const THEME_KEY_LAST = 'portfolio.theme.key.last';
+
 export function themeKeyFor(userId: number | null): string {
   return userId === null ? GUEST_THEME_KEY : `portfolio.theme.u${userId}`;
 }
@@ -500,6 +539,25 @@ export function loadTheme(key: string = GUEST_THEME_KEY): ThemeState {
     if (typeof merged.volume !== 'number' || Number.isNaN(merged.volume)) merged.volume = DEFAULT_THEME.volume;
     else merged.volume = Math.min(100, Math.max(0, merged.volume));
     if (merged.skillsDisplay !== 'bars' && merged.skillsDisplay !== 'cards') merged.skillsDisplay = 'bars';
+    if (!Array.isArray(merged.splashWords)) merged.splashWords = [];
+    merged.splashWords = merged.splashWords
+      .filter((w): w is string => typeof w === 'string')
+      .map((w) => w.slice(0, 14))
+      .filter((w) => w.length > 0)
+      .slice(0, 6);
+    if (!merged.splashWords.length) merged.splashWords = [...DEFAULT_THEME.splashWords];
+    // null (explicitly cleared, incl. '' through the empty-to-null middleware)
+    // means hidden; only a never-saved key falls back to the default line.
+    if (merged.splashTagline === undefined) merged.splashTagline = DEFAULT_THEME.splashTagline;
+    else if (typeof merged.splashTagline !== 'string') merged.splashTagline = '';
+    else merged.splashTagline = merged.splashTagline.slice(0, 60);
+    if (merged.splashFooter === undefined) merged.splashFooter = DEFAULT_THEME.splashFooter;
+    else if (typeof merged.splashFooter !== 'string') merged.splashFooter = '';
+    else merged.splashFooter = merged.splashFooter.slice(0, 40);
+    if (typeof merged.splashDuration !== 'number' || Number.isNaN(merged.splashDuration)) merged.splashDuration = DEFAULT_THEME.splashDuration;
+    else merged.splashDuration = Math.min(8000, Math.max(1000, Math.round(merged.splashDuration)));
+    if (!SPLASH_BACKGROUNDS[merged.splashBackground as SplashBackground]) merged.splashBackground = 'abyss';
+    if (typeof merged.splashAccent !== 'string' || !/^#[0-9a-fA-F]{6}$/.test(merged.splashAccent)) merged.splashAccent = DEFAULT_THEME.splashAccent;
     if (!Array.isArray(merged.taskbarApps)) merged.taskbarApps = [...DEFAULT_THEME.taskbarApps];
     if (
       typeof merged.desktopIconOffsets !== 'object' ||

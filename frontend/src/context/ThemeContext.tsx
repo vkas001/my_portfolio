@@ -16,6 +16,7 @@ import {
   LEGACY_DEFAULT_STARTUP_WINDOWS,
   loadTheme,
   saveTheme,
+  THEME_KEY_LAST,
   themeKeyFor,
   type ThemeState,
 } from '@/styles/theme';
@@ -96,6 +97,9 @@ export function ThemeProvider({ children }: { children: ReactNode }) {
   useEffect(() => {
     if (!authReady) return;
     const nextKey = themeKeyFor(user?.id ?? null);
+    // Remember the active identity so the next cold boot's veil can wear
+    // the right background before auth resolves (see BootOverlay).
+    try { localStorage.setItem(THEME_KEY_LAST, nextKey); } catch { /* private mode */ }
     if (nextKey === themeKeyRef.current) {
       if (!isAdmin) markHydrated(); // guest: nothing to pull
       return;

@@ -6,6 +6,7 @@ import { useAuth } from '@/context/AuthContext';
 import { ACCENTS, ACCENTS_DARK } from '@/styles/theme';
 import { SETTINGS_TABS, TAB_DESCRIPTIONS, type SettingsTabId } from '@/modules/settings/lib/options';
 import PersonalizationTab from '@/modules/settings/components/PersonalizationTab/PersonalizationTab';
+import SplashTab from '@/modules/settings/components/SplashTab/SplashTab';
 import InterfaceTab from '@/modules/settings/components/InterfaceTab/InterfaceTab';
 import AppsTab from '@/modules/settings/components/AppsTab/AppsTab';
 import TaskbarTab from '@/modules/settings/components/TaskbarTab/TaskbarTab';
@@ -74,6 +75,9 @@ export default function SettingsScreen() {
 
           {activeTab === 'personalization' && (
             <PersonalizationTab isDark={isDark} palette={palette} theme={theme} setTheme={setTheme} isAdmin={isAdmin} />
+          )}
+          {activeTab === 'splash' && (
+            <SplashTab theme={theme} setTheme={setTheme} isAdmin={isAdmin} />
           )}
           {activeTab === 'interface' && <InterfaceTab theme={theme} setTheme={setTheme} />}
           {activeTab === 'apps' && <AppsTab theme={theme} setTheme={setTheme} />}

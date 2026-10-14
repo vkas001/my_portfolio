@@ -10,6 +10,7 @@ import {
   Keyboard,
   Monitor,
   Palette,
+  Rocket,
   RotateCcw,
   SlidersHorizontal,
   type LucideIcon,
@@ -72,6 +73,7 @@ export const ICON_SIZE_OPTIONS: { value: IconSize; label: string }[] = [
 
 export const SETTINGS_TABS = [
   { id: 'personalization', label: 'Personalization', icon: Palette },
+  { id: 'splash', label: 'Splash', icon: Rocket },
   { id: 'interface', label: 'Interface', icon: SlidersHorizontal },
   { id: 'apps', label: 'Apps', icon: AppWindow },
   { id: 'taskbar', label: 'Taskbar', icon: Monitor },
@@ -86,6 +88,7 @@ export type SettingsTabId = (typeof SETTINGS_TABS)[number]['id'];
 
 export const TAB_DESCRIPTIONS: Record<SettingsTabId, string> = {
   personalization: 'Accent color, mode, glass, wallpaper',
+  splash: 'Boot screen words, style and timing',
   interface: 'Font, effects and behavior',
   apps: 'Window size and desktop icons',
   taskbar: 'Mode, style, pinned and startup apps',

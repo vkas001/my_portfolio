@@ -37,6 +37,15 @@ class UpdateThemeRequest extends FormRequest
             'animationsEnabled' => ['sometimes', 'boolean'],
             'soundsEnabled' => ['sometimes', 'boolean'],
             'volume' => ['sometimes', 'numeric', 'min:0', 'max:100'],
+            'splashWords' => ['sometimes', 'array', 'min:1', 'max:6'],
+            'splashWords.*' => ['string', 'max:14'],
+            // Nullable: clearing a line sends '' which the empty-string-to-null
+            // middleware turns into null — without this the whole save 422s.
+            'splashTagline' => ['sometimes', 'nullable', 'string', 'max:60'],
+            'splashFooter' => ['sometimes', 'nullable', 'string', 'max:40'],
+            'splashDuration' => ['sometimes', 'integer', 'min:1000', 'max:8000'],
+            'splashBackground' => ['sometimes', 'string', 'in:midnight,onyx,indigo,abyss'],
+            'splashAccent' => ['sometimes', 'string', 'regex:/^#[0-9a-fA-F]{6}$/'],
             'skillsDisplay' => ['sometimes', 'string', 'in:bars,cards'],
             'widgets' => ['sometimes', 'array'],
             'desktopIconOffsets' => ['sometimes', 'array'],

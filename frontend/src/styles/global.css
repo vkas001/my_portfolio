@@ -1081,7 +1081,7 @@ button { font-family: inherit; }
   flex-direction: column;
   align-items: center;
   justify-content: center;
-  background: linear-gradient(to bottom right, #0f172a, #1e293b, #0f172a);
+  background: linear-gradient(160deg, #02120e 0%, #064e3b 60%, #010b08 100%);
   color: #fff;
   user-select: none;
   transition: opacity 500ms ease;

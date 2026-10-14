@@ -78,6 +78,44 @@ class ThemeSettingTest extends AdminApiTestCase
         $this->putJson('/api/theme', ['volume' => -5], $this->adminHeaders())->assertStatus(422);
     }
 
+    public function test_splash_settings_round_trip(): void
+    {
+        $payload = [
+            'splashWords' => ['Ship', 'fast'],
+            'splashTagline' => 'Test tagline',
+            'splashFooter' => 'Test footer',
+            'splashDuration' => 3000,
+            'splashBackground' => 'indigo',
+            'splashAccent' => '#a78bfa',
+        ];
+        $this->putJson('/api/theme', $payload, $this->adminHeaders())->assertOk()
+            ->assertJsonPath('data.theme.splashWords', ['Ship', 'fast'])
+            ->assertJsonPath('data.theme.splashDuration', 3000)
+            ->assertJsonPath('data.theme.splashBackground', 'indigo');
+
+        $this->getJson('/api/theme')->assertOk()
+            ->assertJsonPath('data.theme.splashAccent', '#a78bfa')
+            ->assertJsonPath('data.theme.splashFooter', 'Test footer');
+    }
+
+    public function test_splash_settings_reject_out_of_range_values(): void
+    {
+        $this->putJson('/api/theme', ['splashDuration' => 99999], $this->adminHeaders())->assertStatus(422);
+        $this->putJson('/api/theme', ['splashDuration' => 500], $this->adminHeaders())->assertStatus(422);
+        $this->putJson('/api/theme', ['splashAccent' => 'not-a-color'], $this->adminHeaders())->assertStatus(422);
+        $this->putJson('/api/theme', ['splashBackground' => 'rainbow'], $this->adminHeaders())->assertStatus(422);
+        $this->putJson('/api/theme', ['splashWords' => ['a', 'b', 'c', 'd', 'e', 'f', 'g']], $this->adminHeaders())->assertStatus(422);
+    }
+
+    public function test_splash_cleared_lines_save_as_null(): void
+    {
+        // Regression: '' arrives as null via the empty-string middleware; the
+        // whole save 422d before splashTagline/splashFooter were nullable.
+        $this->putJson('/api/theme', ['splashTagline' => '', 'splashFooter' => ''], $this->adminHeaders())->assertOk()
+            ->assertJsonPath('data.theme.splashTagline', null)
+            ->assertJsonPath('data.theme.splashFooter', null);
+    }
+
     public function test_skills_display_round_trips(): void
     {
         $this->putJson('/api/theme', ['skillsDisplay' => 'cards'], $this->adminHeaders())->assertOk()

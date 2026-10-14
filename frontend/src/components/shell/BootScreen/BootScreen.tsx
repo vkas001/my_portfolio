@@ -1,5 +1,6 @@
 import { useEffect, useRef, useState } from 'react';
 import { Loader2 } from 'lucide-react';
+import { SPLASH_BACKGROUNDS, type SplashBackground } from '@/styles/theme';
 
 /** Minimum splash runtime (progress bar reaches 100% on this wall-clock).
  *  Ported from ibiz_v2's BootScreen — intentionally theme-independent:
@@ -30,6 +31,17 @@ interface BootScreenProps {
   /** Override the tagline under the wordmark (default "My digital workspace").
    *  Pass null to hide it entirely. */
   tagline?: string | null;
+  /** Override the footer line (default "v1.0.0 • Portfolio OS"). */
+  footer?: string;
+  /** Background preset key (theme-independent fixed gradients). */
+  background?: SplashBackground;
+  /** Progress-fill hex (theme-independent). */
+  accent?: string;
+  /** Wall-clock the boot started (overlay mount). Defaults to this
+   *  component's mount — pass the overlay's mount time to keep one
+   *  continuous progress clock when mounting late (e.g. after theme
+   *  resolution) instead of restarting the bar from zero. */
+  startedAt?: number;
 }
 
 export function BootScreen({
@@ -39,6 +51,10 @@ export function BootScreen({
   duration = BOOT_DURATION,
   words = WORDS,
   tagline = 'My digital workspace',
+  footer = 'v1.0.0 • Portfolio OS',
+  background = 'abyss',
+  accent = '#ffffff',
+  startedAt,
 }: BootScreenProps) {
   const [progress, setProgress] = useState(0);
   const [leaving, setLeaving] = useState(false);
@@ -51,7 +67,7 @@ export function BootScreen({
   onDoneRef.current = onDone;
 
   useEffect(() => {
-    const start = Date.now();
+    const start = startedAt ?? Date.now();
     let raf: number;
     let doneTimer: number;
 
@@ -76,17 +92,20 @@ export function BootScreen({
       cancelAnimationFrame(raf);
       window.clearTimeout(doneTimer);
     };
-  }, [duration]);
+  }, [duration, startedAt]);
 
   const stepStatus =
     [...BOOT_STEPS].reverse().find((s) => progress >= s.at)?.text ?? 'Loading theme…';
 
   return (
-    <div className={`boot-overlay${leaving ? ' boot-overlay--leaving' : ''}`}>
+    <div
+      className={`boot-overlay${leaving ? ' boot-overlay--leaving' : ''}`}
+      style={{ background: (SPLASH_BACKGROUNDS[background] ?? SPLASH_BACKGROUNDS.abyss).css }}
+    >
       <div className="boot-wordmark" aria-hidden="true">
         {words.map((word, i) => (
           <span
-            key={word}
+            key={`${word}-${i}`}
             className="boot-word"
             style={i === 0 ? undefined : { animationDelay: `${0.12 + i * 0.18}s` }}
           >
@@ -98,7 +117,7 @@ export function BootScreen({
 
       <div className="boot-progress">
         <div className="boot-progress__track">
-          <div className="boot-progress__fill" style={{ width: `${progress}%` }} />
+          <div className="boot-progress__fill" style={{ width: `${progress}%`, background: accent }} />
         </div>
         <div className="boot-status">
           <span className="boot-status__line">
@@ -109,7 +128,7 @@ export function BootScreen({
         </div>
       </div>
 
-      <div className="boot-footer">v1.0.0 &bull; Portfolio OS</div>
+      <div className="boot-footer">{footer}</div>
     </div>
   );
 }
