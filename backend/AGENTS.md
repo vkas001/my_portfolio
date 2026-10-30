@@ -58,6 +58,9 @@ RBAC, and Scramble sections were dropped — they don't exist here).
 - `php artisan test` — PHPUnit (SQLite `:memory:`, see `phpunit.xml`)
 - `vendor\bin\pint.bat <file>` (Windows) — format changed PHP files (run before
   finalizing any PHP change)
+- `php artisan make:admin` — create/promote the single admin (prompts for
+  identifier + password; `--email`/`--password` for non-interactive). The
+  seeder only creates the demo `admin` / `password` account outside production.
 - `php artisan make:* --no-interaction` — create migrations, controllers,
   models, tests (never hand-roll what a generator covers)
 
@@ -71,7 +74,7 @@ RBAC, and Scramble sections were dropped — they don't exist here).
 | `experience` | `Experience` | string PK, `order`, JSON highlights |
 | `contact_messages` | `ContactMessage` | auto-increment id, throttled + logged |
 | `theme_settings` | `ThemeSetting` | **one global row** (`settings` JSON cast) |
-| `users` + `auth_tokens` | `User`, `AuthToken` | single admin (`is_admin`, seeded `admin` / `password`); hand-rolled sha256 bearer tokens, no Sanctum |
+| `users` + `auth_tokens` | `User`, `AuthToken` | single admin (`is_admin`, created with `php artisan make:admin`; seeder only makes the demo account outside production); hand-rolled sha256 bearer tokens, no Sanctum |
 
 Rules:
 

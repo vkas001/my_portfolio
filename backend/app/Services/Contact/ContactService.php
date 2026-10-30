@@ -29,8 +29,8 @@ class ContactService
             Mail::raw(
                 $payload['message']."\n\n— {$payload['name']} ({$payload['email']})",
                 function ($message) use ($payload) {
-                    $message->to((string) config('mail.contact.to'))
-                        ->from((string) config('mail.contact.from'), $payload['name'])
+                    $message->to((string) config('services.contact.to'))
+                        ->from((string) config('services.contact.from'), $payload['name'])
                         ->replyTo($payload['email'], $payload['name'])
                         ->subject("[portfolio] {$payload['subject']}");
                 },
