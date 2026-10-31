@@ -1,6 +1,7 @@
 import { useEffect, useRef, useState } from 'react';
 import { Loader2 } from 'lucide-react';
 import { SPLASH_BACKGROUNDS, type SplashBackground } from '@/styles/theme';
+import { assetUrl } from '@/lib/api/assets';
 
 /** Minimum splash runtime (progress bar reaches 100% on this wall-clock).
  *  Ported from ibiz_v2's BootScreen — intentionally theme-independent:
@@ -118,7 +119,7 @@ export function BootScreen({
       className={`boot-overlay${leaving ? ' boot-overlay--leaving' : ''}`}
       style={{ background: (SPLASH_BACKGROUNDS[background] ?? SPLASH_BACKGROUNDS.abyss).css }}
     >
-      {backgroundImage && <BootBackdrop image={backgroundImage} />}
+      {backgroundImage && <BootBackdrop image={assetUrl(backgroundImage) ?? backgroundImage} />}
       <div className="boot-center">
         <div className="boot-wordmark" aria-hidden="true">
           {words.map((word, i) => (

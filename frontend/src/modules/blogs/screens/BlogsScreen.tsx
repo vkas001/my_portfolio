@@ -2,6 +2,7 @@ import { useMemo, useState } from 'react';
 import { useBlogs } from '@/modules/blogs';
 import { useContent } from '@/context/ContentContext';
 import MarkdownBody from '@/components/ui/MarkdownBody/MarkdownBody';
+import { assetUrl } from '@/lib/api/assets';
 
 export default function BlogsScreen() {
   const blogs = useBlogs();
@@ -60,7 +61,7 @@ export default function BlogsScreen() {
                 )}
               </div>
               {p.coverUrl && (
-                <img src={p.coverUrl} alt="" loading="lazy" className="rounded-lg w-full object-cover" style={{ maxHeight: 180 }} />
+                <img src={assetUrl(p.coverUrl)} alt="" loading="lazy" className="rounded-lg w-full object-cover" style={{ maxHeight: 180 }} />
               )}
               {/* Swap excerpt/body with animated height: the outgoing block
                   collapses (0fr + fade) while the incoming one expands. */}

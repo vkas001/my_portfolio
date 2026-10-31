@@ -61,6 +61,11 @@ export default function EditorScreen({ data, windowId }: { data?: WindowData; wi
       if (e.pointerType !== 'mouse' || e.button !== 0) return;
       down = true;
       dragging = false;
+      // A drag released outside the strip never delivers its click here, so
+      // the latch would otherwise swallow the NEXT genuine chip click. Clear
+      // it on every fresh press (a drag's own click still arrives before any
+      // new pointerdown, so it stays suppressed).
+      suppressClick = false;
       startX = e.clientX;
       startScroll = el.scrollLeft;
     };
