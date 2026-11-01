@@ -50,6 +50,7 @@ Route::middleware(['auth:api', 'permission:'.PermissionRegistry::HOBBIES_MANAGE]
 Route::middleware(['auth:api', 'permission:'.PermissionRegistry::BLOGS_MANAGE])->group(function () {
     Route::get('/admin/blogs', [BlogController::class, 'index']);
     Route::post('/admin/blogs', [BlogController::class, 'store']);
+    Route::post('/admin/blogs/cover', [BlogController::class, 'uploadCover']);
     Route::put('/admin/blogs/{blog}', [BlogController::class, 'update']);
     Route::delete('/admin/blogs/{blog}', [BlogController::class, 'destroy']);
 });

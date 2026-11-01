@@ -107,4 +107,21 @@ export const adminService = {
   storeBlog: (input: BlogInput) => http.post<Blog>('/admin/blogs', input),
   updateBlog: (id: string, input: BlogInput) => http.put<Blog>(`/admin/blogs/${id}`, input),
   deleteBlog: (id: string) => http.delete<{ id: string }>(`/admin/blogs/${id}`),
+
+  /** Multipart blog cover upload (the JSON http client can't carry a file). Returns the cover URL. */
+  uploadBlogCover: async (file: File): Promise<string> => {
+    const form = new FormData();
+    form.append('image', file);
+    const token = getAuthToken();
+    const res = await fetch(`${API_BASE}/admin/blogs/cover`, {
+      method: 'POST',
+      headers: token ? { Authorization: `Bearer ${token}` } : {},
+      body: form,
+    });
+    const body = (await res.json().catch(() => null)) as { ok?: boolean; data?: { url: string }; error?: string } | null;
+    if (!res.ok || !body?.ok || !body.data?.url) {
+      throw new Error(body?.error ?? `Upload failed (${res.status})`);
+    }
+    return body.data.url;
+  },
 };
