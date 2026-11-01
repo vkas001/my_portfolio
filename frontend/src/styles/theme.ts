@@ -238,6 +238,7 @@ export interface ThemeState {
   volume: number;        // 0-100 — in-OS UI audio gain (drives the WebAudio blips)
   skillsDisplay: SkillDisplayMode;
   splashWords: string[];      // boot wordmark, animated word by word (1-6)
+  splashReloadText: string;   // single line shown instead of the wordmark on reload
   splashTagline: string;      // empty = hidden
   splashFooter: string;
   splashDuration: number;     // 1000-8000ms progress wall-clock
@@ -302,6 +303,7 @@ export const DEFAULT_THEME: ThemeState = {
   volume: 85,
   skillsDisplay: 'bars',
   splashWords: ['You', 'are', 'welcomed'],
+  splashReloadText: 'Reloading',
   splashTagline: 'My digital workspace',
   splashFooter: 'v1.0.0 • Portfolio OS',
   splashDuration: 2600,
@@ -573,6 +575,9 @@ export function loadTheme(key: string = GUEST_THEME_KEY): ThemeState {
       .filter((w) => w.length > 0)
       .slice(0, 6);
     if (!merged.splashWords.length) merged.splashWords = [...DEFAULT_THEME.splashWords];
+    if (merged.splashReloadText === undefined) merged.splashReloadText = DEFAULT_THEME.splashReloadText;
+    else if (typeof merged.splashReloadText !== 'string') merged.splashReloadText = DEFAULT_THEME.splashReloadText;
+    else merged.splashReloadText = merged.splashReloadText.slice(0, 40);
     // null (explicitly cleared, incl. '' through the empty-to-null middleware)
     // means hidden; only a never-saved key falls back to the default line.
     if (merged.splashTagline === undefined) merged.splashTagline = DEFAULT_THEME.splashTagline;

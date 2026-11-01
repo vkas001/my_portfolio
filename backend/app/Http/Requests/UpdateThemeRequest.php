@@ -41,6 +41,7 @@ class UpdateThemeRequest extends FormRequest
             'volume' => ['sometimes', 'numeric', 'min:0', 'max:100'],
             'splashWords' => ['sometimes', 'array', 'min:1', 'max:6'],
             'splashWords.*' => ['string', 'max:14'],
+            'splashReloadText' => ['sometimes', 'nullable', 'string', 'max:40'],
             // Nullable: clearing a line sends '' which the empty-string-to-null
             // middleware turns into null — without this the whole save 422s.
             'splashTagline' => ['sometimes', 'nullable', 'string', 'max:60'],

@@ -1,5 +1,5 @@
 import { useRef, useState } from 'react';
-import { Eye, ImagePlus, LoaderCircle, Palette, Plus, RotateCcw, Timer, Trash2, Type, X } from 'lucide-react';
+import { Eye, ImagePlus, LoaderCircle, Palette, Plus, RefreshCw, RotateCcw, Timer, Trash2, Type, X } from 'lucide-react';
 import {
   DEFAULT_THEME, SPLASH_ACCENTS, SPLASH_BACKGROUNDS, SPLASH_IMAGES,
   type SplashBackground, type ThemeState,
@@ -29,6 +29,7 @@ export default function SplashTab({
   isAdmin: boolean;
 }) {
   const [previewing, setPreviewing] = useState(false);
+  const [previewReload, setPreviewReload] = useState(false);
   const [uploading, setUploading] = useState(false);
   const fileRef = useRef<HTMLInputElement>(null);
 
@@ -82,6 +83,7 @@ export default function SplashTab({
   const resetSplash = () =>
     setTheme({
       splashWords: [...DEFAULT_THEME.splashWords],
+      splashReloadText: DEFAULT_THEME.splashReloadText,
       splashTagline: DEFAULT_THEME.splashTagline,
       splashFooter: DEFAULT_THEME.splashFooter,
       splashDuration: DEFAULT_THEME.splashDuration,
@@ -148,6 +150,14 @@ export default function SplashTab({
             hint="Shown under the wordmark. Empty hides it."
             inputClassName="uppercase tracking-[0.2em]"
             onChange={(e) => setTheme({ splashTagline: e.target.value })}
+          />
+          <Input
+            label="Reload line"
+            value={theme.splashReloadText}
+            maxLength={40}
+            placeholder="Shown when the page reloads"
+            hint="Replaces the wordmark on a browser reload. Empty keeps the welcome words."
+            onChange={(e) => setTheme({ splashReloadText: e.target.value })}
           />
           <Input
             label="Footer"
@@ -308,8 +318,17 @@ export default function SplashTab({
       </SectionCard>
 
       <div className="flex flex-wrap gap-2">
-        <button className="btn-accent text-xs" onClick={() => setPreviewing(true)}>
+        <button
+          className="btn-accent text-xs"
+          onClick={() => { setPreviewReload(false); setPreviewing(true); }}
+        >
           <Eye size={13} /> Preview splash
+        </button>
+        <button
+          className="btn-ghost text-xs"
+          onClick={() => { setPreviewReload(true); setPreviewing(true); }}
+        >
+          <RefreshCw size={13} /> Preview reload
         </button>
         <button className="btn-ghost text-xs" onClick={resetSplash}>
           <RotateCcw size={13} /> Reset splash
@@ -318,7 +337,12 @@ export default function SplashTab({
 
       {previewing && (
         <BootScreen
-          words={theme.splashWords}
+          words={
+            previewReload && theme.splashReloadText.trim()
+              ? [theme.splashReloadText.trim()]
+              : theme.splashWords
+          }
+          statusLine={previewReload ? 'Reloading…' : undefined}
           tagline={theme.splashTagline || null}
           footer={theme.splashFooter}
           duration={theme.splashDuration}
