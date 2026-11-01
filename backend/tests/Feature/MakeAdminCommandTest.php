@@ -16,11 +16,11 @@ class MakeAdminCommandTest extends TestCase
     {
         $this->artisan('make:admin', [
             '--name' => 'Boss',
-            '--email' => 'boss@example.com',
+            '--username' => 'boss',
             '--password' => 'super-secret',
         ])->assertExitCode(0);
 
-        $user = User::query()->where('email', 'boss@example.com')->firstOrFail();
+        $user = User::query()->where('username', 'boss')->firstOrFail();
 
         $this->assertSame('Boss', $user->name);
         $this->assertTrue((bool) $user->is_admin);
@@ -31,11 +31,11 @@ class MakeAdminCommandTest extends TestCase
     public function test_defaults_the_display_name_to_admin(): void
     {
         $this->artisan('make:admin', [
-            '--email' => 'admin2',
+            '--username' => 'admin2',
             '--password' => 'super-secret',
         ])->assertExitCode(0);
 
-        $user = User::query()->where('email', 'admin2')->firstOrFail();
+        $user = User::query()->where('username', 'admin2')->firstOrFail();
 
         $this->assertSame('Admin', $user->name);
         $this->assertTrue((bool) $user->is_admin);
@@ -43,11 +43,11 @@ class MakeAdminCommandTest extends TestCase
 
     public function test_promotes_an_existing_user_without_creating_a_duplicate(): void
     {
-        $user = User::factory()->create(['email' => 'later-admin@example.com']);
+        $user = User::factory()->create(['username' => 'later-admin']);
         $this->assertFalse((bool) $user->is_admin);
 
         $this->artisan('make:admin', [
-            '--email' => 'later-admin@example.com',
+            '--username' => 'later-admin',
             '--password' => 'brand-new-pass',
         ])->assertExitCode(0);
 
@@ -55,17 +55,17 @@ class MakeAdminCommandTest extends TestCase
 
         $this->assertTrue((bool) $user->is_admin);
         $this->assertTrue(Hash::check('brand-new-pass', $user->password));
-        $this->assertSame(1, User::query()->where('email', 'later-admin@example.com')->count());
+        $this->assertSame(1, User::query()->where('username', 'later-admin')->count());
     }
 
     public function test_rejects_a_password_shorter_than_eight_characters(): void
     {
         $this->artisan('make:admin', [
-            '--email' => 'weak@example.com',
+            '--username' => 'weak',
             '--password' => 'short',
         ])->assertExitCode(1);
 
-        $this->assertNull(User::query()->where('email', 'weak@example.com')->first());
+        $this->assertNull(User::query()->where('username', 'weak')->first());
     }
 
     public function test_non_interactive_runs_require_email_and_password(): void

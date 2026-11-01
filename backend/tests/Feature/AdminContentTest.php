@@ -344,6 +344,76 @@ class AdminContentTest extends AdminApiTestCase
         ], $this->adminHeaders())->assertStatus(422)->assertJsonPath('ok', false);
     }
 
+    public function test_blog_cover_upload_swap_and_delete_clean_files(): void
+    {
+        Storage::fake('public');
+
+        // One login for the whole test: adminHeaders() logs in on every call
+        // and the login limiter allows 5 attempts/minute.
+        $headers = $this->adminHeaders();
+
+        $upload = fn (string $name) => $this->post('/api/admin/blogs/cover', [
+            'image' => UploadedFile::fake()->image($name, 1280, 720),
+        ], $headers)->assertOk()->assertJsonPath('ok', true)->json('data.url');
+
+        $first = $upload('first.jpg');
+        $this->assertStringStartsWith('/storage/blog-covers/', $first);
+        Storage::disk('public')->assertExists(substr($first, strlen('/storage/')));
+
+        $this->postJson('/api/admin/blogs', [
+            'id' => 'blog-cover',
+            'title' => 'Covered',
+            'body' => 'Body.',
+            'coverUrl' => $first,
+            'published' => false,
+        ], $headers)->assertOk();
+
+        // Swapping the cover on update deletes the previous upload.
+        $second = $upload('second.jpg');
+        $this->putJson('/api/admin/blogs/blog-cover', [
+            'title' => 'Covered',
+            'body' => 'Body.',
+            'coverUrl' => $second,
+        ], $headers)->assertOk();
+
+        Storage::disk('public')->assertMissing(substr($first, strlen('/storage/')));
+        Storage::disk('public')->assertExists(substr($second, strlen('/storage/')));
+
+        // Deleting the post deletes its cover file; external URLs are untouched.
+        $this->putJson('/api/admin/blogs/blog-cover', [
+            'title' => 'Covered',
+            'body' => 'Body.',
+            'coverUrl' => 'https://example.com/ext.jpg',
+        ], $headers)->assertOk();
+        Storage::disk('public')->assertMissing(substr($second, strlen('/storage/')));
+
+        $this->deleteJson('/api/admin/blogs/blog-cover', [], $headers)->assertOk();
+        Storage::disk('public')->assertDirectoryEmpty('blog-covers');
+
+        // Destroy with a stored cover attached deletes the file too.
+        $third = $upload('third.jpg');
+        $this->postJson('/api/admin/blogs', [
+            'id' => 'blog-cover2',
+            'title' => 'Covered 2',
+            'body' => 'Body.',
+            'coverUrl' => $third,
+            'published' => false,
+        ], $headers)->assertOk();
+        $this->deleteJson('/api/admin/blogs/blog-cover2', [], $headers)->assertOk();
+        Storage::disk('public')->assertDirectoryEmpty('blog-covers');
+    }
+
+    public function test_blog_cover_upload_rejects_non_images(): void
+    {
+        Storage::fake('public');
+
+        $this->post('/api/admin/blogs/cover', [
+            'image' => UploadedFile::fake()->create('evil.php', 10),
+        ], $this->adminHeaders())->assertStatus(422)->assertJsonPath('ok', false);
+
+        Storage::disk('public')->assertDirectoryEmpty('blog-covers');
+    }
+
     // ─── Profile ─────────────────────────────────────────────────────────────
 
     public function test_profile_upsert_and_socials_replace(): void

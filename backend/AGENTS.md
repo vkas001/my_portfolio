@@ -89,6 +89,32 @@ Rules:
 - `contact_messages` intake is throttled (`throttle:contact`) and only logged
   outside production — keep both.
 
+## Production migration safety (read before writing any migration)
+
+This is a deployed project. Production data must never be lost by a migration.
+
+- **Additive-only by default.** Add tables/columns; never `Schema::drop`,
+  `dropColumn`, or rename a column that holds production data without explicit
+  approval plus a data-preservation plan.
+- **New columns on existing tables must be `nullable()` or carry a `default()`.**
+  Existing rows must stay valid without a backfill.
+- **Always write a `down()`, but treat it as dev/staging-only.** `down()`
+  destroys data — never run `migrate:rollback` or `migrate:fresh` on production.
+- **Guard idempotently.** Check `Schema::hasTable()` / `Schema::hasColumn()`
+  before altering so re-running a migration is safe.
+- **Gate raw SQL by driver.** Use `DB::getDriverName() !== 'mysql'` guards for
+  MySQL-specific statements (SQLite never enforces string lengths) — mirror
+  `database/migrations/2026_10_15_045903_widen_url_columns_to_text.php`.
+- **String PKs for new portfolio tables** (`$incrementing = false`,
+  `keyType = 'string'`); follow the sibling model.
+- **Test every migration on SQLite `:memory:`** via PHPUnit before it touches
+  prod (`php artisan test --filter=<MigrationTest>`).
+- **Before running on prod:** back up the database, confirm the `migrations`
+  table state, enable maintenance mode, then run `php artisan migrate` and
+  immediately take the site out of maintenance mode.
+- **Use `php artisan make:migration`** — never hand-roll the skeleton.
+- Run `vendor\bin\pint.bat` on changed migration files before finishing.
+
 ## API envelope (mandatory)
 
 Every response is `{ ok: true, data }` / `{ ok: false, error }`

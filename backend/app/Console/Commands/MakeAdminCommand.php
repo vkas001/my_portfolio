@@ -6,6 +6,7 @@ use App\Models\User;
 use Illuminate\Console\Attributes\Description;
 use Illuminate\Console\Attributes\Signature;
 use Illuminate\Console\Command;
+use Illuminate\Support\Facades\Hash;
 use Illuminate\Support\Facades\Validator;
 
 /**
@@ -16,38 +17,38 @@ use Illuminate\Support\Facades\Validator;
  */
 #[Signature('make:admin
     {--name= : Display name (defaults to "Admin" for a new account)}
-    {--email= : Login identifier / email (prompted when omitted)}
+    {--username= : Login identifier / username (prompted when omitted)}
     {--password= : Password, min 8 chars (prompted securely when omitted)}')]
 #[Description('Create or promote the single portfolio admin user')]
 class MakeAdminCommand extends Command
 {
     public function handle(): int
     {
-        $email = $this->option('email');
+        $username = $this->option('username');
         $password = $this->option('password');
 
         // No TTY to prompt on (CI / provisioning scripts): fail loudly instead
         // of blocking on a question that can never be answered.
-        if (! $this->input->isInteractive() && ($email === null || $password === null)) {
-            $this->error('Non-interactive mode requires --email and --password.');
+        if (! $this->input->isInteractive() && ($username === null || $password === null)) {
+            $this->error('Non-interactive mode requires --username and --password.');
 
             return self::FAILURE;
         }
 
-        if ($email === null || trim((string) $email) === '') {
-            $email = $this->ask('Email / login identifier for the admin');
+        if ($username === null || trim((string) $username) === '') {
+            $username = $this->ask('Username / login identifier for the admin');
         }
 
         if ($password === null || $password === '') {
             $password = $this->secret('Password (min 8 characters)');
         }
 
-        $email = trim((string) $email);
+        $username = trim((string) $username);
 
         $validator = Validator::make(
-            ['email' => $email, 'password' => $password],
+            ['username' => $username, 'password' => $password],
             [
-                'email' => ['required', 'string', 'max:255'],
+                'username' => ['required', 'string', 'max:255'],
                 'password' => ['required', 'string', 'min:8', 'max:255'],
             ],
         );
@@ -60,24 +61,24 @@ class MakeAdminCommand extends Command
             return self::FAILURE;
         }
 
-        $user = User::query()->where('email', $email)->first();
+        $user = User::query()->where('username', $username)->first();
         $name = $this->option('name');
 
         if ($user === null) {
             (new User)->forceFill([
                 'name' => $name ?: 'Admin',
-                'email' => $email,
-                'password' => $password,
+                'username' => $username,
+                'password' => Hash::make($password),
                 'is_admin' => true,
             ])->save();
 
-            $this->info("Admin created: {$email}");
+            $this->info("Admin created: {$username}");
 
             return self::SUCCESS;
         }
 
         $user->forceFill([
-            'password' => $password,
+            'password' => Hash::make($password),
             'is_admin' => true,
         ]);
 
@@ -87,7 +88,7 @@ class MakeAdminCommand extends Command
 
         $user->save();
 
-        $this->info("Admin updated: {$email}");
+        $this->info("Admin updated: {$username}");
 
         return self::SUCCESS;
     }
