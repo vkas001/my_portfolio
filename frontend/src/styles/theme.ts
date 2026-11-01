@@ -6,8 +6,9 @@
 // and status color tokens.
 // ─────────────────────────────────────────────────────────────────────────────
 
-export type ThemeMode = 'light' | 'dark';
-export type AccentName =
+import { assetUrl } from '@/lib/api/assets';
+
+export type ThemeMode = 'light' | 'dark';export type AccentName =
   | 'blue' | 'cyan' | 'teal' | 'emerald' | 'lime' | 'amber'
   | 'orange' | 'rose' | 'red' | 'pink' | 'violet' | 'indigo';
 export type GlassLevel = 'subtle' | 'normal' | 'strong';
@@ -486,7 +487,8 @@ export function applyTheme(theme: ThemeState): void {
   const wp = getWallpaper(theme.wallpaper);
   const fallback = isDark ? 'var(--wp-accent-dark)' : 'var(--wp-accent-light)';
   const preset = wp.css.startsWith('var(') ? fallback : wp.css;
-  set('--wallpaper', theme.wallpaperImage ? `url('${theme.wallpaperImage}') center / cover no-repeat, ${preset}` : preset);
+  const wpImage = assetUrl(theme.wallpaperImage);
+  set('--wallpaper', wpImage ? `url('${wpImage}') center / cover no-repeat, ${preset}` : preset);
 
   // Wallpaper-aware ink: desktop icon names + taskbar glyphs sit directly on
   // the wallpaper, so their color flips with wallpaper lightness. A light

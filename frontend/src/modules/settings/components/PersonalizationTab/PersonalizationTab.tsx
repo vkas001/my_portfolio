@@ -3,6 +3,7 @@ import { ImagePlus, LayoutGrid, LoaderCircle, Palette, Sparkles, Sun, Trash2 } f
 import { ACCENTS, WALLPAPERS, type ThemeState } from '@/styles/theme';
 import SectionCard from '@/components/ui/SectionCard/SectionCard';
 import { adminService } from '@/lib/api/adminService';
+import { assetUrl } from '@/lib/api/assets';
 import toast from 'react-hot-toast';
 import { RangeControl, SegmentedControl, SubLabel } from '@/modules/settings/components/primitives';
 import {
@@ -218,7 +219,7 @@ export default function PersonalizationTab({
               style={{ border: tileBorder(true), background: 'var(--accent-soft)' }}
             >
               <img
-                src={customPhoto}
+                src={assetUrl(customPhoto)}
                 alt="Custom wallpaper"
                 loading="lazy"
                 className="w-10 h-10 rounded shrink-0 border object-cover"

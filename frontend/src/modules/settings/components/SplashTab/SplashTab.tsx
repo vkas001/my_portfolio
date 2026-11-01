@@ -9,6 +9,7 @@ import Input from '@/components/ui/Input/Input';
 import { RangeControl } from '@/modules/settings/components/primitives';
 import { BootScreen } from '@/components/shell/BootScreen/BootScreen';
 import { adminService } from '@/lib/api/adminService';
+import { assetUrl } from '@/lib/api/assets';
 import type { SetTheme } from '@/modules/settings/lib/types';
 import toast from 'react-hot-toast';
 
@@ -240,7 +241,7 @@ export default function SplashTab({
               style={{ borderColor: 'var(--accent)', boxShadow: '0 0 0 2px var(--accent-soft)', background: 'var(--accent-soft)' }}
             >
               <img
-                src={image}
+                src={assetUrl(image)}
                 alt="Custom backdrop"
                 loading="lazy"
                 className="w-10 h-7 rounded shrink-0 border object-cover"

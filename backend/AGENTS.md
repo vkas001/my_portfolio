@@ -58,6 +58,9 @@ RBAC, and Scramble sections were dropped — they don't exist here).
 - `php artisan test` — PHPUnit (SQLite `:memory:`, see `phpunit.xml`)
 - `vendor\bin\pint.bat <file>` (Windows) — format changed PHP files (run before
   finalizing any PHP change)
+- `php artisan make:admin` — create/promote the single admin (prompts for
+  identifier + password; `--email`/`--password` for non-interactive). The
+  seeder only creates the demo `admin` / `password` account outside production.
 - `php artisan make:* --no-interaction` — create migrations, controllers,
   models, tests (never hand-roll what a generator covers)
 
@@ -71,7 +74,7 @@ RBAC, and Scramble sections were dropped — they don't exist here).
 | `experience` | `Experience` | string PK, `order`, JSON highlights |
 | `contact_messages` | `ContactMessage` | auto-increment id, throttled + logged |
 | `theme_settings` | `ThemeSetting` | **one global row** (`settings` JSON cast) |
-| `users` + `auth_tokens` | `User`, `AuthToken` | single admin (`is_admin`, seeded `admin` / `password`); hand-rolled sha256 bearer tokens, no Sanctum |
+| `users` + `auth_tokens` | `User`, `AuthToken` | single admin (`is_admin`, created with `php artisan make:admin`; seeder only makes the demo account outside production); hand-rolled sha256 bearer tokens, no Sanctum |
 
 Rules:
 
@@ -85,6 +88,32 @@ Rules:
   behind the same guard (future portfolio-edit CRUD hangs off it).
 - `contact_messages` intake is throttled (`throttle:contact`) and only logged
   outside production — keep both.
+
+## Production migration safety (read before writing any migration)
+
+This is a deployed project. Production data must never be lost by a migration.
+
+- **Additive-only by default.** Add tables/columns; never `Schema::drop`,
+  `dropColumn`, or rename a column that holds production data without explicit
+  approval plus a data-preservation plan.
+- **New columns on existing tables must be `nullable()` or carry a `default()`.**
+  Existing rows must stay valid without a backfill.
+- **Always write a `down()`, but treat it as dev/staging-only.** `down()`
+  destroys data — never run `migrate:rollback` or `migrate:fresh` on production.
+- **Guard idempotently.** Check `Schema::hasTable()` / `Schema::hasColumn()`
+  before altering so re-running a migration is safe.
+- **Gate raw SQL by driver.** Use `DB::getDriverName() !== 'mysql'` guards for
+  MySQL-specific statements (SQLite never enforces string lengths) — mirror
+  `database/migrations/2026_10_15_045903_widen_url_columns_to_text.php`.
+- **String PKs for new portfolio tables** (`$incrementing = false`,
+  `keyType = 'string'`); follow the sibling model.
+- **Test every migration on SQLite `:memory:`** via PHPUnit before it touches
+  prod (`php artisan test --filter=<MigrationTest>`).
+- **Before running on prod:** back up the database, confirm the `migrations`
+  table state, enable maintenance mode, then run `php artisan migrate` and
+  immediately take the site out of maintenance mode.
+- **Use `php artisan make:migration`** — never hand-roll the skeleton.
+- Run `vendor\bin\pint.bat` on changed migration files before finishing.
 
 ## API envelope (mandatory)
 

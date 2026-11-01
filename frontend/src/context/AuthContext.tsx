@@ -17,7 +17,7 @@ export interface AuthContextValue {
   /** True once the stored token has been validated (or ruled out). */
   authReady: boolean;
   isAdmin: boolean;
-  signIn: (email: string, password: string) => Promise<AuthUser>;
+  signIn: (username: string, password: string) => Promise<AuthUser>;
   signOut: () => Promise<void>;
 }
 
@@ -51,8 +51,8 @@ export function AuthProvider({ children }: { children: ReactNode }) {
     };
   }, []);
 
-  const signIn = useCallback(async (email: string, password: string) => {
-    const res = await authService.login({ email, password });
+  const signIn = useCallback(async (username: string, password: string) => {
+    const res = await authService.login({ username, password });
     setUser(res.user);
     return res.user;
   }, []);

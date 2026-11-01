@@ -5,6 +5,7 @@ namespace App\Services\Contact;
 use App\Models\ContactMessage;
 use Illuminate\Support\Facades\Log;
 use Illuminate\Support\Facades\Mail;
+use Symfony\Component\Mime\Address;
 
 /**
  * Persist + deliver contact submissions. Dev mode logs; production sends
@@ -29,8 +30,11 @@ class ContactService
             Mail::raw(
                 $payload['message']."\n\n— {$payload['name']} ({$payload['email']})",
                 function ($message) use ($payload) {
-                    $message->to((string) config('mail.contact.to'))
-                        ->from((string) config('mail.contact.from'), $payload['name'])
+                    $message->to((string) config('services.contact.to'))
+                        // CONTACT_FROM may be a full "Name <addr>" mailbox —
+                        // Address::create parses it; passing the raw string as
+                        // the address produced an invalid From header.
+                        ->from(Address::create((string) config('services.contact.from')))
                         ->replyTo($payload['email'], $payload['name'])
                         ->subject("[portfolio] {$payload['subject']}");
                 },

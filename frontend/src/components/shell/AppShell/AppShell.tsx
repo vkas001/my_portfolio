@@ -1,6 +1,7 @@
 import { useEffect, useRef, useState } from 'react';
 import { useWindows } from '@/context/WindowsContext';
 import { useShellUI } from '@/context/ShellUIContext';
+import { useTheme } from '@/context/ThemeContext';
 import Desktop from '@/components/shell/Desktop/Desktop';
 import Spotlight from '@/components/shell/Spotlight/Spotlight';
 import Toaster from '@/components/shell/Toaster/Toaster';
@@ -20,6 +21,7 @@ const VIEW_SWITCH_SPLASH_MS = 1500;
 export default function AppShell() {
   const { viewMode, widgetsOpen, setWidgetsOpen, setSpotlightOpen, taskbarVisible, setTaskbarVisible } = useShellUI();
   const { windows, focusedId, launchApp, closeWindow } = useWindows();
+  const { theme } = useTheme();
   const prevViewMode = useRef(viewMode);
   const [transitionSplash, setTransitionSplash] = useState<{ id: number } | null>(null);
 
@@ -81,6 +83,9 @@ export default function AppShell() {
               : ['Switching', 'to', 'OS view']
           }
           tagline="Please wait"
+          background={theme.splashBackground}
+          backgroundImage={theme.splashBackgroundImage}
+          accent={theme.splashAccent}
           onDone={() =>
             setTransitionSplash((s) => (s && s.id === transitionSplash.id ? null : s))
           }

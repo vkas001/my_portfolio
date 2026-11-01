@@ -6,6 +6,7 @@ import { useContent } from '@/context/ContentContext';
 import { API_BASE } from '@/lib/api/httpClient';
 import UserAvatar from '@/components/ui/UserAvatar/UserAvatar';
 import MarkdownBody from '@/components/ui/MarkdownBody/MarkdownBody';
+import { assetUrl } from '@/lib/api/assets';
 
 /** Minutes of reading time at ~200 wpm, derived from the stored body. */
 function readMins(body: string): number {
