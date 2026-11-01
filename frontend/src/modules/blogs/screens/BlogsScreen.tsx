@@ -189,7 +189,7 @@ export default function BlogsScreen() {
               {selected.coverUrl && (
                 <img
                   key={selected.coverUrl}
-                  src={selected.coverUrl}
+                  src={assetUrl(selected.coverUrl)}
                   alt=""
                   loading="lazy"
                   className="rounded-xl w-full aspect-video object-cover"

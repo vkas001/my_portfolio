@@ -8,6 +8,7 @@ import TextArea from '@/components/ui/TextArea/TextArea';
 import StringListInput from '@/modules/editor/components/StringListInput/StringListInput';
 import MarkdownBody from '@/components/ui/MarkdownBody/MarkdownBody';
 import { adminService } from '@/lib/api/adminService';
+import { assetUrl } from '@/lib/api/assets';
 
 const COVER_TYPES = ['image/jpeg', 'image/png', 'image/webp'];
 const COVER_MAX_BYTES = 5 * 1024 * 1024;
@@ -64,7 +65,7 @@ export default function BlogFields({
         {d.coverUrl && !coverBroken ? (
           <img
             key={d.coverUrl}
-            src={d.coverUrl}
+            src={assetUrl(d.coverUrl)}
             alt=""
             className="h-12 w-20 rounded-md object-cover border"
             style={{ borderColor: 'var(--border)' }}
