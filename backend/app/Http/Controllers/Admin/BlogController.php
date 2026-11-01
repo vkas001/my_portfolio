@@ -5,6 +5,7 @@ namespace App\Http\Controllers\Admin;
 use App\Http\Controllers\Controller;
 use App\Http\Requests\StoreBlogRequest;
 use App\Http\Requests\UpdateBlogRequest;
+use App\Http\Requests\UploadBlogCoverRequest;
 use App\Models\Blog;
 use App\Services\Content\BlogService;
 use Illuminate\Http\JsonResponse;
@@ -28,6 +29,11 @@ class BlogController extends Controller
         $this->blogs->destroy($id);
 
         return response()->json(['id' => $id]);
+    }
+
+    public function uploadCover(UploadBlogCoverRequest $request): JsonResponse
+    {
+        return response()->json(['url' => $this->blogs->uploadCover($request->file('image'))]);
     }
 
     /** Full list including drafts (editor); the public feed stays published-only. */

@@ -152,12 +152,12 @@ export interface GitHubStats {
 export interface AuthUser {
   id: number;
   name: string;
-  email: string;
+  username: string;
   isAdmin: boolean;
 }
 
 export interface LoginPayload {
-  email: string;
+  username: string;
   password: string;
 }
 

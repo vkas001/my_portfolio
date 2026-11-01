@@ -12,13 +12,13 @@ class LoginRequest extends FormRequest
     }
 
     /**
-     * Identifier only — the admin account's email is literally "admin",
-     * so no email-format rule.
+     * Identifier only — the admin account's username is literally "admin",
+     * so no username-format rule.
      */
     public function rules(): array
     {
         return [
-            'email' => ['required', 'string', 'max:255'],
+            'username' => ['required', 'string', 'max:255'],
             'password' => ['required', 'string', 'max:255'],
         ];
     }

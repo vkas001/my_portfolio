@@ -22,7 +22,7 @@ class AuthTest extends TestCase
     private function loginToken(): string
     {
         $res = $this->postJson('/api/auth/login', [
-            'email' => 'admin',
+            'username' => 'admin',
             'password' => 'password',
         ])->assertOk()->assertJsonPath('ok', true);
 
@@ -32,11 +32,11 @@ class AuthTest extends TestCase
     public function test_login_succeeds_with_seeded_admin_credentials(): void
     {
         $this->postJson('/api/auth/login', [
-            'email' => 'admin',
+            'username' => 'admin',
             'password' => 'password',
         ])->assertOk()
             ->assertJsonPath('ok', true)
-            ->assertJsonPath('data.user.email', 'admin')
+            ->assertJsonPath('data.user.username', 'admin')
             ->assertJsonPath('data.user.isAdmin', true)
             ->assertJsonStructure(['data' => ['token', 'user']]);
     }
@@ -44,17 +44,17 @@ class AuthTest extends TestCase
     public function test_login_rejects_wrong_password(): void
     {
         $this->postJson('/api/auth/login', [
-            'email' => 'admin',
+            'username' => 'admin',
             'password' => 'wrong',
         ])->assertUnauthorized()
             ->assertJsonPath('ok', false)
             ->assertJsonPath('error', 'Invalid credentials.');
     }
 
-    public function test_login_rejects_unknown_email_with_same_error(): void
+    public function test_login_rejects_unknown_username_with_same_error(): void
     {
         $this->postJson('/api/auth/login', [
-            'email' => 'nobody@example.com',
+            'username' => 'nobody',
             'password' => 'password',
         ])->assertUnauthorized()
             ->assertJsonPath('ok', false)
@@ -82,7 +82,7 @@ class AuthTest extends TestCase
     {
         $user = User::query()->create([
             'name' => 'Not Admin',
-            'email' => 'not-admin@example.com',
+            'username' => 'not-admin',
             'password' => 'password',
             'is_admin' => true,
         ]);
@@ -99,7 +99,7 @@ class AuthTest extends TestCase
         $this->getJson('/api/auth/me', ['Authorization' => 'Bearer '.$this->loginToken()])
             ->assertOk()
             ->assertJsonPath('ok', true)
-            ->assertJsonPath('data.user.email', 'admin');
+            ->assertJsonPath('data.user.username', 'admin');
     }
 
     public function test_me_rejects_missing_token(): void

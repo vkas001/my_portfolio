@@ -4,6 +4,7 @@ namespace Database\Seeders;
 
 use App\Models\User;
 use Illuminate\Database\Seeder;
+use Illuminate\Support\Facades\Hash;
 
 class AdminSeeder extends Seeder
 {
@@ -15,7 +16,7 @@ class AdminSeeder extends Seeder
      */
     public function run(): void
     {
-        $user = User::query()->firstWhere('email', 'admin');
+        $user = User::query()->firstWhere('username', 'admin');
 
         if ($user === null) {
             // Never ship the well-known demo credentials to production —
@@ -31,8 +32,8 @@ class AdminSeeder extends Seeder
             // forceFill: `is_admin` is not fillable on purpose (see User).
             User::query()->forceCreate([
                 'name' => 'Admin',
-                'email' => 'admin',
-                'password' => 'password',
+                'username' => 'admin',
+                'password' => Hash::make('password'),
                 'is_admin' => true,
             ]);
 

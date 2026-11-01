@@ -22,12 +22,12 @@ class AuthService
 
     /**
      * Validate credentials, returning `{ token, user }` on success or null.
-     * Constant-time failure: same result whether the email or the password
+     * Constant-time failure: same result whether the username or the password
      * is wrong so accounts can't be enumerated.
      */
     public function attempt(string $identifier, string $password): ?array
     {
-        $user = User::query()->where('email', $identifier)->first();
+        $user = User::query()->where('username', $identifier)->first();
 
         if ($user === null || ! Hash::check($password, $user->password)) {
             return null;
@@ -63,13 +63,13 @@ class AuthService
         AuthToken::query()->where('token_hash', hash('sha256', $raw))->delete();
     }
 
-    /** @return array{id: int, name: string, email: string, isAdmin: bool} */
+    /** @return array{id: int, name: string, username: string, isAdmin: bool} */
     public function userPayload(User $user): array
     {
         return [
             'id' => $user->id,
             'name' => $user->name,
-            'email' => $user->email,
+            'username' => $user->username,
             'isAdmin' => (bool) $user->is_admin,
         ];
     }

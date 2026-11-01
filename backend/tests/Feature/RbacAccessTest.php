@@ -64,7 +64,7 @@ class RbacAccessTest extends TestCase
         $this->seed(AdminSeeder::class);
 
         return (string) $this->postJson('/api/auth/login', [
-            'email' => 'admin',
+            'username' => 'admin',
             'password' => 'password',
         ])->json('data.token');
     }

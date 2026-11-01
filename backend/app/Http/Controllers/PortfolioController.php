@@ -11,6 +11,7 @@ use App\Models\Project;
 use App\Models\Skill;
 use Illuminate\Http\JsonResponse;
 use Illuminate\Http\Request;
+use Symfony\Component\HttpFoundation\Response;
 
 /**
  * Public read endpoints — no auth. Returns plain payloads; the global
@@ -97,5 +98,68 @@ class PortfolioController extends Controller
             ->get();
 
         return response()->json($blogs);
+    }
+
+    /**
+     * Public RSS 2.0 feed of published posts (hand-built XML, no new deps).
+     * Passes through ApiResponseEnvelope untouched (non-JSON responses
+     * bypass it). Item links land on the site's writing section — there are
+     * no per-post routes by design.
+     */
+    public function blogFeed(): Response
+    {
+        $author = Profile::query()->first()?->name ?? 'Portfolio';
+        $siteUrl = rtrim((string) config('app.url'), '/');
+        $posts = Blog::query()->where('published', true)->orderBy('order')->get();
+
+        $esc = fn (?string $v): string => htmlspecialchars((string) $v, ENT_XML1 | ENT_COMPAT, 'UTF-8');
+        $items = $posts->map(function (Blog $post) use ($esc, $siteUrl) {
+            $desc = $post->excerpt;
+            if (! $desc) {
+                $plain = trim((string) preg_replace('/\s+/', ' ', strip_tags((string) $post->body)));
+                $desc = mb_substr($plain, 0, 200);
+            }
+            try {
+                $pubDate = (new \DateTime((string) ($post->published_at ?? $post->created_at)))->format(DATE_RFC2822);
+            } catch (\Throwable) {
+                $pubDate = gmdate(DATE_RFC2822);
+            }
+            $cats = collect($post->tags)
+                ->map(fn ($t) => "<category>{$esc($t)}</category>")
+                ->implode("\n");
+            $title = $esc($post->title);
+            $link = $esc($siteUrl).'/#site-writing';
+            $guid = $esc($post->id);
+            $desc = $esc($desc);
+
+            return <<<XML
+                <item>
+                  <title>{$title}</title>
+                  <link>{$link}</link>
+                  <guid isPermaLink="false">{$guid}</guid>
+                  <pubDate>{$pubDate}</pubDate>
+                  <description>{$desc}</description>
+                {$cats}
+                </item>
+                XML;
+        })->implode("\n");
+
+        $channelTitle = $esc($author).' — Blog';
+        $channelLink = $esc($siteUrl);
+        $channelDesc = $esc('Posts by '.$author);
+        $xml = <<<XML
+        <?xml version="1.0" encoding="UTF-8"?>
+        <rss version="2.0">
+          <channel>
+            <title>{$channelTitle}</title>
+            <link>{$channelLink}</link>
+            <description>{$channelDesc}</description>
+            <language>en</language>
+        {$items}
+          </channel>
+        </rss>
+        XML;
+
+        return response($xml, 200, ['Content-Type' => 'application/rss+xml; charset=utf-8']);
     }
 }

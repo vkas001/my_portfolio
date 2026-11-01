@@ -30,7 +30,7 @@ abstract class AdminApiTestCase extends TestCase
     protected function adminToken(): string
     {
         return (string) $this->postJson('/api/auth/login', [
-            'email' => 'admin',
+            'username' => 'admin',
             'password' => 'password',
         ])->assertOk()->json('data.token');
     }
