@@ -100,7 +100,7 @@ export default function BootOverlay() {
   const statusLine = isReload
     ? 'Reloading…'
     : !themeReady ? 'Loading your theme…' : loading ? 'Loading portfolio…' : null;
-  const reloadLine = theme.splashReloadText.trim();
+  const reloadLine = (theme.splashReloadText ?? '').trim();
   const words = isReload && reloadLine ? [reloadLine] : theme.splashWords;
 
   // Theme still resolving (local → identity → server pull): hold a live

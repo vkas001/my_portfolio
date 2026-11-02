@@ -153,7 +153,7 @@ export default function SplashTab({
           />
           <Input
             label="Reload line"
-            value={theme.splashReloadText}
+            value={theme.splashReloadText ?? ''}
             maxLength={40}
             placeholder="Shown when the page reloads"
             hint="Replaces the wordmark on a browser reload. Empty keeps the welcome words."
@@ -338,8 +338,8 @@ export default function SplashTab({
       {previewing && (
         <BootScreen
           words={
-            previewReload && theme.splashReloadText.trim()
-              ? [theme.splashReloadText.trim()]
+            previewReload && (theme.splashReloadText ?? '').trim()
+              ? [(theme.splashReloadText ?? '').trim()]
               : theme.splashWords
           }
           statusLine={previewReload ? 'Reloading…' : undefined}

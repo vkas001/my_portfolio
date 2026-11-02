@@ -214,6 +214,15 @@ export default function EditorScreen({ data, windowId }: { data?: WindowData; wi
   return (
     <div className="relative flex flex-col h-full gap-3">
       <div ref={stripRef} className="flex flex-nowrap items-center gap-1.5 overflow-x-auto no-scrollbar cursor-grab select-none">
+        <button
+          className={`chip cursor-pointer !py-1.5 !px-2.5 text-[11px] flex shrink-0 items-center gap-1.5 ${section === 'splash' ? '!bg-[var(--accent)] !text-[var(--accent-text-on)]' : ''}`}
+          onClick={openSplash}
+          title="Edit the boot splash"
+          style={section === 'splash' ? undefined : { color: 'var(--accent)' }}
+        >
+          <Rocket size={12} />
+          Splash
+        </button>
         {selectableApps.map(({ app, section: s }) => {
           const active = s !== null && s === section;
           return (
@@ -229,15 +238,6 @@ export default function EditorScreen({ data, windowId }: { data?: WindowData; wi
             </button>
           );
         })}
-        <button
-          className={`chip cursor-pointer !py-1.5 !px-2.5 text-[11px] flex shrink-0 items-center gap-1.5 ${section === 'splash' ? '!bg-[var(--accent)] !text-[var(--accent-text-on)]' : ''}`}
-          onClick={openSplash}
-          title="Edit the boot splash"
-          style={section === 'splash' ? undefined : { color: 'var(--accent)' }}
-        >
-          <Rocket size={12} />
-          Splash
-        </button>
       </div>
 
       <div className="flex-1 overflow-y-auto pr-1 -mr-1 pb-14">
