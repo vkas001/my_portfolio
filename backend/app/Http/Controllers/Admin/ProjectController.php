@@ -5,6 +5,7 @@ namespace App\Http\Controllers\Admin;
 use App\Http\Controllers\Controller;
 use App\Http\Requests\StoreProjectRequest;
 use App\Http\Requests\UpdateProjectRequest;
+use App\Http\Requests\UploadProjectScreenshotRequest;
 use App\Services\Content\ProjectService;
 use Illuminate\Http\JsonResponse;
 
@@ -27,5 +28,10 @@ class ProjectController extends Controller
         $this->projects->destroy($id);
 
         return response()->json(['id' => $id]);
+    }
+
+    public function uploadScreenshot(UploadProjectScreenshotRequest $request): JsonResponse
+    {
+        return response()->json(['url' => $this->projects->uploadScreenshot($request->file('image'))]);
     }
 }

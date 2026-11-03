@@ -1,5 +1,6 @@
 import type { Profile } from '@/modules/about';
 import UserAvatar from '@/components/ui/UserAvatar/UserAvatar';
+import ProseText from '@/components/ui/ProseText/ProseText';
 import { Briefcase, MapPin } from 'lucide-react';
 
 export default function AboutIntro({ profile }: { profile: Profile }) {
@@ -30,9 +31,7 @@ export default function AboutIntro({ profile }: { profile: Profile }) {
         )}
       </div>
 
-      <p className="text-sm leading-relaxed" style={{ color: 'var(--text-hi)' }}>
-        {profile.shortBio}
-      </p>
+      <ProseText text={profile.shortBio} className="text-sm leading-relaxed" style={{ color: 'var(--text-hi)' }} />
     </header>
   );
 }

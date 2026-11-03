@@ -1,7 +1,9 @@
 import { useMemo, useState } from 'react';
 import { useProjects } from '@/modules/projects';
 import { useContent } from '@/context/ContentContext';
-import { ExternalLink, Github, Star } from 'lucide-react';
+import ProseText from '@/components/ui/ProseText/ProseText';
+import { assetUrl } from '@/lib/api/assets';
+import { Briefcase, ExternalLink, Github, Star } from 'lucide-react';
 
 export default function ProjectsScreen() {
   const projects = useProjects();
@@ -43,28 +45,66 @@ export default function ProjectsScreen() {
             >
               <div className="flex flex-wrap items-start justify-between gap-2">
                 <h3 className="text-sm font-semibold leading-tight">{p.title}</h3>
-                {p.featured && (
-                  <span className="chip !py-0.5 !px-2 text-[10px] shrink-0">
-                    <Star size={9} /> Featured
-                  </span>
-                )}
+                <div className="flex flex-wrap items-center gap-1 shrink-0">
+                  {p.isClient && (
+                    <span className="chip !py-0.5 !px-2 text-[10px]">
+                      <Briefcase size={9} /> Client
+                    </span>
+                  )}
+                  {p.featured && (
+                    <span className="chip !py-0.5 !px-2 text-[10px]">
+                      <Star size={9} /> Featured
+                    </span>
+                  )}
+                </div>
               </div>
               {/* Swap short/long with animated height: the outgoing paragraph
                   collapses (0fr + fade) while the incoming one expands. */}
               <div className={`grid transition-all duration-300 ease-in-out ${open ? 'grid-rows-[0fr] opacity-0' : 'grid-rows-[1fr] opacity-100'}`}>
                 <div className="overflow-hidden min-h-0">
-                  <p className="text-xs leading-relaxed" style={{ color: 'var(--text-mid)' }}>
-                    {p.description}
-                  </p>
+                  <ProseText
+                    text={p.description}
+                    className="text-xs leading-relaxed"
+                    style={{ color: 'var(--text-mid)' }}
+                  />
                 </div>
               </div>
               <div className={`grid transition-all duration-300 ease-in-out ${open ? 'grid-rows-[1fr] opacity-100' : 'grid-rows-[0fr] opacity-0'}`}>
                 <div className="overflow-hidden min-h-0">
-                  <p className="text-xs leading-relaxed" style={{ color: 'var(--text-mid)' }}>
-                    {p.longDescription}
-                  </p>
+                  <ProseText
+                    text={p.longDescription}
+                    className="text-xs leading-relaxed"
+                    style={{ color: 'var(--text-mid)' }}
+                  />
                 </div>
               </div>
+              {open && p.screenshots.length > 0 && (
+                <div className="flex flex-col gap-1.5" onClick={(e) => e.stopPropagation()}>
+                  <p className="text-[10px] font-bold uppercase tracking-wider" style={{ color: 'var(--text-low)' }}>
+                    Proof
+                  </p>
+                  <div className="grid grid-cols-2 gap-2">
+                    {p.screenshots.map((url, i) => (
+                      <a
+                        key={`${url}-${i}`}
+                        href={assetUrl(url)}
+                        target="_blank"
+                        rel="noreferrer"
+                        className="block rounded-lg overflow-hidden border group"
+                        style={{ borderColor: 'var(--border)' }}
+                        title={`Screenshot ${i + 1}`}
+                      >
+                        <img
+                          src={assetUrl(url)}
+                          alt={`${p.title} screenshot ${i + 1}`}
+                          className="w-full h-20 object-cover transition-transform duration-150 group-hover:scale-[1.03]"
+                          loading="lazy"
+                        />
+                      </a>
+                    ))}
+                  </div>
+                </div>
+              )}
               <div className="flex flex-wrap gap-1">
                 {p.techStack.map((t) => (
                   <span key={t} className="text-[10px] px-1.5 py-0.5 rounded" style={{ background: 'rgba(0,0,0,.2)', color: 'var(--text-mid)' }}>

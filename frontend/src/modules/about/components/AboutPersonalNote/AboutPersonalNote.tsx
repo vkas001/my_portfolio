@@ -1,6 +1,7 @@
 import type { Profile } from '@/modules/about';
 import { sectionIcon } from '@/modules/about';
 import UserAvatar from '@/components/ui/UserAvatar/UserAvatar';
+import ProseText from '@/components/ui/ProseText/ProseText';
 
 export default function AboutPersonalNote({ profile }: { profile: Profile }) {
   const Icon = sectionIcon(profile.personalNoteIcon);
@@ -20,9 +21,11 @@ export default function AboutPersonalNote({ profile }: { profile: Profile }) {
           >
             {Icon && <Icon size={11} />} {title}
           </p>
-          <p className="text-xs leading-relaxed mt-1 @2xl:text-sm" style={{ color: 'var(--text-mid)' }}>
-            {profile.personalNote}
-          </p>
+          <ProseText
+            text={profile.personalNote}
+            className="text-xs leading-relaxed mt-1 @2xl:text-sm"
+            style={{ color: 'var(--text-mid)' }}
+          />
         </div>
       </div>
     </section>

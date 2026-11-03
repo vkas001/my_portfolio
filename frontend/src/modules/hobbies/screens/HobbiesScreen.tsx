@@ -2,6 +2,7 @@ import { useMemo } from 'react';
 import { useHobbies } from '@/modules/hobbies';
 import { useContent } from '@/context/ContentContext';
 import { hobbyIcon } from '@/modules/hobbies';
+import ProseText from '@/components/ui/ProseText/ProseText';
 
 export default function HobbiesScreen() {
   const hobbies = useHobbies();
@@ -31,9 +32,11 @@ export default function HobbiesScreen() {
               <div className="min-w-0">
                 <h3 className="text-xs font-semibold truncate" style={{ color: 'var(--text-hi)' }}>{h.name}</h3>
                 {h.description && (
-                  <p className="mt-1 text-[11px] leading-relaxed" style={{ color: 'var(--text-mid)' }}>
-                    {h.description}
-                  </p>
+                  <ProseText
+                    text={h.description}
+                    className="mt-1 text-[11px] leading-relaxed"
+                    style={{ color: 'var(--text-mid)' }}
+                  />
                 )}
               </div>
             </div>

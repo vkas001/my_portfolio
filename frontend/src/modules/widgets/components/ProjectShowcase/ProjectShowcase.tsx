@@ -25,7 +25,7 @@ export default function ProjectShowcase() {
         <span className="text-xs font-semibold truncate">{p.title}</span>
         <span className="chip text-[10px] !py-0.5 !px-2">{p.category}</span>
       </div>
-      <p className="text-xs leading-relaxed line-clamp-3" style={{ color: 'var(--text-mid)' }}>
+      <p className="text-xs leading-relaxed line-clamp-3 whitespace-pre-line" style={{ color: 'var(--text-mid)' }}>
         {p.description}
       </p>
       <div className="flex flex-wrap gap-1 mt-auto">

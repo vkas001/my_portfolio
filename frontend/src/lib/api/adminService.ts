@@ -92,6 +92,23 @@ export const adminService = {
   updateProject: (id: string, input: ProjectInput) => http.put<Project>(`/admin/projects/${id}`, input),
   deleteProject: (id: string) => http.delete<{ id: string }>(`/admin/projects/${id}`),
 
+  /** Multipart proof-screenshot upload (the JSON http client can't carry a file). Returns the image URL. */
+  uploadProjectScreenshot: async (file: File): Promise<string> => {
+    const form = new FormData();
+    form.append('image', file);
+    const token = getAuthToken();
+    const res = await fetch(`${API_BASE}/admin/projects/screenshot`, {
+      method: 'POST',
+      headers: token ? { Authorization: `Bearer ${token}` } : {},
+      body: form,
+    });
+    const body = (await res.json().catch(() => null)) as { ok?: boolean; data?: { url: string }; error?: string } | null;
+    if (!res.ok || !body?.ok || !body.data?.url) {
+      throw new Error(body?.error ?? `Upload failed (${res.status})`);
+    }
+    return body.data.url;
+  },
+
   storeExperience: (input: ExperienceInput) => http.post<Experience>('/admin/experience', input),
   updateExperience: (id: string, input: ExperienceInput) => http.put<Experience>(`/admin/experience/${id}`, input),
   deleteExperience: (id: string) => http.delete<{ id: string }>(`/admin/experience/${id}`),

@@ -1,6 +1,7 @@
 import { useMemo } from 'react';
 import { useEducation } from '@/modules/education';
 import { useContent } from '@/context/ContentContext';
+import ProseText from '@/components/ui/ProseText/ProseText';
 import { GraduationCap } from 'lucide-react';
 
 function fmt(iso: string) {
@@ -39,9 +40,11 @@ export default function EducationScreen() {
             <GraduationCap size={11} /> {x.degree}
           </p>
           {x.description && (
-            <p className="mt-2 text-xs leading-relaxed" style={{ color: 'var(--text-mid)' }}>
-              {x.description}
-            </p>
+            <ProseText
+              text={x.description}
+              className="mt-2 text-xs leading-relaxed"
+              style={{ color: 'var(--text-mid)' }}
+            />
           )}
         </div>
       ))}

@@ -1,6 +1,7 @@
 import { useState } from 'react';
 import { useProfile, SOCIAL_META } from '@/modules/about';
 import UserAvatar from '@/components/ui/UserAvatar/UserAvatar';
+import ProseText from '@/components/ui/ProseText/ProseText';
 import { Briefcase, Copy, Download, MapPin, Send } from 'lucide-react';
 
 /**
@@ -112,9 +113,11 @@ export default function AboutHero() {
         </div>
       </div>
 
-      <p className="text-sm leading-relaxed mt-5 @2xl:text-base @2xl:mt-6" style={{ color: 'var(--text-hi)' }}>
-        {profile.shortBio}
-      </p>
+      <ProseText
+        text={profile.shortBio}
+        className="text-sm leading-relaxed mt-5 @2xl:text-base @2xl:mt-6"
+        style={{ color: 'var(--text-hi)' }}
+      />
     </div>
   );
 }

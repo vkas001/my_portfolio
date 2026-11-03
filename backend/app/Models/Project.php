@@ -10,14 +10,15 @@ class Project extends Model
 
     protected $fillable = [
         'id', 'title', 'description', 'long_description', 'tech_stack', 'category',
-        'featured', 'live_url', 'github_url', 'image_url', 'year', 'order',
+        'featured', 'is_client', 'live_url', 'github_url', 'image_url', 'screenshots',
+        'year', 'order',
     ];
 
     /** camelCase API attributes matching the shared Project type. */
-    protected $appends = ['longDescription', 'techStack', 'liveUrl', 'githubUrl', 'imageUrl'];
+    protected $appends = ['longDescription', 'techStack', 'isClient', 'liveUrl', 'githubUrl', 'imageUrl', 'screenshots'];
 
     protected $hidden = [
-        'long_description', 'tech_stack', 'live_url', 'github_url', 'image_url',
+        'long_description', 'tech_stack', 'is_client', 'live_url', 'github_url', 'image_url',
         'created_at', 'updated_at',
     ];
 
@@ -31,7 +32,9 @@ class Project extends Model
     {
         return [
             'tech_stack' => 'array',
+            'screenshots' => 'array',
             'featured' => 'boolean',
+            'is_client' => 'boolean',
             'year' => 'integer',
             'order' => 'integer',
         ];
@@ -45,6 +48,16 @@ class Project extends Model
     public function getTechStackAttribute(): array
     {
         return json_decode((string) $this->attributes['tech_stack'], true) ?: [];
+    }
+
+    public function getIsClientAttribute(): bool
+    {
+        return (bool) ($this->attributes['is_client'] ?? false);
+    }
+
+    public function getScreenshotsAttribute(): array
+    {
+        return json_decode((string) ($this->attributes['screenshots'] ?? ''), true) ?: [];
     }
 
     public function getLiveUrlAttribute(): ?string

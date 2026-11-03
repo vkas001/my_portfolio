@@ -25,6 +25,7 @@ Route::middleware(['auth:api', 'permission:'.PermissionRegistry::SKILL_MANAGE])-
 
 Route::middleware(['auth:api', 'permission:'.PermissionRegistry::PROJECT_MANAGE])->group(function () {
     Route::post('/admin/projects', [ProjectController::class, 'store']);
+    Route::post('/admin/projects/screenshot', [ProjectController::class, 'uploadScreenshot']);
     Route::put('/admin/projects/{project}', [ProjectController::class, 'update']);
     Route::delete('/admin/projects/{project}', [ProjectController::class, 'destroy']);
 });

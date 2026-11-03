@@ -41,7 +41,8 @@ export default function ExperienceScreen() {
           <ul className="mt-2 space-y-1">
             {x.highlights.map((h, i) => (
               <li key={i} className="text-xs leading-relaxed flex gap-1.5" style={{ color: 'var(--text-mid)' }}>
-                <span style={{ color: 'var(--accent)' }}>▸</span> {h}
+                <span style={{ color: 'var(--accent)' }}>▸</span>{' '}
+                <span className="whitespace-pre-line min-w-0">{h}</span>
               </li>
             ))}
           </ul>

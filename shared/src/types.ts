@@ -65,9 +65,13 @@ export interface Project {
   techStack: string[];
   category: string;
   featured: boolean;
+  /** Built for a client (badge in the projects list). */
+  isClient: boolean;
   liveUrl: string | null;
   githubUrl: string | null;
   imageUrl: string | null;
+  /** Proof screenshots (uploaded or external URLs). */
+  screenshots: string[];
   year: number;
   order: number;
 }
@@ -212,9 +216,11 @@ export interface ProjectInput {
   techStack?: string[];
   category: string;
   featured?: boolean;
+  isClient?: boolean;
   liveUrl?: string | null;
   githubUrl?: string | null;
   imageUrl?: string | null;
+  screenshots?: string[];
   year: number;
   order?: number;
 }

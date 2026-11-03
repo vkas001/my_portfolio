@@ -1,6 +1,7 @@
 import { Download } from 'lucide-react';
 import { SOCIAL_META, useProfile } from '@/modules/about';
 import UserAvatar from '@/components/ui/UserAvatar/UserAvatar';
+import ProseText from '@/components/ui/ProseText/ProseText';
 import SectionNav from '@/modules/site/components/SectionNav/SectionNav';
 
 /** Sticky identity column: who this is, where to jump, how to reach them.
@@ -36,7 +37,7 @@ export default function SiteIntro({ activeId }: { activeId: string }) {
         <h1 className="si-name">{profile.name}</h1>
         <p className="si-title">{profile.title}</p>
       </div>
-      <p className="si-bio">{profile.shortBio}</p>
+      <ProseText text={profile.shortBio} className="si-bio" />
 
       <SectionNav activeId={activeId} />
 

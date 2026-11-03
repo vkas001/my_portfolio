@@ -1,5 +1,6 @@
 import type { Profile } from '@/modules/about';
 import { sectionIcon } from '@/modules/about';
+import ProseText from '@/components/ui/ProseText/ProseText';
 
 export default function AboutStrengths({ profile }: { profile: Profile }) {
   const hasStrengths = profile.strengths.length > 0;
@@ -27,7 +28,7 @@ export default function AboutStrengths({ profile }: { profile: Profile }) {
                 {ItemIcon ? (
                   <ItemIcon size={13} className="shrink-0 mt-0.5 @2xl:mt-1" style={{ color: 'var(--accent)' }} />
                 ) : null}
-                <p className="text-xs leading-relaxed font-medium @2xl:text-sm" style={{ color: 'var(--text-hi)' }}>
+                <p className="text-xs leading-relaxed font-medium whitespace-pre-line @2xl:text-sm" style={{ color: 'var(--text-hi)' }}>
                   {strength.text}
                 </p>
               </div>
@@ -37,9 +38,11 @@ export default function AboutStrengths({ profile }: { profile: Profile }) {
       )}
 
       {profile.bio && (
-        <p className="text-sm leading-relaxed pt-1 @2xl:text-base" style={{ color: 'var(--text-mid)' }}>
-          {profile.bio}
-        </p>
+        <ProseText
+          text={profile.bio}
+          className="text-sm leading-relaxed pt-1 @2xl:text-base"
+          style={{ color: 'var(--text-mid)' }}
+        />
       )}
     </section>
   );

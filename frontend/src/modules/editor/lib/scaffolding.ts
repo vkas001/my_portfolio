@@ -54,7 +54,8 @@ export const SECTION_UNIT = (section: EditorSection) => (section === 'experience
 
 export const emptyProject = (id: string): Project => ({
   id, title: '', description: '', longDescription: '', techStack: [], category: '',
-  featured: false, liveUrl: null, githubUrl: null, imageUrl: null, year: new Date().getFullYear(), order: Number.MAX_SAFE_INTEGER,
+  featured: false, isClient: false, liveUrl: null, githubUrl: null, imageUrl: null, screenshots: [],
+  year: new Date().getFullYear(), order: Number.MAX_SAFE_INTEGER,
 });
 
 export const emptyExperience = (id: string): Experience => ({

@@ -23,6 +23,7 @@ class AdminContentTest extends AdminApiTestCase
         $this->postJson('/api/admin/skills', ['id' => 'x1', 'name' => 'X', 'category' => 'tools', 'proficiency' => 50])
             ->assertStatus(401)->assertJsonPath('ok', false);
         $this->postJson('/api/admin/projects', ['title' => 'X'])->assertStatus(401)->assertJsonPath('ok', false);
+        $this->post('/api/admin/projects/screenshot', [])->assertStatus(401)->assertJsonPath('ok', false);
         $this->deleteJson('/api/admin/experience/nope')->assertStatus(401)->assertJsonPath('ok', false);
         $this->deleteJson('/api/admin/education/nope')->assertStatus(401)->assertJsonPath('ok', false);
         $this->deleteJson('/api/admin/hobbies/nope')->assertStatus(401)->assertJsonPath('ok', false);
@@ -159,6 +160,89 @@ class AdminContentTest extends AdminApiTestCase
         $this->postJson('/api/admin/projects', [
             'id' => 'typo', 'description' => 'd', 'category' => 'Web App', 'year' => 2026,
         ], $this->adminHeaders())->assertStatus(422)->assertJsonPath('ok', false);
+    }
+
+    public function test_project_client_flag_and_proof_screenshots_round_trip(): void
+    {
+        $headers = $this->adminHeaders();
+
+        $this->postJson('/api/admin/projects', [
+            'id' => 'client-work',
+            'title' => 'Client Work',
+            'description' => 'Shipped for a client.',
+            'category' => 'Web App',
+            'isClient' => true,
+            'screenshots' => ['/storage/projects/screenshots/proof.webp', 'https://cdn.example.com/shot.png'],
+            'year' => 2026,
+        ], $headers)->assertOk()
+            ->assertJsonPath('ok', true)
+            ->assertJsonPath('data.isClient', true)
+            ->assertJsonPath('data.featured', false)
+            ->assertJsonPath('data.screenshots', [
+                '/storage/projects/screenshots/proof.webp',
+                'https://cdn.example.com/shot.png',
+            ]);
+
+        $this->getJson('/api/projects')->assertOk()
+            ->assertJsonFragment(['id' => 'client-work', 'isClient' => true]);
+    }
+
+    public function test_project_rejects_more_than_six_screenshots(): void
+    {
+        $this->postJson('/api/admin/projects', [
+            'id' => 'too-many',
+            'title' => 'Too Many',
+            'description' => 'd',
+            'category' => 'Web App',
+            'screenshots' => array_fill(0, 7, '/storage/projects/screenshots/x.webp'),
+            'year' => 2026,
+        ], $this->adminHeaders())->assertStatus(422)->assertJsonPath('ok', false);
+    }
+
+    public function test_project_screenshot_upload_removal_and_delete_clean_files(): void
+    {
+        Storage::fake('public');
+        $headers = $this->adminHeaders();
+
+        $upload = fn (string $name) => $this->post('/api/admin/projects/screenshot', [
+            'image' => UploadedFile::fake()->image($name, 1280, 720),
+        ], $headers)->assertOk()->assertJsonPath('ok', true)->json('data.url');
+
+        $first = $upload('proof.png');
+        $this->assertStringStartsWith('/storage/projects/screenshots/', $first);
+        Storage::disk('public')->assertExists(substr($first, strlen('/storage/')));
+
+        $this->postJson('/api/admin/projects', [
+            'id' => 'proofs',
+            'title' => 'Proofs',
+            'description' => 'd',
+            'category' => 'Web App',
+            'screenshots' => [$first],
+            'year' => 2026,
+        ], $headers)->assertOk();
+
+        // Dropping a proof on update deletes its upload.
+        $this->putJson('/api/admin/projects/proofs', [
+            'title' => 'Proofs',
+            'description' => 'd',
+            'category' => 'Web App',
+            'screenshots' => [],
+            'year' => 2026,
+        ], $headers)->assertOk();
+        Storage::disk('public')->assertMissing(substr($first, strlen('/storage/')));
+
+        // Deleting the project deletes the remaining uploads.
+        $second = $upload('proof2.png');
+        $this->putJson('/api/admin/projects/proofs', [
+            'title' => 'Proofs',
+            'description' => 'd',
+            'category' => 'Web App',
+            'screenshots' => [$second],
+            'year' => 2026,
+        ], $headers)->assertOk();
+
+        $this->deleteJson('/api/admin/projects/proofs', [], $headers)->assertOk();
+        Storage::disk('public')->assertMissing(substr($second, strlen('/storage/')));
     }
 
     // ─── Experience ──────────────────────────────────────────────────────────

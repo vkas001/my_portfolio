@@ -367,9 +367,11 @@ export function ContentProvider({ children }: { children: ReactNode }) {
         techStack: value.techStack,
         category: value.category,
         featured: value.featured,
+        isClient: value.isClient,
         liveUrl: value.liveUrl,
         githubUrl: value.githubUrl,
         imageUrl: value.imageUrl,
+        screenshots: value.screenshots,
         year: value.year,
       };
       return saveItem(
