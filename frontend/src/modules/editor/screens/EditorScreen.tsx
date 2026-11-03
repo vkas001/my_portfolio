@@ -1,8 +1,11 @@
 import { useEffect, useMemo, useRef, useState } from 'react';
+import { Rocket } from 'lucide-react';
 import { useTheme } from '@/context/ThemeContext';
+import { useAuth } from '@/context/AuthContext';
 import { useWindows } from '@/context/WindowsContext';
 import { getDockRects } from '@/lib/osLayout';
 import { APP_REGISTRY, EDITABLE_APPS } from '@/apps/registry';
+import { SplashTab } from '@/modules/settings';
 import type { AppId, EditorSection, WindowData } from '@/types';
 import SkillsTab from '@/modules/editor/components/SkillsTab/SkillsTab';
 import ProjectsTab from '@/modules/editor/components/ProjectsTab/ProjectsTab';
@@ -14,10 +17,13 @@ import ProfileTab from '@/modules/editor/components/ProfileTab/ProfileTab';
 import FloatingSaveButton from '@/modules/editor/components/FloatingSaveButton/FloatingSaveButton';
 import type { SaveBridge } from '@/modules/editor/lib/scaffolding';
 
+type EditorPane = EditorSection | 'splash';
+
 export default function EditorScreen({ data, windowId }: { data?: WindowData; windowId?: string }) {
-  const { theme } = useTheme();
+  const { theme, setTheme } = useTheme();
+  const { isAdmin } = useAuth();
   const { windows, focusedId, launchApp, focusWindow, restoreWindow, toggleMaximize, updateWindowRect, updateWindowData } = useWindows();
-  const [section, setSection] = useState<EditorSection>(data?.section ?? 'profile');
+  const [section, setSection] = useState<EditorPane>(data?.section ?? 'profile');
   const commitRef = useRef<(() => void) | null>(null);
   const [saveState, setSaveState] = useState({ canSave: false, saving: false });
   const lastSave = useRef({ canSave: false, saving: false });
@@ -172,7 +178,11 @@ export default function EditorScreen({ data, windowId }: { data?: WindowData; wi
       const restoreRect = existing
         ? { x: existing.x, y: existing.y, w: existing.w, h: existing.h }
         : contentRect;
-      updateWindowData(my.id, { section: newSection ?? section, dock: { contentId, rect: restoreRect } });
+      const nextSection = newSection ?? (section === 'splash' ? undefined : section);
+      updateWindowData(my.id, {
+        ...(nextSection ? { section: nextSection } : {}),
+        dock: { contentId, rect: restoreRect },
+      });
     }
   };
 
@@ -184,9 +194,35 @@ export default function EditorScreen({ data, windowId }: { data?: WindowData; wi
     dockApp(appId, newSection ?? undefined);
   };
 
+  // Splash is a theme pane, not a content section: restore any content window
+  // this editor had docked, then show the shared splash editor in place.
+  const openSplash = () => {
+    setSection('splash');
+    if (!my) return;
+    const dock = my.data?.dock;
+    if (dock && windows.some((w) => w.id === dock.contentId)) {
+      updateWindowRect(dock.contentId, dock.rect);
+    }
+    if (my.data) {
+      const rest = { ...my.data };
+      delete rest.dock;
+      delete rest.section;
+      updateWindowData(my.id, rest);
+    }
+  };
+
   return (
     <div className="relative flex flex-col h-full gap-3">
       <div ref={stripRef} className="flex flex-nowrap items-center gap-1.5 overflow-x-auto no-scrollbar cursor-grab select-none">
+        <button
+          className={`chip cursor-pointer !py-1.5 !px-2.5 text-[11px] flex shrink-0 items-center gap-1.5 ${section === 'splash' ? '!bg-[var(--accent)] !text-[var(--accent-text-on)]' : ''}`}
+          onClick={openSplash}
+          title="Edit the boot splash"
+          style={section === 'splash' ? undefined : { color: 'var(--accent)' }}
+        >
+          <Rocket size={12} />
+          Splash
+        </button>
         {selectableApps.map(({ app, section: s }) => {
           const active = s !== null && s === section;
           return (
@@ -205,6 +241,7 @@ export default function EditorScreen({ data, windowId }: { data?: WindowData; wi
       </div>
 
       <div className="flex-1 overflow-y-auto pr-1 -mr-1 pb-14">
+        {section === 'splash' ? <SplashTab theme={theme} setTheme={setTheme} isAdmin={isAdmin} /> : null}
         {section === 'profile' ? <ProfileTab {...bridge} /> : null}
         {section === 'skills' ? <SkillsTab {...bridge} /> : null}
         {section === 'projects' ? <ProjectsTab {...bridge} /> : null}
@@ -214,7 +251,9 @@ export default function EditorScreen({ data, windowId }: { data?: WindowData; wi
         {section === 'blogs' ? <BlogsTab {...bridge} /> : null}
       </div>
 
-      <FloatingSaveButton canSave={saveState.canSave} saving={saveState.saving} onSave={() => commitRef.current?.()} />
+      {section !== 'splash' && (
+        <FloatingSaveButton canSave={saveState.canSave} saving={saveState.saving} onSave={() => commitRef.current?.()} />
+      )}
     </div>
   );
 }

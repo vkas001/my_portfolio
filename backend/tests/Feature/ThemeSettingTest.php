@@ -85,6 +85,7 @@ class ThemeSettingTest extends AdminApiTestCase
     {
         $payload = [
             'splashWords' => ['Ship', 'fast'],
+            'splashReloadText' => 'Reconnecting',
             'splashTagline' => 'Test tagline',
             'splashFooter' => 'Test footer',
             'splashDuration' => 3000,
@@ -93,6 +94,7 @@ class ThemeSettingTest extends AdminApiTestCase
         ];
         $this->putJson('/api/theme', $payload, $this->adminHeaders())->assertOk()
             ->assertJsonPath('data.theme.splashWords', ['Ship', 'fast'])
+            ->assertJsonPath('data.theme.splashReloadText', 'Reconnecting')
             ->assertJsonPath('data.theme.splashDuration', 3000)
             ->assertJsonPath('data.theme.splashBackground', 'indigo');
 
@@ -103,11 +105,13 @@ class ThemeSettingTest extends AdminApiTestCase
 
     public function test_splash_settings_reject_out_of_range_values(): void
     {
-        $this->putJson('/api/theme', ['splashDuration' => 99999], $this->adminHeaders())->assertStatus(422);
-        $this->putJson('/api/theme', ['splashDuration' => 500], $this->adminHeaders())->assertStatus(422);
-        $this->putJson('/api/theme', ['splashAccent' => 'not-a-color'], $this->adminHeaders())->assertStatus(422);
-        $this->putJson('/api/theme', ['splashBackground' => 'rainbow'], $this->adminHeaders())->assertStatus(422);
-        $this->putJson('/api/theme', ['splashWords' => ['a', 'b', 'c', 'd', 'e', 'f', 'g']], $this->adminHeaders())->assertStatus(422);
+        $headers = $this->adminHeaders();
+        $this->putJson('/api/theme', ['splashDuration' => 99999], $headers)->assertStatus(422);
+        $this->putJson('/api/theme', ['splashDuration' => 500], $headers)->assertStatus(422);
+        $this->putJson('/api/theme', ['splashAccent' => 'not-a-color'], $headers)->assertStatus(422);
+        $this->putJson('/api/theme', ['splashBackground' => 'rainbow'], $headers)->assertStatus(422);
+        $this->putJson('/api/theme', ['splashWords' => ['a', 'b', 'c', 'd', 'e', 'f', 'g']], $headers)->assertStatus(422);
+        $this->putJson('/api/theme', ['splashReloadText' => str_repeat('x', 41)], $headers)->assertStatus(422);
     }
 
     public function test_splash_cleared_lines_save_as_null(): void

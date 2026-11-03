@@ -57,6 +57,17 @@ export default function BootOverlay() {
   const { theme, themeReady } = useTheme();
   const { loading } = useContent();
   const [released, setReleased] = useState(false);
+  // A real browser reload gets a shorter, progress-oriented intro than the
+  // first visit's welcome wordmark. Read once from the Navigation Timing API
+  // so SPA navigation or opening a link still counts as a first visit.
+  const [isReload] = useState(() => {
+    try {
+      const nav = performance.getEntriesByType('navigation')[0] as PerformanceNavigationTiming | undefined;
+      return nav?.type === 'reload';
+    } catch {
+      return false;
+    }
+  });
   const [minElapsed, setMinElapsed] = useState(false);
   const [capped, setCapped] = useState(false);
   const [mountAt] = useState(() => Date.now());
@@ -86,8 +97,11 @@ export default function BootOverlay() {
   if (released) return null;
 
   const blocking = !authReady || !themeReady || loading;
-  const statusLine =
-    !themeReady ? 'Loading your theme…' : loading ? 'Loading portfolio…' : null;
+  const statusLine = isReload
+    ? 'Reloading…'
+    : !themeReady ? 'Loading your theme…' : loading ? 'Loading portfolio…' : null;
+  const reloadLine = (theme.splashReloadText ?? '').trim();
+  const words = isReload && reloadLine ? [reloadLine] : theme.splashWords;
 
   // Theme still resolving (local → identity → server pull): hold a live
   // progress veil so the first animated frame already carries final values.
@@ -108,7 +122,7 @@ export default function BootOverlay() {
       hold={(!minElapsed || blocking) && !capped}
       statusLine={statusLine}
       startedAt={mountAt}
-      words={theme.splashWords}
+      words={words}
       tagline={theme.splashTagline || null}
       footer={theme.splashFooter}
       duration={theme.splashDuration}
