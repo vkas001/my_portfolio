@@ -27,6 +27,7 @@ class UpdateThemeRequest extends FormRequest
             'windowOpacity' => ['sometimes', 'numeric', 'min:0.5', 'max:1'],
             'windowSize' => ['sometimes', 'string', 'in:small,medium,large'],
             'showTopBar' => ['sometimes', 'boolean'],
+            'webViewEnabled' => ['sometimes', 'boolean'],
             'wallpaper' => ['sometimes', 'string', 'max:60'],
             'wallpaperImage' => ['sometimes', 'nullable', 'string', 'max:255', 'regex:/^\//'],
             'wallpaperDim' => ['sometimes', 'numeric', 'min:0', 'max:60'],

@@ -58,32 +58,55 @@ class ProfileService
     /** @return Profile updated profile with socials loaded. */
     public function uploadAvatar(UploadedFile $image): Profile
     {
-        $profile = Profile::query()->where('id', 'me')->first();
-
-        // Fresh DB (never seeded) — create the profile row so the avatar has
-        // a home instead of 500ing on the NOT NULL columns.
-        if (! $profile) {
-            $profile = Profile::query()->create([
-                'id' => 'me',
-                'name' => 'Portfolio',
-                'title' => '',
-                'email' => '',
-                'location' => '',
-            ]);
-        }
+        $profile = $this->ensureProfile();
 
         // Replacing an uploaded avatar — clear the previous stored file so
         // old images don't pile up on disk (only ours, under /storage/avatars).
-        $marker = '/storage/';
-        $pos = is_string($profile->avatar_url) ? strpos($profile->avatar_url, $marker) : false;
-        if ($pos !== false) {
-            Storage::disk('public')->delete(substr($profile->avatar_url, $pos + strlen($marker)));
-        }
+        $this->deleteStoredFile($profile->avatar_url, 'avatars');
 
         $path = $image->store('avatars', 'public');
 
         $profile->forceFill(['avatar_url' => '/storage/'.$path])->save();
 
         return $profile->refresh()->load('socials');
+    }
+
+    /** @return Profile updated profile with socials loaded. */
+    public function uploadResume(UploadedFile $file): Profile
+    {
+        $profile = $this->ensureProfile();
+
+        // Replacing an uploaded CV — clear the previous stored file so old
+        // documents don't pile up on disk (only ours, under /storage/resumes).
+        $this->deleteStoredFile($profile->resume_url, 'resumes');
+
+        $path = $file->store('resumes', 'public');
+
+        $profile->forceFill(['resume_url' => '/storage/'.$path])->save();
+
+        return $profile->refresh()->load('socials');
+    }
+
+    /** Fresh DB (never seeded) — create the profile row so uploads have a home. */
+    private function ensureProfile(): Profile
+    {
+        return Profile::query()->where('id', 'me')->first()
+            ?? Profile::query()->create([
+                'id' => 'me',
+                'name' => 'Portfolio',
+                'title' => '',
+                'email' => '',
+                'location' => '',
+            ]);
+    }
+
+    /** Delete a stored file when the URL points inside the given folder. */
+    private function deleteStoredFile(?string $url, string $folder): void
+    {
+        $marker = '/storage/';
+
+        if (is_string($url) && str_starts_with($url, $marker.$folder.'/')) {
+            Storage::disk('public')->delete(substr($url, strlen($marker)));
+        }
     }
 }

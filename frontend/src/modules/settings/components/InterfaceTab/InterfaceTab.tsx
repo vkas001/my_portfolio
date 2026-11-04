@@ -5,7 +5,15 @@ import { RangeControl, SegmentedControl, SettingRow, SubLabel, Toggle } from '@/
 import { DENSITY_OPTIONS, GRID_SIZE_OPTIONS } from '@/modules/settings/lib/options';
 import type { SetTheme } from '@/modules/settings/lib/types';
 
-export default function InterfaceTab({ theme, setTheme }: { theme: ThemeState; setTheme: SetTheme }) {
+export default function InterfaceTab({
+  theme,
+  setTheme,
+  isAdmin,
+}: {
+  theme: ThemeState;
+  setTheme: SetTheme;
+  isAdmin: boolean;
+}) {
   return (
     <SectionCard title="Interface" icon={<Type size={13} />}>
       <div className="grid grid-cols-12 gap-4 mb-4">
@@ -77,6 +85,14 @@ export default function InterfaceTab({ theme, setTheme }: { theme: ThemeState; s
         <SettingRow label="Top bar" description="Show the top status bar">
           <Toggle enabled={theme.showTopBar} onChange={(v) => setTheme({ showTopBar: v })} />
         </SettingRow>
+        {isAdmin && (
+          <SettingRow
+            label="Web view"
+            description="Let visitors switch to the scrolling website. Off forces the OS view site-wide."
+          >
+            <Toggle enabled={theme.webViewEnabled} onChange={(v) => setTheme({ webViewEnabled: v })} />
+          </SettingRow>
+        )}
       </div>
 
       <div className="pt-2 mt-2 space-y-4" style={{ borderTop: '1px solid var(--border)' }}>

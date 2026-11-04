@@ -30,9 +30,12 @@ export default function AppShell() {
   useEffect(() => {
     if (prevViewMode.current !== viewMode) {
       prevViewMode.current = viewMode;
-      setTransitionSplash({ id: Date.now() });
+      // Suppress the switch splash when the Web view was just disabled: that
+      // is a forced correction back to OS, not a user-initiated switch.
+      if (theme.webViewEnabled) setTransitionSplash({ id: Date.now() });
+      else setTransitionSplash(null);
     }
-  }, [viewMode]);
+  }, [viewMode, theme.webViewEnabled]);
 
   // Global keyboard shortcuts (ported verbatim from Desktop).
   useEffect(() => {

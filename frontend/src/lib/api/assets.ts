@@ -16,3 +16,15 @@ export function assetUrl(path: string | null | undefined): string | undefined {
   }
   return path;
 }
+
+/** Link for a CV download. Stored files go through the API's attachment
+ *  endpoint so cross-origin browsers download instead of opening the PDF;
+ *  external URLs open directly. */
+export function resumeLink(path: string | null | undefined): { href: string; external: boolean } | undefined {
+  if (!path) return undefined;
+  if (path.startsWith('/storage/')) {
+    return { href: `${API_BASE}/profile/resume`, external: false };
+  }
+  const href = assetUrl(path);
+  return href ? { href, external: /^https?:\/\//i.test(href) } : undefined;
+}

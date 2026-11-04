@@ -99,6 +99,12 @@ export function ShellUIProvider({ children }: { children: ReactNode }) {
     }
   }, []);
 
+  // The admin can disable the public Web view. Force everyone back to the OS
+  // (and overwrite a stale 'web' preference) whenever that flag is off.
+  useEffect(() => {
+    if (!theme.webViewEnabled && viewMode === 'web') setViewMode('os');
+  }, [theme.webViewEnabled, viewMode, setViewMode]);
+
   const pushNotification = useCallback((n: Omit<NotificationItem, 'id' | 'time' | 'read'>) => {
     setNotifications((ns) => [
       { ...n, id: `n${Date.now().toString(36)}`, time: Date.now(), read: false },

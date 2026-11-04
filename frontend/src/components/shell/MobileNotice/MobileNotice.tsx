@@ -15,7 +15,9 @@ export default function MobileNotice({ onUseWeb, onEnterOs }: MobileNoticeProps)
       <Smartphone size={40} style={{ color: 'var(--accent)' }} />
       <h1 className="text-xl font-bold"> Portfolio OS</h1>
       <p className="text-sm max-w-xs" style={{ color: 'var(--text-mid)' }}>
-        The desktop experience needs a larger screen. Continue on the web site, or enter the OS anyway.
+        {onUseWeb
+          ? 'The desktop experience needs a larger screen. Continue on the web site, or enter the OS anyway.'
+          : 'The desktop experience needs a larger screen. Enter the OS to continue.'}
       </p>
       <span className="chip">
         <Smartphone size={12} /> Best viewed ≥ 768px
@@ -36,10 +38,18 @@ export default function MobileNotice({ onUseWeb, onEnterOs }: MobileNoticeProps)
         <button
           type="button"
           onClick={onEnterOs}
-          className="flex items-center gap-2 text-xs font-semibold cursor-pointer transition-all duration-150 active:scale-95"
-          style={{ color: 'var(--text-mid)' }}
+          className={
+            onUseWeb
+              ? 'flex items-center gap-2 text-xs font-semibold cursor-pointer transition-all duration-150 active:scale-95'
+              : 'flex items-center gap-2 px-4 py-2 rounded-full text-sm font-semibold cursor-pointer transition-all duration-150 active:scale-95'
+          }
+          style={
+            onUseWeb
+              ? { color: 'var(--text-mid)' }
+              : { background: 'var(--accent)', color: 'var(--accent-text-on)' }
+          }
         >
-          <Monitor size={14} /> Go to OS anyway
+          <Monitor size={14} /> {onUseWeb ? 'Go to OS anyway' : 'Continue in OS view'}
         </button>
       )}
     </div>

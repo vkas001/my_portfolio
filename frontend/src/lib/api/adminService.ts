@@ -41,6 +41,23 @@ export const adminService = {
     return body.data;
   },
 
+  /** Multipart CV upload (replaces any previous stored file). */
+  uploadResume: async (file: File): Promise<Profile> => {
+    const form = new FormData();
+    form.append('file', file);
+    const token = getAuthToken();
+    const res = await fetch(`${API_BASE}/admin/profile/resume`, {
+      method: 'POST',
+      headers: token ? { Authorization: `Bearer ${token}` } : {},
+      body: form,
+    });
+    const body = (await res.json().catch(() => null)) as { ok?: boolean; data?: Profile; error?: string } | null;
+    if (!res.ok || !body?.ok || !body.data) {
+      throw new Error(body?.error ?? `Upload failed (${res.status})`);
+    }
+    return body.data;
+  },
+
   /** Multipart splash backdrop upload (replaces any previous custom file).
    *  Returns the merged theme so the caller can sync the field. */
   uploadSplashImage: async (file: File): Promise<ThemeState> => {

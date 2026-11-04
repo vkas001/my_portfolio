@@ -268,4 +268,16 @@ class ThemeSettingTest extends AdminApiTestCase
 
         $this->putJson('/api/theme', ['fontSize' => 'huge'], $this->adminHeaders())->assertStatus(422);
     }
+
+    public function test_web_view_enabled_round_trips_and_rejects_non_booleans(): void
+    {
+        $this->putJson('/api/theme', ['webViewEnabled' => false], $this->adminHeaders())->assertOk()
+            ->assertJsonPath('data.theme.webViewEnabled', false);
+
+        $this->getJson('/api/theme')->assertOk()
+            ->assertJsonPath('data.theme.webViewEnabled', false);
+
+        $this->putJson('/api/theme', ['webViewEnabled' => 'sometimes'], $this->adminHeaders())
+            ->assertStatus(422);
+    }
 }

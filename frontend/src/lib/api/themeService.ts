@@ -1,5 +1,5 @@
 import type { ThemeState } from '@/styles/theme';
-import { http } from './httpClient';
+import { http, invalidate } from './httpClient';
 
 interface ThemePayload {
   theme: ThemeState | null;
@@ -28,6 +28,7 @@ export const themeService = {
   async save(theme: ThemeState): Promise<void> {
     try {
       await http.put('/theme', theme);
+      invalidate('/theme');
     } catch {
       /* offline — localStorage remains source of truth */
     }
@@ -36,6 +37,7 @@ export const themeService = {
   async reset(): Promise<void> {
     try {
       await http.delete('/theme/reset');
+      invalidate('/theme');
     } catch {
       /* noop */
     }

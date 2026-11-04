@@ -100,10 +100,7 @@ export function ThemeProvider({ children }: { children: ReactNode }) {
     // Remember the active identity so the next cold boot's veil can wear
     // the right background before auth resolves (see BootOverlay).
     try { localStorage.setItem(THEME_KEY_LAST, nextKey); } catch { /* private mode */ }
-    if (nextKey === themeKeyRef.current) {
-      if (!isAdmin) markHydrated(); // guest: nothing to pull
-      return;
-    }
+    if (nextKey === themeKeyRef.current) return;
     saveTheme(themeRef.current, themeKeyRef.current);
     const incoming = loadTheme(nextKey);
     const b = getWorkspaceBounds(themeRef.current);
@@ -112,18 +109,37 @@ export function ThemeProvider({ children }: { children: ReactNode }) {
     setThemeState({ ...incoming, widgets });
     hydratedRef.current = false;
     setThemeReady(false);
-    // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [authReady, user]);
 
-  // Boot/pull: server wins over local when it exists (admin only — guests
-  // never touch the server). Stale exact-legacy startupWindows are
-  // force-cleared once; any other saved pick (including an intentional [])
-  // is preserved.
+  // Boot/pull: the admin's server theme wins over local. Guests keep their
+  // local-only appearance but read the public Web-view flag so an admin can
+  // hide the scrolling Web site site-wide. Stale exact-legacy startupWindows
+  // are force-cleared once; any other saved pick is preserved.
   useEffect(() => {
     if (!authReady) return;
-    if (!isAdmin || hydratedRef.current) {
+    if (hydratedRef.current) {
       markHydrated();
       return;
+    }
+    if (!isAdmin) {
+      // The guest theme is already valid locally: don't block boot on the
+      // network. Pull only the public Web-view flag in the background; the
+      // boot splash is longer than this request, so the switch is settled
+      // before the shell appears.
+      markHydrated();
+      let cancelled = false;
+      void themeService.get().then((server) => {
+        if (cancelled || !server || typeof server !== 'object') return;
+        if (typeof server.webViewEnabled !== 'boolean') return;
+        setThemeState((prev) =>
+          prev.webViewEnabled === server.webViewEnabled
+            ? prev
+            : { ...prev, webViewEnabled: server.webViewEnabled },
+        );
+      });
+      return () => {
+        cancelled = true;
+      };
     }
     let cancelled = false;
     void themeService.get().then((server) => {
@@ -139,6 +155,7 @@ export function ThemeProvider({ children }: { children: ReactNode }) {
       const serverWidgets = (server.widgets as ThemeState['widgets']) ?? undefined;
       setThemeState((prev) => {
         const base = { ...DEFAULT_THEME, ...server, startupWindows: isLegacyStale ? [] : startup };
+        if (typeof base.webViewEnabled !== 'boolean') base.webViewEnabled = DEFAULT_THEME.webViewEnabled;
         // Server-saved widgets must appear: placements were seeded from the
         // first-render local theme before hydration completed. Fitted so
         // placements saved on a larger screen never load cut off.
@@ -154,7 +171,7 @@ export function ThemeProvider({ children }: { children: ReactNode }) {
       cancelled = true;
     };
     // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, [authReady, themeKey]);
+  }, [authReady, themeKey, isAdmin]);
 
   const setTheme = useCallback((patch: ThemePatch) => {
     setThemeState((prev) => {

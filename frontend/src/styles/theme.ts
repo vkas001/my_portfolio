@@ -221,6 +221,9 @@ export interface ThemeState {
   windowOpacity: number; // 0.5-1 (ibiz_v2 InterfacePanel)
   windowSize: WindowSize; // launch-size preset for app windows (Settings → Apps)
   showTopBar: boolean;
+  /** Site-wide Web view availability (admin-controlled). Off hides the
+   *  Web/OS switch and forces the OS view for every visitor. */
+  webViewEnabled: boolean;
   wallpaper: string; // WallpaperDef.id
   /** Custom desktop photo URL (/storage/* upload). Set = photo wins over
    *  the preset id above; null = preset. */
@@ -289,6 +292,7 @@ export const DEFAULT_THEME: ThemeState = {
   windowOpacity: 0.5,
   windowSize: 'small',
   showTopBar: true,
+  webViewEnabled: true,
   wallpaper: 'mint',
   wallpaperImage: null,
   wallpaperDim: 0,
@@ -558,6 +562,7 @@ export function loadTheme(key: string = GUEST_THEME_KEY): ThemeState {
     if (typeof merged.windowOpacity !== 'number' || Number.isNaN(merged.windowOpacity)) merged.windowOpacity = DEFAULT_THEME.windowOpacity;
     if (merged.windowSize !== 'small' && merged.windowSize !== 'medium' && merged.windowSize !== 'large') merged.windowSize = 'small';
     if (typeof merged.showTopBar !== 'boolean') merged.showTopBar = true;
+    if (typeof merged.webViewEnabled !== 'boolean') merged.webViewEnabled = DEFAULT_THEME.webViewEnabled;
     if (typeof merged.showSeconds !== 'boolean') merged.showSeconds = false;
     if (typeof merged.showHomeIndicator !== 'boolean') merged.showHomeIndicator = false;
     if (typeof merged.volume !== 'number' || Number.isNaN(merged.volume)) merged.volume = DEFAULT_THEME.volume;
@@ -614,6 +619,9 @@ export function loadTheme(key: string = GUEST_THEME_KEY): ThemeState {
       merged.startupWindows = [];
     }
     if (!Array.isArray(merged.startupWindows)) merged.startupWindows = [];
+    // Web view availability is server-authoritative: never let a guest's
+    // local copy pin a stale flag (admin disabled, then re-enabled).
+    if (key === GUEST_THEME_KEY) merged.webViewEnabled = DEFAULT_THEME.webViewEnabled;
     return merged;
   } catch {
     return { ...DEFAULT_THEME };

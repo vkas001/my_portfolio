@@ -5,8 +5,9 @@ import { useShellUI } from '@/context/ShellUIContext';
 import { useProfile } from '@/modules/about';
 import UserAvatar from '@/components/ui/UserAvatar/UserAvatar';
 import { WIDGET_DEFS } from '@/modules/widgets';
-import { Bell, Eye, EyeOff, Plus, X } from 'lucide-react';
+import { Bell, Download, Eye, EyeOff, Plus, X } from 'lucide-react';
 import ViewToggle from '@/components/shell/ViewToggle/ViewToggle';
+import { resumeLink } from '@/lib/api/assets';
 
 export default function TopBar() {
   const { theme } = useTheme();
@@ -18,6 +19,7 @@ export default function TopBar() {
   const bellRef = useRef<HTMLDivElement>(null);
   const pickerRef = useRef<HTMLDivElement>(null);
   const unread = notifications.filter((n) => !n.read).length;
+  const resume = resumeLink(profile?.resumeUrl);
 
   useEffect(() => {
     if (!bellOpen && !pickerOpen) return;
@@ -44,11 +46,26 @@ export default function TopBar() {
 
       {/* Center — shell view toggle (Web ⇄ OS) */}
       <div className="flex-1 flex items-center justify-center">
-        <ViewToggle />
+        {theme.webViewEnabled && <ViewToggle />}
       </div>
 
-      {/* Right — widgets visibility, add widget, notifications */}
+      {/* Right — CV download, widgets visibility, add widget, notifications */}
       <div className="flex items-center gap-1">
+        {resume && (
+          <a
+            href={resume.href}
+            download
+            target={resume.external ? '_blank' : undefined}
+            rel={resume.external ? 'noreferrer' : undefined}
+            className="icon-btn w-7 h-7"
+            style={{ color: 'var(--accent)' }}
+            aria-label="Download CV"
+            title="Download CV"
+          >
+            <Download size={14} />
+          </a>
+        )}
+
         <button
           className="icon-btn w-7 h-7"
           onClick={() => setWidgetsOpen(!widgetsOpen)}

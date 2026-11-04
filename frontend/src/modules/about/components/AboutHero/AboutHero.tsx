@@ -3,6 +3,7 @@ import { useProfile, SOCIAL_META } from '@/modules/about';
 import UserAvatar from '@/components/ui/UserAvatar/UserAvatar';
 import ProseText from '@/components/ui/ProseText/ProseText';
 import { Briefcase, Copy, Download, MapPin, Send } from 'lucide-react';
+import { resumeLink } from '@/lib/api/assets';
 
 /**
  * Web-view flagship hero (rendered only when the shell is in Web view).
@@ -16,6 +17,8 @@ export default function AboutHero() {
   const [copied, setCopied] = useState(false);
 
   if (!profile) return null;
+
+  const resume = resumeLink(profile.resumeUrl);
 
   const copyEmail = async () => {
     try {
@@ -78,8 +81,14 @@ export default function AboutHero() {
           </div>
 
           <div className="flex flex-col gap-2 @sm:flex-row @sm:flex-wrap">
-            {profile.resumeUrl && (
-              <a href={profile.resumeUrl} download className="btn-accent text-xs justify-center no-underline w-full @sm:w-auto">
+            {resume && (
+              <a
+                href={resume.href}
+                download
+                target={resume.external ? '_blank' : undefined}
+                rel={resume.external ? 'noreferrer' : undefined}
+                className="btn-accent text-xs justify-center no-underline w-full @sm:w-auto"
+              >
                 <Download size={13} /> Download résumé
               </a>
             )}

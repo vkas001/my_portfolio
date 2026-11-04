@@ -79,7 +79,7 @@ export default function SettingsScreen() {
           {activeTab === 'splash' && (
             <SplashTab theme={theme} setTheme={setTheme} isAdmin={isAdmin} />
           )}
-          {activeTab === 'interface' && <InterfaceTab theme={theme} setTheme={setTheme} />}
+          {activeTab === 'interface' && <InterfaceTab theme={theme} setTheme={setTheme} isAdmin={isAdmin} />}
           {activeTab === 'apps' && <AppsTab theme={theme} setTheme={setTheme} />}
           {activeTab === 'taskbar' && <TaskbarTab theme={theme} setTheme={setTheme} />}
           {activeTab === 'time' && <TimeTab theme={theme} setTheme={setTheme} />}

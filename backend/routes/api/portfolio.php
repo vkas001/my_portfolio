@@ -5,6 +5,7 @@ use Illuminate\Support\Facades\Route;
 
 // Public reads — no auth.
 Route::get('/profile', [PortfolioController::class, 'profile']);
+Route::get('/profile/resume', [PortfolioController::class, 'resume']);
 Route::get('/skills', [PortfolioController::class, 'skills']);
 Route::get('/projects', [PortfolioController::class, 'projects']);
 Route::get('/experience', [PortfolioController::class, 'experience']);

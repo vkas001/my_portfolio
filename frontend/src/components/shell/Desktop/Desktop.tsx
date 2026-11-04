@@ -219,7 +219,7 @@ export default function Desktop() {
   if (isMobile && !forceOsOnMobile) {
     return (
       <MobileNotice
-        onUseWeb={() => setViewMode('web')}
+        onUseWeb={theme.webViewEnabled ? () => setViewMode('web') : undefined}
         onEnterOs={() => setForceOsOnMobile(true)}
       />
     );

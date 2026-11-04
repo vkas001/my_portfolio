@@ -1,12 +1,21 @@
 import type { Profile } from '@/modules/about';
 import { SOCIAL_META } from '@/modules/about';
 import { Download } from 'lucide-react';
+import { resumeLink } from '@/lib/api/assets';
 
 export default function AboutActions({ profile }: { profile: Profile }) {
+  const resume = resumeLink(profile.resumeUrl);
+
   return (
     <section className="flex flex-wrap gap-2">
-      {profile.resumeUrl && (
-        <a href={profile.resumeUrl} download className="btn-accent text-xs no-underline justify-center w-full @sm:w-auto">
+      {resume && (
+        <a
+          href={resume.href}
+          download
+          target={resume.external ? '_blank' : undefined}
+          rel={resume.external ? 'noreferrer' : undefined}
+          className="btn-accent text-xs no-underline justify-center w-full @sm:w-auto"
+        >
           <Download size={13} /> Download résumé
         </a>
       )}

@@ -1,4 +1,5 @@
 import TopBar from '@/components/shell/TopBar/TopBar';
+import { useTheme } from '@/context/ThemeContext';
 import { SiteScreen } from '@/modules/site';
 
 /** Normal scrolling website: sticky header plus the split-résumé site.
@@ -18,5 +19,8 @@ export default function WebView() {
 }
 
 function ViewToggleHint() {
+  const { theme } = useTheme();
+  if (!theme.webViewEnabled) return null;
   return <span>Prefer the desktop? Switch back to OS view from the header.</span>;
 }
+
