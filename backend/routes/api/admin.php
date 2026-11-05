@@ -15,7 +15,6 @@ use Illuminate\Support\Facades\Route;
 Route::middleware(['auth:api', 'permission:'.PermissionRegistry::PROFILE_MANAGE])->group(function () {
     Route::put('/admin/profile', [ProfileController::class, 'update']);
     Route::post('/admin/avatar', [ProfileController::class, 'uploadAvatar']);
-    Route::post('/admin/profile/resume', [ProfileController::class, 'uploadResume']);
 });
 
 Route::middleware(['auth:api', 'permission:'.PermissionRegistry::SKILL_MANAGE])->group(function () {

@@ -20,7 +20,6 @@ class AdminContentTest extends AdminApiTestCase
     {
         $this->putJson('/api/admin/profile', ['name' => 'X'])->assertStatus(401)->assertJsonPath('ok', false);
         $this->post('/api/admin/avatar', [])->assertStatus(401)->assertJsonPath('ok', false);
-        $this->post('/api/admin/profile/resume', [])->assertStatus(401)->assertJsonPath('ok', false);
         $this->postJson('/api/admin/skills', ['id' => 'x1', 'name' => 'X', 'category' => 'tools', 'proficiency' => 50])
             ->assertStatus(401)->assertJsonPath('ok', false);
         $this->postJson('/api/admin/projects', ['title' => 'X'])->assertStatus(401)->assertJsonPath('ok', false);
@@ -655,51 +654,5 @@ class AdminContentTest extends AdminApiTestCase
         ], $this->adminHeaders())->assertStatus(422)->assertJsonPath('ok', false);
 
         Storage::disk('public')->assertDirectoryEmpty('avatars');
-    }
-
-    public function test_admin_can_upload_resume_and_download_it(): void
-    {
-        Storage::fake('public');
-        Profile::query()->create([
-            'id' => 'me',
-            'name' => 'Vikas Limbu',
-            'title' => 'Engineer',
-            'email' => 'me@example.com',
-            'location' => 'Kathmandu',
-        ]);
-
-        $this->get('/api/profile/resume')->assertNotFound();
-
-        $this->post('/api/admin/profile/resume', [
-            'file' => UploadedFile::fake()->create('first.pdf', 100, 'application/pdf'),
-        ], $this->adminHeaders())->assertOk()->assertJsonPath('ok', true);
-
-        $first = Profile::query()->where('id', 'me')->first()->resume_url;
-        $this->assertStringContainsString('/storage/resumes/', $first);
-        $firstName = substr($first, strpos($first, '/storage/') + strlen('/storage/'));
-        Storage::disk('public')->assertExists($firstName);
-
-        $this->getJson('/api/profile')->assertOk()->assertJsonPath('data.resumeUrl', $first);
-        $this->get('/api/profile/resume')->assertOk()->assertDownload('vikas-limbu-cv.pdf');
-
-        // A second upload replaces the file and URL, and the old file is removed.
-        $this->post('/api/admin/profile/resume', [
-            'file' => UploadedFile::fake()->create('second.pdf', 100, 'application/pdf'),
-        ], $this->adminHeaders())->assertOk()->assertJsonPath('ok', true);
-
-        $second = Profile::query()->where('id', 'me')->first()->resume_url;
-        $this->assertNotSame($first, $second);
-        Storage::disk('public')->assertMissing($firstName);
-    }
-
-    public function test_admin_resume_upload_rejects_non_document(): void
-    {
-        Storage::fake('public');
-
-        $this->post('/api/admin/profile/resume', [
-            'file' => UploadedFile::fake()->create('evil.php', 10, 'application/x-php'),
-        ], $this->adminHeaders())->assertStatus(422)->assertJsonPath('ok', false);
-
-        Storage::disk('public')->assertDirectoryEmpty('resumes');
     }
 }

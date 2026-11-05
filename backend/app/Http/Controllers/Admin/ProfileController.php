@@ -5,7 +5,6 @@ namespace App\Http\Controllers\Admin;
 use App\Http\Controllers\Controller;
 use App\Http\Requests\UpdateProfileRequest;
 use App\Http\Requests\UploadAvatarRequest;
-use App\Http\Requests\UploadResumeRequest;
 use App\Services\Profile\ProfileService;
 use Illuminate\Http\JsonResponse;
 
@@ -25,10 +24,5 @@ class ProfileController extends Controller
     public function uploadAvatar(UploadAvatarRequest $request): JsonResponse
     {
         return response()->json($this->profile->uploadAvatar($request->file('image')));
-    }
-
-    public function uploadResume(UploadResumeRequest $request): JsonResponse
-    {
-        return response()->json($this->profile->uploadResume($request->file('file')));
     }
 }

@@ -1,5 +1,5 @@
 import { useEffect, useRef, useState } from 'react';
-import { Check, Download, LoaderCircle, Plus, Trash2, Upload, X } from 'lucide-react';
+import { Check, LoaderCircle, Plus, Trash2, Upload, X } from 'lucide-react';
 import { useContent } from '@/context/ContentContext';
 import type { Profile, ProfileInput, Strength } from '@shared/types';
 import { SECTION_ICONS, SECTION_ICON_LABELS, type SectionIcon } from '@/modules/about';
@@ -10,19 +10,17 @@ import TextArea from '@/components/ui/TextArea/TextArea';
 import SelectInput from '@/modules/editor/components/SelectInput/SelectInput';
 import AvatarCropper from '@/modules/editor/components/AvatarCropper/AvatarCropper';
 import { SOCIAL_ICONS, type SaveBridge } from '@/modules/editor/lib/scaffolding';
-import { assetUrl, resumeLink } from '@/lib/api/assets';
+import { assetUrl } from '@/lib/api/assets';
 
 export default function ProfileTab({ commitRef, reportSave }: SaveBridge) {
-  const { profile, saveProfile, uploadAvatar, uploadResume } = useContent();
+  const { profile, saveProfile, uploadAvatar } = useContent();
   const [form, setForm] = useState<ProfileInput | null>(null);
   const [saving, setSaving] = useState(false);
   const [uploading, setUploading] = useState(false);
-  const [uploadingResume, setUploadingResume] = useState(false);
   const [cropFile, setCropFile] = useState<File | null>(null);
   const [error, setError] = useState('');
   const [saved, setSaved] = useState(false);
   const fileRef = useRef<HTMLInputElement>(null);
-  const resumeRef = useRef<HTMLInputElement>(null);
 
   const handleFile = (e: React.ChangeEvent<HTMLInputElement>) => {
     const file = e.target.files?.[0];
@@ -30,23 +28,6 @@ export default function ProfileTab({ commitRef, reportSave }: SaveBridge) {
     if (file) {
       setError('');
       setCropFile(file);
-    }
-  };
-
-  const handleResume = async (e: React.ChangeEvent<HTMLInputElement>) => {
-    const file = e.target.files?.[0];
-    e.target.value = '';
-    if (!file) return;
-    setError('');
-    setUploadingResume(true);
-    try {
-      await uploadResume(file);
-      setSaved(true);
-      window.setTimeout(() => setSaved(false), 2000);
-    } catch (err) {
-      setError(err instanceof Error ? err.message : 'Could not upload CV.');
-    } finally {
-      setUploadingResume(false);
     }
   };
 
@@ -129,8 +110,6 @@ export default function ProfileTab({ commitRef, reportSave }: SaveBridge) {
     return <p className="text-xs" style={{ color: 'var(--text-low)' }}>Loading profile…</p>;
   }
 
-  const resume = resumeLink(form.resumeUrl);
-
   return (
     <div className="space-y-3">
       <div className="grid grid-cols-12 gap-3">
@@ -196,52 +175,6 @@ export default function ProfileTab({ commitRef, reportSave }: SaveBridge) {
         </div>
         <div className="col-span-12 @md:col-span-6">
           <NumberInput key={`${profile?.id ?? 'new'}-yearsExperience`} label="Years experience" min={0} max={60} value={form.yearsExperience} onCommit={(v) => patch({ yearsExperience: v })} />
-        </div>
-        <div className="col-span-12 rounded-xl p-3 space-y-2.5" style={{ background: 'var(--bg-elev)', border: '1px solid var(--border)' }}>
-          <h3 className={labelCls} style={{ color: 'var(--accent)' }}>CV / Résumé</h3>
-          <div className="flex flex-wrap items-center gap-2">
-            <button
-              type="button"
-              className="btn-accent text-[11px] !py-1.5"
-              disabled={uploadingResume}
-              onClick={() => resumeRef.current?.click()}
-            >
-              {uploadingResume ? <LoaderCircle size={12} className="animate-spin" /> : <Upload size={12} />}
-              {uploadingResume ? 'Uploading…' : form.resumeUrl ? 'Replace CV' : 'Upload CV'}
-            </button>
-            {resume && (
-              <a
-                href={resume.href}
-                download
-                target={resume.external ? '_blank' : undefined}
-                rel={resume.external ? 'noreferrer' : undefined}
-                className="btn-ghost text-[11px] !py-1.5"
-              >
-                <Download size={11} /> Current CV
-              </a>
-            )}
-            {form.resumeUrl && (
-              <button
-                type="button"
-                className="btn-ghost text-[11px] !py-1.5"
-                disabled={uploadingResume}
-                onClick={() => patch({ resumeUrl: null })}
-              >
-                <Trash2 size={11} /> Remove
-              </button>
-            )}
-            <input
-              ref={resumeRef}
-              type="file"
-              accept=".pdf,.doc,.docx,application/pdf,application/msword,application/vnd.openxmlformats-officedocument.wordprocessingml.document"
-              className="hidden"
-              onChange={handleResume}
-            />
-          </div>
-          <Input label="…or link a CV URL (external host)" value={form.resumeUrl ?? ''} onChange={(e) => patch({ resumeUrl: e.target.value || null })} />
-          <p className="text-[10px]" style={{ color: 'var(--text-low)' }}>
-            PDF, DOC or DOCX up to 10 MB. The header and About download buttons appear as soon as a CV is set.
-          </p>
         </div>
         <div className="col-span-12 rounded-xl p-3 space-y-2.5" style={{ background: 'var(--bg-elev)', border: '1px solid var(--border)' }}>
           <h3 className={labelCls} style={{ color: 'var(--accent)' }}>Opening</h3>

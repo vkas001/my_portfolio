@@ -71,22 +71,6 @@ class ProfileService
         return $profile->refresh()->load('socials');
     }
 
-    /** @return Profile updated profile with socials loaded. */
-    public function uploadResume(UploadedFile $file): Profile
-    {
-        $profile = $this->ensureProfile();
-
-        // Replacing an uploaded CV — clear the previous stored file so old
-        // documents don't pile up on disk (only ours, under /storage/resumes).
-        $this->deleteStoredFile($profile->resume_url, 'resumes');
-
-        $path = $file->store('resumes', 'public');
-
-        $profile->forceFill(['resume_url' => '/storage/'.$path])->save();
-
-        return $profile->refresh()->load('socials');
-    }
-
     /** Fresh DB (never seeded) — create the profile row so uploads have a home. */
     private function ensureProfile(): Profile
     {

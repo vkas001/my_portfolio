@@ -40,6 +40,8 @@ interface ShellUIContextValue {
   setTaskbarVisible: (open: boolean) => void;
   contactModalOpen: boolean;
   setContactModalOpen: (open: boolean) => void;
+  cvModalOpen: boolean;
+  setCvModalOpen: (open: boolean) => void;
   notifications: NotificationItem[];
   pushNotification: (n: Omit<NotificationItem, 'id' | 'time' | 'read'>) => void;
   dismissNotification: (id: string) => void;
@@ -69,6 +71,7 @@ export function ShellUIProvider({ children }: { children: ReactNode }) {
   const [startMenuOpen, setStartMenuOpen] = useState(false);
   const [taskbarVisible, setTaskbarVisible] = useState(true);
   const [contactModalOpen, setContactModalOpen] = useState(false);
+  const [cvModalOpen, setCvModalOpen] = useState(false);
   const [notifications, setNotifications] = useState<NotificationItem[]>([]);
   const [activeWidget, setActiveWidget] = useState<string | null>(null);
   const { focusedId } = useWindows();
@@ -134,6 +137,8 @@ export function ShellUIProvider({ children }: { children: ReactNode }) {
       setTaskbarVisible,
       contactModalOpen,
       setContactModalOpen,
+      cvModalOpen,
+      setCvModalOpen,
       notifications,
       pushNotification,
       dismissNotification,
@@ -144,7 +149,7 @@ export function ShellUIProvider({ children }: { children: ReactNode }) {
     [
       viewMode, setViewMode, widgetsOpen, setWidgetsOpen, spotlightOpen, setSpotlightOpen,
       startMenuOpen, setStartMenuOpen, taskbarVisible, setTaskbarVisible, contactModalOpen,
-      setContactModalOpen, notifications, pushNotification, dismissNotification, markNotificationsRead,
+      setContactModalOpen, cvModalOpen, setCvModalOpen, notifications, pushNotification, dismissNotification, markNotificationsRead,
       activeWidget, setActiveWidget,
     ],
   );

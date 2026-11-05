@@ -3,11 +3,13 @@ import { SOCIAL_META, useProfile } from '@/modules/about';
 import UserAvatar from '@/components/ui/UserAvatar/UserAvatar';
 import ProseText from '@/components/ui/ProseText/ProseText';
 import SectionNav from '@/modules/site/components/SectionNav/SectionNav';
+import { useShellUI } from '@/context/ShellUIContext';
 
 /** Sticky identity column: who this is, where to jump, how to reach them.
  *  Nothing here scrolls away — the page's fixed point. */
 export default function SiteIntro({ activeId }: { activeId: string }) {
   const profile = useProfile();
+  const { setCvModalOpen } = useShellUI();
 
   if (!profile) {
     return (
@@ -61,11 +63,13 @@ export default function SiteIntro({ activeId }: { activeId: string }) {
         })}
       </div>
 
-      {profile.resumeUrl && (
-        <a href={profile.resumeUrl} download className="btn-ghost text-xs justify-center no-underline">
-          <Download size={13} /> Download résumé
-        </a>
-      )}
+      <button
+        type="button"
+        className="btn-ghost text-xs justify-center"
+        onClick={() => setCvModalOpen(true)}
+      >
+        <Download size={13} /> Download CV
+      </button>
     </aside>
   );
 }

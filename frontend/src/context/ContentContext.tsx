@@ -52,9 +52,6 @@ export interface ContentContextValue {
   /** Upload a new profile picture; persists via POST /admin/avatar and
    *  updates the shared profile so every window reflects it immediately. */
   uploadAvatar: (file: File) => Promise<boolean>;
-  /** Upload a new CV; persists via POST /admin/profile/resume and updates the
-   *  shared profile so the header/About download buttons appear immediately. */
-  uploadResume: (file: File) => Promise<boolean>;
   saveSkill: (value: Skill, isNew: boolean) => Promise<boolean>;
   deleteSkill: (id: string) => Promise<boolean>;
   saveProject: (value: Project, isNew: boolean) => Promise<boolean>;
@@ -294,23 +291,6 @@ export function ContentProvider({ children }: { children: ReactNode }) {
         // Also surfaced as an inline error by the caller; keep it as a toast so
         // the failed action is visible even if the editor pane is scrolled away.
         note(err instanceof Error ? err.message : 'Could not upload avatar');
-        throw err;
-      }
-    },
-    [note, ok],
-  );
-
-  // ─── CV upload ──────────────────────────────────────────────────────────
-  const uploadResume = useCallback(
-    async (file: File): Promise<boolean> => {
-      try {
-        const saved = await adminService.uploadResume(file);
-        invalidate('/profile');
-        setProfile(saved);
-        ok('CV updated');
-        return true;
-      } catch (err) {
-        note(err instanceof Error ? err.message : 'Could not upload CV');
         throw err;
       }
     },
@@ -638,7 +618,6 @@ export function ContentProvider({ children }: { children: ReactNode }) {
       refresh,
       saveProfile,
       uploadAvatar,
-      uploadResume,
       saveSkill,
       deleteSkill,
       saveProject,
@@ -665,7 +644,6 @@ export function ContentProvider({ children }: { children: ReactNode }) {
       refresh,
       saveProfile,
       uploadAvatar,
-      uploadResume,
       saveSkill,
       deleteSkill,
       saveProject,

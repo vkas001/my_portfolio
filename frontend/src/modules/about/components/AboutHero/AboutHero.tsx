@@ -3,7 +3,7 @@ import { useProfile, SOCIAL_META } from '@/modules/about';
 import UserAvatar from '@/components/ui/UserAvatar/UserAvatar';
 import ProseText from '@/components/ui/ProseText/ProseText';
 import { Briefcase, Copy, Download, MapPin, Send } from 'lucide-react';
-import { resumeLink } from '@/lib/api/assets';
+import { useShellUI } from '@/context/ShellUIContext';
 
 /**
  * Web-view flagship hero (rendered only when the shell is in Web view).
@@ -14,11 +14,10 @@ import { resumeLink } from '@/lib/api/assets';
  */
 export default function AboutHero() {
   const profile = useProfile();
+  const { setCvModalOpen } = useShellUI();
   const [copied, setCopied] = useState(false);
 
   if (!profile) return null;
-
-  const resume = resumeLink(profile.resumeUrl);
 
   const copyEmail = async () => {
     try {
@@ -81,17 +80,13 @@ export default function AboutHero() {
           </div>
 
           <div className="flex flex-col gap-2 @sm:flex-row @sm:flex-wrap">
-            {resume && (
-              <a
-                href={resume.href}
-                download
-                target={resume.external ? '_blank' : undefined}
-                rel={resume.external ? 'noreferrer' : undefined}
-                className="btn-accent text-xs justify-center no-underline w-full @sm:w-auto"
-              >
-                <Download size={13} /> Download résumé
-              </a>
-            )}
+            <button
+              type="button"
+              className="btn-accent text-xs justify-center w-full @sm:w-auto"
+              onClick={() => setCvModalOpen(true)}
+            >
+              <Download size={13} /> Download CV
+            </button>
             <a href="#site-contact" className="btn-ghost text-xs justify-center no-underline w-full @sm:w-auto">
               <Send size={13} /> Work with me
             </a>

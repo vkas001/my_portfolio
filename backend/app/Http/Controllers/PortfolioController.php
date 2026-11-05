@@ -11,8 +11,6 @@ use App\Models\Project;
 use App\Models\Skill;
 use Illuminate\Http\JsonResponse;
 use Illuminate\Http\Request;
-use Illuminate\Support\Facades\Storage;
-use Illuminate\Support\Str;
 use Symfony\Component\HttpFoundation\Response;
 
 /**
@@ -33,26 +31,6 @@ class PortfolioController extends Controller
         }
 
         return response()->json($profile);
-    }
-
-    /** Stream the uploaded CV as a download (the header/About CTAs hit this). */
-    public function resume(): Response
-    {
-        $profile = Profile::query()->first();
-        $url = $profile?->resume_url;
-
-        abort_unless(is_string($url) && str_starts_with($url, '/storage/'), 404);
-
-        $path = substr($url, strlen('/storage/'));
-        $disk = Storage::disk('public');
-
-        abort_unless($disk->exists($path), 404);
-
-        $extension = pathinfo($path, PATHINFO_EXTENSION);
-        $slug = Str::slug($profile->name ?: '') ?: 'resume';
-        $filename = $slug.'-cv'.($extension ? '.'.$extension : '');
-
-        return $disk->download($path, $filename);
     }
 
     public function skills(Request $request): JsonResponse

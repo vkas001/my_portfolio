@@ -7,6 +7,7 @@ import Spotlight from '@/components/shell/Spotlight/Spotlight';
 import Toaster from '@/components/shell/Toaster/Toaster';
 import WebView from '@/components/shell/WebView/WebView';
 import { ContactModal } from '@/modules/contact';
+import { CvModal } from '@/modules/cv';
 import { siteAnchorFor } from '@/modules/site';
 import { BootScreen } from '@/components/shell/BootScreen/BootScreen';
 import { matchShortcut } from '@/lib/shortcuts';
@@ -75,6 +76,7 @@ export default function AppShell() {
       <Toaster />
       <Spotlight />
       <ContactModal />
+      <CvModal />
       {transitionSplash && (
         <BootScreen
           key={transitionSplash.id}

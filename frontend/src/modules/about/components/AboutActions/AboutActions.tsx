@@ -1,24 +1,20 @@
 import type { Profile } from '@/modules/about';
 import { SOCIAL_META } from '@/modules/about';
 import { Download } from 'lucide-react';
-import { resumeLink } from '@/lib/api/assets';
+import { useShellUI } from '@/context/ShellUIContext';
 
 export default function AboutActions({ profile }: { profile: Profile }) {
-  const resume = resumeLink(profile.resumeUrl);
+  const { setCvModalOpen } = useShellUI();
 
   return (
     <section className="flex flex-wrap gap-2">
-      {resume && (
-        <a
-          href={resume.href}
-          download
-          target={resume.external ? '_blank' : undefined}
-          rel={resume.external ? 'noreferrer' : undefined}
-          className="btn-accent text-xs no-underline justify-center w-full @sm:w-auto"
-        >
-          <Download size={13} /> Download résumé
-        </a>
-      )}
+      <button
+        type="button"
+        className="btn-accent text-xs no-underline justify-center w-full @sm:w-auto"
+        onClick={() => setCvModalOpen(true)}
+      >
+        <Download size={13} /> Download CV
+      </button>
       {profile.socials.map((s) => {
         const meta = SOCIAL_META[s.icon];
         const Icon = meta.icon;

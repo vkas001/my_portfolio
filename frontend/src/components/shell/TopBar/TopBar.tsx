@@ -7,19 +7,17 @@ import UserAvatar from '@/components/ui/UserAvatar/UserAvatar';
 import { WIDGET_DEFS } from '@/modules/widgets';
 import { Bell, Download, Eye, EyeOff, Plus, X } from 'lucide-react';
 import ViewToggle from '@/components/shell/ViewToggle/ViewToggle';
-import { resumeLink } from '@/lib/api/assets';
 
 export default function TopBar() {
   const { theme } = useTheme();
   const { addWidget } = useWidgets();
-  const { notifications, dismissNotification, markNotificationsRead, widgetsOpen, setWidgetsOpen } = useShellUI();
+  const { notifications, dismissNotification, markNotificationsRead, widgetsOpen, setWidgetsOpen, setCvModalOpen } = useShellUI();
   const profile = useProfile();
   const [bellOpen, setBellOpen] = useState(false);
   const [pickerOpen, setPickerOpen] = useState(false);
   const bellRef = useRef<HTMLDivElement>(null);
   const pickerRef = useRef<HTMLDivElement>(null);
   const unread = notifications.filter((n) => !n.read).length;
-  const resume = resumeLink(profile?.resumeUrl);
 
   useEffect(() => {
     if (!bellOpen && !pickerOpen) return;
@@ -49,21 +47,19 @@ export default function TopBar() {
         {theme.webViewEnabled && <ViewToggle />}
       </div>
 
-      {/* Right — CV download, widgets visibility, add widget, notifications */}
+      {/* Right — CV preview, widgets visibility, add widget, notifications */}
       <div className="flex items-center gap-1">
-        {resume && (
-          <a
-            href={resume.href}
-            download
-            target={resume.external ? '_blank' : undefined}
-            rel={resume.external ? 'noreferrer' : undefined}
+        {profile && (
+          <button
+            type="button"
             className="icon-btn w-7 h-7"
             style={{ color: 'var(--accent)' }}
-            aria-label="Download CV"
-            title="Download CV"
+            onClick={() => setCvModalOpen(true)}
+            aria-label="Preview and download CV"
+            title="Preview CV"
           >
             <Download size={14} />
-          </a>
+          </button>
         )}
 
         <button
